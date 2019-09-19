@@ -171,4 +171,21 @@ public class PessoaService extends CrudService<Pessoa, PessoaRepository> {
 }
 ```
 
-Os hooks são executados na sequência em que são informados ao serviço. No nosso exemplo, o nome ser validado primeiro, em seguida o cpf.
+Os hooks são executados na sequência em que são informados ao serviço. No nosso exemplo, o nome ser validado primeiro, em seguida o cpf. Qualquer dos hooks que lançar uma exceção interrompe o processo.
+
+Também é possível utilizar os hooks para manipular os objetos:
+
+```java
+.
+.
+.
+addBeforeCreateHook(this::verificarNome);
+addBeforeUpdateHook(this::verificarNome);
+
+private Pessoa verificarNome(Pessoa pessoa) {
+    if (pessoa.getNome() == null)
+        pessoa.setNome("Paulo Alonso");
+        
+    return pessoa;
+}
+```
