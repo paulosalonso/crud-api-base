@@ -93,7 +93,7 @@ PessoaService service;
 .
 .
 // Busca a primeira página de pessoas, informando Integer.MAX_VALUE como tamanho da página e ordena pelo nome
-List<Pessoa> pessoas = service.listAll(0, Integer.MAX_VALUE, new Expression("nome:asc"));
+List<Pessoa> pessoas = service.list(0, Integer.MAX_VALUE, new Expression("nome:asc"));
 
 // Cadastra uma pessoa
 service.create(new Pessoa("Paulo", "xxx.xxx.xxx.xx");
@@ -116,7 +116,7 @@ service.delete(1);
 
 Note a anotação __@NotBlank__ nos atributos __nome__ e __cpf__ da entidade Pessoa. Os métodos __create__ e __update__ da classe __CrudService__ realizam a validação dos atributos anotados com validadores do pacote __javax.validation__. Nesse caso, se nome ou cpf estiverem nulos, vazios ou somente com espaços, chamar um desses métodos resultará em uma exceção.
 
-Note também os parâmetros utilizados na chamada de __service.listAll__. O último é uma instância de __Expression__. Essa classe faz parte do projeto [Query Decoder](https://github.com/paulosalonso/query-decoder), que deve ser incluído ao projeto principal juntamente com Spring CRUD Base. O projeto Query Decoder também tem a classe __SpringJpaSpecificationDecoder__, que aplica filtros nas consultas a partir de expressões. Veja o [readme](https://github.com/paulosalonso/query-decoder/blob/master/README.md) do projeto para mais detalhes:
+Note também os parâmetros utilizados na chamada de __service.list__. O último é uma instância de __Expression__. Essa classe faz parte do projeto [Query Decoder](https://github.com/paulosalonso/query-decoder), que deve ser incluído ao projeto principal juntamente com Spring CRUD Base. O projeto Query Decoder também tem a classe __SpringJpaSpecificationDecoder__, que aplica filtros nas consultas a partir de expressões. Veja o [readme](https://github.com/paulosalonso/query-decoder/blob/master/README.md) do projeto para mais detalhes.
 
 ```java
 .
@@ -128,7 +128,7 @@ PessoaService service;
 .
 .
 // Busca a primeira página de pessoas que contém "Paulo" no nome
-List<Pessoa> pessoas = service.listAll(new SpringJpaSpecificationDecoder("nome[CT]:Paulo"), 0, Integer.MAX_VALUE, new Expression("nome:asc"));
+List<Pessoa> pessoas = service.list(new SpringJpaSpecificationDecoder("nome[CT]:Paulo"), 0, Integer.MAX_VALUE, new Expression("nome:asc"));
 .
 .
 .
