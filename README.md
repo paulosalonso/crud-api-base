@@ -247,16 +247,16 @@ public class PessoaResource extends CrudResource<Pessoa, PessoaService> {
 
 Com essa implementação já temos disponíveis os seguintes endpoints:
 
-* GET <url>/pessoa
+* GET /pessoa
     * Retorna uma lista de pessoas
     * Aceita filtros através do query param "filter", utilizando a sintaxe de [Query Decoder](https://github.com/paulosalonso/query-decoder)
     * Aceita paginação através dos queries params "page" e "size"
     * Aceita ordenação através do query param "order", utilizando a sintaxe de [Query Decoder](https://github.com/paulosalonso/query-decoder)
-* GET <url>/pessoa/{id}
+* GET /pessoa/{id}
     * Retorna o cadastro de pessoa referente ao id informado no lugar de __{id}__
-* POST <url>/pessoa
+* POST /pessoa
     * Cadastra a pessoa enviada no corpo da requisição no formato JSON
-* PUT <url>/pessoa/{id}
+* PUT /pessoa/{id}
     * Altera o cadastro da pessoa referente ao id informado no lugar de __{id}__
-* DELETE <url>/pessoa/{id}
+* DELETE /pessoa/{id}
     * Exclui o cadastro da pessoa referente ao id informado no lugar de __{id}__
