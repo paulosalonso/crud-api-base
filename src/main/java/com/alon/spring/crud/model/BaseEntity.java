@@ -1,4 +1,4 @@
-package br.com.senior.treinamento.model;
+package com.alon.spring.crud.model;
 
 import java.io.Serializable;
 
