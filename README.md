@@ -48,3 +48,17 @@ public class Pessoa implements BaseEntity {
 ```java
 public interface PessoaRepository extends JpaRepository<Pessoa, Long>, JpaSpecificationExecutor<Pessoa> {}
 ```
+
+#### Serviço PessoaService
+
+```java
+@Service
+public class PessoaService extends CrudService<Pessoa, PessoaRepository> {
+
+    @Autowired
+    public PessoaService(PessoaRepository repository) {
+        super(repository);
+    }
+
+}
+```
