@@ -21,22 +21,38 @@ public class Pessoa implements BaseEntity {
     @NotBlank
     private String nome;
     
+    @NotBlank
+    private String cpf;
+    
+    public Pessoa(String nome, String cpf) {
+        this.nome = nome;
+        this.cpf = cpf;
+    }
+    
     @Override
     public Long getId() {
-      return this.id;
+        return this.id;
     }
     
     @Override
     public void setId(Long id) {
-      this.id = id;
+        this.id = id;
     }
     
     public String getNome() {
-      return this.nome;
+        return this.nome;
     }
     
     public void setNome(String nome) {
-      this.nome = nome;
+        this.nome = nome;
+    }
+    
+    public String getCpf() {
+        return this.cpf;
+    }
+    
+    public void setCpf(String cpf) {
+        this.cpf = cpf;
     }
     
  }
@@ -61,4 +77,37 @@ public class PessoaService extends CrudService<Pessoa, PessoaRepository> {
     }
 
 }
+```
+
+Com estas implementações já é possível listar, criar, buscar, alterar e excluir entidades do tipo __Pessoa__:
+
+```java
+.
+.
+.
+@Autowired
+PessoaService service;
+.
+.
+.
+// Lista pessoas ordenando pelo nome
+List<Pessoa> pessoas = service.listAll(1, Integer.MAX_VALUE, new Expression("nome:asc"));
+
+// Cadastra uma pessoa
+service.create(new Pessoa("Paulo", "xxx.xxx.xxx.xx");
+
+// Busca a pessoa de id 1
+Pessoa pessoa = service.read(1);
+
+// Altera o nome da pessoa
+pessoa.setNome("Paulo Alonso");
+
+// Grava a alteração
+service.update(pessoa);
+
+// Exclui a pessoa de id 1
+service.delete(1);
+.
+.
+.
 ```
