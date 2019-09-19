@@ -42,3 +42,9 @@ public class Pessoa implements BaseEntity {
  }
     
 ```
+
+#### Repositório PessoaRepository
+
+```java
+public interface PessoaRepository extends JpaRepository<Pessoa, Long>, JpaSpecificationExecutor<Pessoa> {}
+```
