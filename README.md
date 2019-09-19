@@ -112,7 +112,7 @@ service.delete(1);
 .
 ```
 
-Note a anotação __@NotBlank__ nos atributos __nome__ e __cpf__ da entidade Pessoa. Os métodos __create__ e __update__ da classe __CrudService__ realiza a validação dos atributos anotados com validadores do pacote __javax.validation__. Nesse caso, se nome ou cpf estiverem nulos, vazios ou somente com espaços chamar um desses métodos resultará em uma exceção.
+Note a anotação __@NotBlank__ nos atributos __nome__ e __cpf__ da entidade Pessoa. Os métodos __create__ e __update__ da classe __CrudService__ realizam a validação dos atributos anotados com validadores do pacote __javax.validation__. Nesse caso, se nome ou cpf estiverem nulos, vazios ou somente com espaços, chamar um desses métodos resultará em uma exceção.
 
 ### Life Cycle Hooks
 
