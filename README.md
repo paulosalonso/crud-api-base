@@ -90,8 +90,8 @@ PessoaService service;
 .
 .
 .
-// Lista pessoas ordenando pelo nome
-List<Pessoa> pessoas = service.listAll(1, Integer.MAX_VALUE, new Expression("nome:asc"));
+// Busca a primeira página de pessoas, informando Integer.MAX_VALUE como tamanho da página e ordena pelo nome
+List<Pessoa> pessoas = service.listAll(0, Integer.MAX_VALUE, new Expression("nome:asc"));
 
 // Cadastra uma pessoa
 service.create(new Pessoa("Paulo", "xxx.xxx.xxx.xx");
@@ -111,3 +111,60 @@ service.delete(1);
 .
 .
 ```
+
+Note a anotação __@NotBlank__ nos atributos __nome__ e __cpf__ da entidade Pessoa. Os métodos __create__ e __update__ da classe __CrudService__ realiza a validação dos atributos anotados com validadores do pacote __javax.validation__. Nesse caso, se nome ou cpf estiverem nulos, vazios ou somente com espaços chamar um desses métodos resultará em uma exceção.
+
+### Life Cycle Hooks
+
+A classe __CrudService__ conta com os __Life Cycle Hooks__, ou __Ganchos de Ciclo de Vida__. Os hooks são funções que são executadas antes e depois de alguns dos métodos de CRUD. Os hooks existentes são:
+
+* BEFORE_CREATE - antes da criação
+* AFTER_CREATE - depois da criação
+* BEFORE_UPDATE - antes da atualização
+* AFTER_UPDATE - depois da atualização
+* BEFORE_DELETE - antes da exclusão
+* AFTER_DELETE - depois da exclusão
+
+É possível adicionar quantas funções sejam necessárias para cada hook através dos seguintes métodos:
+
+* addBeforeCreateHook
+* addAfterCreateHook
+* addBeforeUpdateHook
+* addAfterUpdateHook
+* addBeforeDeleteHook
+* addAfterDeleteHook
+
+Todos esses métodos esperam como parâmetro uma instância de __com.alon.spring.crud.service.CheckedFunction__ que é uma interface funcional. Seu método __apply__ deve ser implementado e pode lançar um __Throwable__. No caso dos hooks para __create__ e __update__, o método apply recebe e retorna uma instância do tipo de entidade manipulado pelo serviço (no nosso exemplo, Pessoa). Já o hook de __delete__ recebe e devolve uma instância de __Long__, que deve ser o id da entidade.
+
+#### Serviço PessoaService com hooks
+
+```java
+@Service
+public class PessoaService extends CrudService<Pessoa, PessoaRepository> {
+
+    @Autowired
+    public PessoaService(PessoaRepository repository) {
+        super(repository);
+        super.addBeforeCreateHook(this::validarNome);
+        super.addBeforeCreateHook(this::validarCpf);
+        super.addBeforeUpdateHook(this::validarNome);
+        super.addBeforeUpdateHook(this::validarCpf);
+    }
+    
+    private Pessoa validarNome(Pessoa pessoa) throws Exception {
+        if (pessoa.getNome().lenght() < 15)
+            throw new Exception("O nome deve ter no mínimo 15 caracteres");
+            
+        return pessoa;
+    }
+    
+    private Pessoa validarCpf(Pessoa pessoa) throws Exception {
+        if (pessoa.getCpf().lenght() < 11)
+            throw new Exception("O CPF deve ter 11 dígitos");
+            
+        return pessoa;
+    }
+}
+```
+
+Os hooks são executados na sequência em que são informados ao serviço. No nosso exemplo, o nome ser validado primeiro, em seguida o cpf.
