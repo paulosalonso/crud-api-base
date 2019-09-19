@@ -201,7 +201,9 @@ Também é possível utilizar os hooks para manipular os objetos:
 .
 addBeforeCreateHook(this::verificarNome);
 addBeforeUpdateHook(this::verificarNome);
-
+.
+.
+.
 private Pessoa verificarNome(Pessoa pessoa) {
     if (pessoa.getNome() == null)
         pessoa.setNome("Paulo Alonso");
