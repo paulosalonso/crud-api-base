@@ -1,9 +1,7 @@
-package br.com.senior.treinamento.resource;
+package com.alon.spring.crud.resource;
 
 import br.com.senior.treinamento.model.BaseEntity;
 import org.springframework.data.domain.Page;
-import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -12,7 +10,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 
-import br.com.senior.treinamento.service.CrudService;
+import com.alon.spring.crud.service.CrudService;
 import com.alon.querydecoder.Expression;
 import com.alon.querydecoder.impl.SpringJpaSpecificationDecoder;
 

@@ -1,4 +1,4 @@
-package br.com.senior.treinamento.service;
+package com.alon.spring.crud.service;
 
 import java.util.List;
 
@@ -104,32 +104,32 @@ public abstract class CrudService<E extends BaseEntity, R extends JpaRepository<
     public abstract List<Order> getDefaultSort();
     
     public CrudService addBeforeCreateHook(CheckedFunction<E, E> function) {
-    	HOOKS.get(LifeCycleHook.BEFORE_CREATE).add(function);    	
+    	this.HOOKS.get(LifeCycleHook.BEFORE_CREATE).add(function);    	
     	return this;
     }
     
     public CrudService addAfterCreateHook(CheckedFunction<E, E> function) {
-    	HOOKS.get(LifeCycleHook.AFTER_CREATE).add(function);    	
+    	this.HOOKS.get(LifeCycleHook.AFTER_CREATE).add(function);    	
     	return this;
     }
     
     public CrudService addBeforeUpdateHook(CheckedFunction<E, E> function) {
-    	HOOKS.get(LifeCycleHook.BEFORE_UPDATE).add(function);    	
+    	this.HOOKS.get(LifeCycleHook.BEFORE_UPDATE).add(function);    	
     	return this;
     }
     
     public CrudService addAfterUpdateHook(CheckedFunction<E, E> function) {
-    	HOOKS.get(LifeCycleHook.AFTER_UPDATE).add(function);    	
+    	this.HOOKS.get(LifeCycleHook.AFTER_UPDATE).add(function);    	
     	return this;
     }
     
     public CrudService addBeforeDeleteHook(CheckedFunction<Long, Long> function) {
-    	HOOKS.get(LifeCycleHook.BEFORE_DELETE).add(function);    	
+    	this.HOOKS.get(LifeCycleHook.BEFORE_DELETE).add(function);    	
     	return this;
     }
     
     public CrudService addAfterDeleteHook(CheckedFunction<Long, Long> function) {
-    	HOOKS.get(LifeCycleHook.AFTER_DELETE).add(function);    	
+    	this.HOOKS.get(LifeCycleHook.AFTER_DELETE).add(function);    	
     	return this;
     }
     
