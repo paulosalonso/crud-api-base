@@ -1,6 +1,5 @@
 package com.alon.spring.crud.resource;
 
-import br.com.senior.treinamento.model.BaseEntity;
 import org.springframework.data.domain.Page;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -13,6 +12,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import com.alon.spring.crud.service.CrudService;
 import com.alon.querydecoder.Expression;
 import com.alon.querydecoder.impl.SpringJpaSpecificationDecoder;
+import com.alon.spring.crud.model.BaseEntity;
 
 public abstract class CrudResource<E extends BaseEntity, S extends CrudService<E, ?>> {
 	

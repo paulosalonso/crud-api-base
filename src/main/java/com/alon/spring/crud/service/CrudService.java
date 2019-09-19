@@ -9,8 +9,8 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 
-import br.com.senior.treinamento.model.BaseEntity;
 import com.alon.querydecoder.Expression;
+import com.alon.spring.crud.model.BaseEntity;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
