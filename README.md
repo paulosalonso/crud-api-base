@@ -134,7 +134,7 @@ A classe __CrudService__ conta com os __Life Cycle Hooks__, ou __Ganchos de Cicl
 * addBeforeDeleteHook
 * addAfterDeleteHook
 
-Todos esses métodos esperam como parâmetro uma instância de __com.alon.spring.crud.service.CheckedFunction__ que é uma interface funcional. Seu método __apply__ deve ser implementado e pode lançar um __Throwable__. 
+Todos esses métodos esperam como parâmetro uma instância de __com.alon.spring.crud.service.CheckedFunction__,que é uma interface funcional. Seu método __apply__ deve ser implementado e pode lançar um __Throwable__. 
 Também é possível utilizar o recurso de __method reference__ para informar os hooks, como veremos no exemplo abaixo.
 No caso dos hooks para __create__ e __update__, o método apply recebe e retorna uma instância do tipo de entidade manipulado pelo serviço (no nosso exemplo, Pessoa). Já o hook de __delete__ recebe e devolve uma instância de __Long__, que deve ser o id da entidade.
 
