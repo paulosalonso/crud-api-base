@@ -1,6 +1,6 @@
 # Spring CRUD Base
 
-Projeto base para criação de serviços e recusos de CRUD com Spring Data JPA.
+Projeto base para criação de serviços e recusos de CRUD com Spring e Spring Data JPA.
 
 ## CrudService
 
@@ -214,3 +214,49 @@ private Pessoa verificarNome(Pessoa pessoa) {
 .
 .
 ```
+
+## CrudResource
+
+A classe __com.alon.spring.crud.resource.CrudResource__ implementa os endpoints para listagem e CRUD de entidades via API. Pra utilizá-la, é necessário ter uma implementação de __CrudService__, conforme o tipo genérico solicitado na declaração da classe:
+
+```java
+public abstract class CrudResource<E extends BaseEntity, S extends CrudService<E, ?>> {
+.
+.
+.
+}
+```
+
+### Exemplo de implementação
+
+#### Classe PessoaResource
+
+```java
+@RestController
+@RequestMapping("/pessoa")
+@CrossOrigin
+public class PessoaResource extends CrudResource<Pessoa, PessoaService> {
+
+    @Autowired
+    public PessoaResource(PessoaService service) {
+        super(service);
+    }
+
+}
+```
+
+Com essa implementação já temos disponíveis os seguintes endpoints:
+
+* GET <url>/pessoa
+    * Retorna uma lista de pessoas
+    * Aceita filtros através do query param "filter", utilizando a sintaxe de [Query Decoder](https://github.com/paulosalonso/query-decoder)
+    * Aceita paginação através dos queries params "page" e "size"
+    * Aceita ordenação através do query param "order", utilizando a sintaxe de [Query Decoder](https://github.com/paulosalonso/query-decoder)
+* GET <url>/pessoa/{id}
+    * Retorna o cadastro de pessoa referente ao id informado no lugar de __{id}__
+* POST <url>/pessoa
+    * Cadastra a pessoa enviada no corpo da requisição no formato JSON
+* PUT <url>/pessoa/{id}
+    * Altera o cadastro da pessoa referente ao id informado no lugar de __{id}__
+* DELETE <url>/pessoa/{id}
+    * Exclui o cadastro da pessoa referente ao id informado no lugar de __{id}__
