@@ -127,7 +127,7 @@ PessoaService service;
 .
 .
 .
-// Busca a primeira página de pessoas que contém "Paulo" no nome
+// Busca pessoas que contém "Paulo" no nome
 List<Pessoa> pessoas = service.list(new SpringJpaSpecificationDecoder("nome[CT]:Paulo"), 0, Integer.MAX_VALUE, new Expression("nome:asc"));
 .
 .
