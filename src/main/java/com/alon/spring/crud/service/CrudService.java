@@ -79,7 +79,7 @@ public abstract class CrudService<E extends BaseEntity, R extends JpaRepository<
 
     public E update(@Valid E entity) throws UpdateException {
         if (entity.getId() == null)
-            throw new UpdateException("Entity not managed. Use create method.");
+            throw new UpdateException("Unmanaged entity. Use the create method.");
             
         try {
             entity = this.executeHook(entity, LifeCycleHook.BEFORE_UPDATE);

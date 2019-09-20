@@ -13,6 +13,7 @@ import com.alon.spring.crud.service.CrudService;
 import com.alon.querydecoder.Expression;
 import com.alon.querydecoder.impl.SpringJpaSpecificationDecoder;
 import com.alon.spring.crud.model.BaseEntity;
+import com.alon.spring.crud.service.UpdateException;
 
 public abstract class CrudResource<E extends BaseEntity, S extends CrudService<E, ?>> {
 	
@@ -46,7 +47,10 @@ public abstract class CrudResource<E extends BaseEntity, S extends CrudService<E
 	}
 	
 	@PutMapping("/{id}")
-	public E update(@RequestBody E entity) throws Exception {
+	public E update(@PathVariable Long id, @RequestBody E entity) throws Exception {
+            if (!id.equals(entity.getId()))
+                throw new UpdateException("The entity id does not match the URL id.");
+            
             return this.service.update(entity);
 	}
 	
