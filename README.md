@@ -191,7 +191,7 @@ public class PessoaService extends CrudService<Pessoa, PessoaRepository> {
 }
 ```
 
-Os hooks são executados na sequência em que são informados ao serviço. No nosso exemplo, o nome ser validado primeiro, em seguida o cpf. Qualquer dos hooks que lançar uma exceção interrompe o processo.
+Os hooks são executados na sequência em que são informados ao serviço. No nosso exemplo, o nome será validado primeiro, em seguida o cpf. Qualquer dos hooks que lançar uma exceção interrompe o processo.
 
 Também é possível utilizar os hooks para manipular os objetos:
 
