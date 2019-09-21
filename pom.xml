@@ -80,7 +80,7 @@
             <artifactId>validation-api</artifactId>
         </dependency>
         <dependency>
-            <groupId>com.alon</groupId>
+            <groupId>com.github.paulosalonso</groupId>
             <artifactId>querydecoder</artifactId>
             <version>1.0.0</version>
         </dependency>
