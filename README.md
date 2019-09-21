@@ -1,5 +1,13 @@
 # Spring CRUD Base
 
+```xml
+<dependency>
+    <groupId>com.github.paulosalonso</groupId>
+    <artifactId>spring-crud-base</artifactId>
+    <version>1.0.0</version>
+</dependency>
+```
+
 Projeto base para criação de serviços e recusos de CRUD com Spring e Spring Data JPA.
 
 ## CrudService
