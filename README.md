@@ -266,6 +266,6 @@ Com essa implementação já temos disponíveis os seguintes endpoints:
 * POST /pessoa
     * Cadastra a pessoa enviada no corpo da requisição no formato JSON
 * PUT /pessoa/{id}
-    * Altera o cadastro da pessoa referente ao id informado no lugar de __{id}__ usando os JSON enviado no corpo da requisição
+    * Altera o cadastro da pessoa referente ao id informado no lugar de __{id}__ usando o JSON enviado no corpo da requisição
 * DELETE /pessoa/{id}
     * Exclui o cadastro da pessoa referente ao id informado no lugar de __{id}__
