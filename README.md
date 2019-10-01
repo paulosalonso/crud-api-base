@@ -105,7 +105,7 @@ PessoaService service;
 List<Pessoa> pessoas = service.list(0, Integer.MAX_VALUE, new Expression("nome:asc"));
 
 // Cadastra uma pessoa
-service.create(new Pessoa("Paulo", "xxx.xxx.xxx.xx");
+service.create(new Pessoa("Paulo", "xxx.xxx.xxx.xx"));
 
 // Busca a pessoa de id 1
 Pessoa pessoa = service.read(1);
