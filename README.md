@@ -287,7 +287,7 @@ private PessoaRepository repository;
 .
 .
 .
-Specification spec = new SpringJpaSpecificationDecoder("nome[CT]:Paulo");
+Specification<Pessoa> spec = new SpringJpaSpecificationDecoder<>("nome[CT]:Paulo");
 
 List<Pessoa> pessoas = this.repository.findAll(spec);
 ```
@@ -305,3 +305,48 @@ Esta operação é case insensitive, então as expressões abaixo têm o mesmo e
 
 * nome[EQ]:null ou nome:null
 * nome[EQ]:not null ou nome:not null
+
+### Encadeamento de atributos
+
+Quando temos relacionamentos entre entidades, é possível verificar atributos da classe relacionada através do encadeamento de atributos. Veja as entidades abaixo:
+
+```java
+@Entity
+public class Cidade {
+    @Id
+    private Long codigoIbge;
+    
+    private String nome;
+    
+    // getters & setters
+}
+
+@Entity
+public class Pessoa {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+    
+    private String nome;
+    
+    @ManyToOne
+    @JoinColumn(name = "codigoIbgeCidade")
+    private Cidade cidade;
+    
+    // getters & setters
+}
+```
+
+Para buscar por todas as pessoas cadastradas que são de São Paulo (código IBGE 3550308), fazemos o seguinte:
+
+```java
+
+@Autowired
+private PessoaRepository repository;
+.
+.
+.
+Specification<Pessoa> spec = new SpringJpaSpecificationDecoder<>("cidade.codigoIbge[EQ]:3550308");
+
+List<Pessoa> pessoas = this.repository.findAll(spec);
+```
