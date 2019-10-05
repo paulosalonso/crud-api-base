@@ -86,17 +86,26 @@ public class SpringJpaSpecificationDecoder<T> extends QueryDecoder<Predicate> im
         
         switch (expression.getMatchType()) {
             case BT : predicate = criteriaBuilder.between(path, (Comparable) value, (Comparable) valueBT); break;
-            case CT : predicate = criteriaBuilder.like(path, "%".concat(value.toString()).concat("%")); break;
-            case EQ : predicate = criteriaBuilder.equal(path, value); break;
-            case GT : predicate = criteriaBuilder.gt(path, (Number) value); break;
+            case CT : predicate = criteriaBuilder.like(path, String.format("%%%s%%", value)); break;
+            case EQ : predicate = this.resolveEqualOrNullOrNotNull(criteriaBuilder, path, value); break;
+            case GT : predicate = criteriaBuilder.greaterThan(path, (Comparable) value); break;
             case GTE: predicate = criteriaBuilder.greaterThanOrEqualTo(path, (Comparable) value); break;
-            case LT : predicate = criteriaBuilder.le(path, (Number) value); break;
+            case LT : predicate = criteriaBuilder.lessThan(path, (Comparable) value); break;
             case LTE: predicate = criteriaBuilder.lessThanOrEqualTo(path, (Comparable) value); break;
             case IN : predicate = path.in(value); break;
             default : predicate = criteriaBuilder.equal(path, value);
         }
         
         return this.decodeNext(predicate, expression, root, criteriaBuilder);
+    }
+    
+    private Predicate resolveEqualOrNullOrNotNull(CriteriaBuilder criteriaBuilder, Path path, Object value) {
+        if (value.toString().equalsIgnoreCase("NULL"))
+            return criteriaBuilder.isNull(path);
+        else if (value.toString().equalsIgnoreCase("NOT NULL"))
+            return criteriaBuilder.isNotNull(path);
+        
+        return criteriaBuilder.equal(path, value);
     }
     
     private Predicate decodeNext(Predicate predicate, Decoder decoder, Root<T> root, CriteriaBuilder criteriaBuilder) throws Throwable {
@@ -125,15 +134,13 @@ public class SpringJpaSpecificationDecoder<T> extends QueryDecoder<Predicate> im
     }
     
     private Object getValue(Path path, Expression expression) throws Throwable {
+        if (checkIfNullOrNotNull(expression.getValue()))
+            return expression.getValue();
+        
         Object result;
         String[] values;
         
         switch (expression.getMatchType()) {
-            case BT:
-                values = expression.getValue().split("-");
-                result = this.convert(path, values[0]);
-                break;
-            
             case CT:
                 values = expression.getValue().split((","));                
                 result = Collections.emptyList();
@@ -149,6 +156,11 @@ public class SpringJpaSpecificationDecoder<T> extends QueryDecoder<Predicate> im
         }
         
         return result;
+    }
+    
+    private boolean checkIfNullOrNotNull(Object value) {
+        return Arrays.asList(new String[]{ "NULL", "NOT NULL"})
+                     .contains(value.toString().toUpperCase());
     }
     
 }

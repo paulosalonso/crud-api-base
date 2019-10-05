@@ -16,7 +16,7 @@ public class DateTimeConverter implements DecoderConverter<Date> {
     
     private static DateTimeConverter INSTANCE;
     
-    private static final SimpleDateFormat DATE_FORMATTER = new SimpleDateFormat("yyyy/MM/dd");
+    private static final SimpleDateFormat DATE_FORMATTER = new SimpleDateFormat("yyyy-MM-dd");
     private static final SimpleDateFormat TIME_FORMATTER = new SimpleDateFormat("HH:mm");
     private static final SimpleDateFormat DATE_TIME_FORMATTER = new SimpleDateFormat("yyyy-MM-dd HH:mm");
     
