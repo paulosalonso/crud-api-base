@@ -269,3 +269,27 @@ Com essa implementação já temos disponíveis os seguintes endpoints:
     * Altera o cadastro da pessoa referente ao id informado no lugar de __{id}__ usando o JSON enviado no corpo da requisição
 * DELETE /pessoa/{id}
     * Exclui o cadastro da pessoa referente ao id informado no lugar de __{id}__
+    
+## SpringJpaSpecificationDecoder
+
+A classe __SpringJpaSpecificationDecoder__ extende a classe __QueryDecoder__ (projeto [QueryDecoder](https://github.com/paulosalonso/query-decoder) e implementa a interface __org.springframework.data.jpa.domain.Specification__ para aplicar filtros em consultas utilizando o __Spring Data JPA__. Para utilizá-la, o repositório Spring deve implementar, além de __org.springframework.data.jpa.repository.JpaRepository__, a interface __org.springframework.data.jpa.repository.JpaSpecificationExecutor__:
+
+```java
+public interface PessoaRepository extends JpaRepository<Pessoa, Long>, JpaSpecificationExecutor<Pessoa> {
+}
+```
+
+Assim, ficam disponíveis os métodos de __JpaSpecificatonExecutor__ que recebem um __Specification__ como parâmetro. __SpringJpaSpecificationDecoder__ pode ser usado da seguinte maneira:
+
+```java
+@Autowired
+private PessoaRepository repository;
+.
+.
+.
+Specification spec = new SpringJpaSpecificationDecoder("nome[CT]:Paulo");
+
+List<Pessoa> pessoas = this.repository.findAll(spec);
+```
+
+O código acima deve retornar uma lista com todas as pessoas que contém "Paulo" no nome.
