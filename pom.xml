@@ -9,7 +9,7 @@
     </parent>
     <groupId>com.github.paulosalonso</groupId>
     <artifactId>spring-crud-base</artifactId>
-    <version>1.0.1-SNAPSHOT</version>
+    <version>1.1.0-SNAPSHOT</version>
     <name>Spring CRUD Base</name>
     <description>Projeto base para criação de serviços e recusos de CRUD com Spring Data JPA.</description>
     <url>https://github.com/paulosalonso/spring-crud-base</url>
