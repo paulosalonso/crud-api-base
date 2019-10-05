@@ -134,7 +134,7 @@ public class SpringJpaSpecificationDecoder<T> extends QueryDecoder<Predicate> im
     }
     
     private Object getValue(Path path, Expression expression) throws Throwable {
-        if (checkIfNullOrNotNull(expression.getValue()))
+        if (isNullOrNotNull(expression.getValue()))
             return expression.getValue();
         
         Object result;
@@ -158,7 +158,7 @@ public class SpringJpaSpecificationDecoder<T> extends QueryDecoder<Predicate> im
         return result;
     }
     
-    private boolean checkIfNullOrNotNull(Object value) {
+    private boolean isNullOrNotNull(Object value) {
         return Arrays.asList(new String[]{ "NULL", "NOT NULL"})
                      .contains(value.toString().toUpperCase());
     }
