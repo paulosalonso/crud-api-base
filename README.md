@@ -301,7 +301,7 @@ Para verificar se valores são NULL ou NOT NULL, basta utilizar o operador EQ ([
 * nome[EQ]:NULL ou nome:NULL
 * nome[EQ]:NOT NULL ou nome: NOT NULL
 
-Esta operação é case insensitive, então as expressões abaixo tem o mesmo efeito:
+Esta operação é case insensitive, então as expressões abaixo têm o mesmo efeito:
 
 * nome[EQ]:null ou nome:null
 * nome[EQ]:not null ou nome:not null
