@@ -167,7 +167,7 @@ Todos esses métodos esperam como parâmetro uma instância de __com.alon.spring
 
 Também é possível utilizar o recurso de __method reference__ para informar os hooks, como veremos no exemplo abaixo.
 
-No caso dos hooks para __create__ e __update__, o método apply recebe e retorna uma instância do tipo de entidade manipulado pelo serviço (no nosso exemplo, Pessoa). Já o hook de __delete__ recebe e devolve uma instância de __Long__, que deve ser o id da entidade.
+No caso dos hooks para __create__ e __update__, o método apply recebe e retorna uma instância do tipo de entidade manipulado pelo serviço (no nosso exemplo, Pessoa). Já o hook de __delete__ recebe e devolve uma instância de __Long__, que é o id da entidade.
 
 #### Serviço PessoaService com hooks para create e update
 
