@@ -293,3 +293,15 @@ List<Pessoa> pessoas = this.repository.findAll(spec);
 ```
 
 O código acima deve retornar uma lista com todas as pessoas que contém "Paulo" no nome.
+
+### NULL e NOT NULL
+
+Para verificar se valores são NULL ou NOT NULL, basta utilizar o operador EQ ([ou suprimir o operador, que é equivalente](https://github.com/paulosalonso/query-decoder#exemplos)), seguido da comparação desejada:
+
+* nome[EQ]:NULL ou nome:NULL
+* nome[EQ]:NOT NULL ou nome: NOT NULL
+
+Esta operação é case insensitive, então as expressões abaixo tem o mesmo efeito:
+
+* nome[EQ]:null ou nome:null
+* nome[EQ]:not null ou nome:not null
