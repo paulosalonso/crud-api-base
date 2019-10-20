@@ -141,9 +141,9 @@ public class SpringJpaSpecificationDecoder<T> extends QueryDecoder<Predicate> im
         String[] values;
         
         switch (expression.getMatchType()) {
-            case CT:
+            case IN:
                 values = expression.getValue().split((","));                
-                result = Collections.emptyList();
+                result = new ArrayList<>();
                 
                 for (String v : values)
                     ((Collection) result).add(this.convert(path, v));
