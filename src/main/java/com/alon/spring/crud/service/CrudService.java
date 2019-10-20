@@ -31,6 +31,10 @@ public abstract class CrudService<E extends BaseEntity, R extends JpaRepository<
             this.HOOKS.put(hook, new ArrayList<>());
     }
 
+    public Page<E> list(int page, int size) {
+        return this.list(page, size, null);
+    }
+
     public Page<E> list(int page, int size, Expression order) {
         return this.repository.findAll(this.buildPageable(page, size, order));
     }
@@ -44,7 +48,7 @@ public abstract class CrudService<E extends BaseEntity, R extends JpaRepository<
     }
 
     private Sort getSort(Expression order) {
-        if (order.getField() == null)
+        if (order == null || order.getField() == null)
             return Sort.by(this.getDefaultSort());
 
         List<Order> orders = new ArrayList<>();
