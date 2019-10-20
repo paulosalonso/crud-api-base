@@ -24,11 +24,13 @@ public abstract class CrudService<E extends BaseEntity, R extends JpaRepository<
     
     private final Map<LifeCycleHook, List<CheckedFunction>> HOOKS = new HashMap<>(); 
 
-    public CrudService(R repository) {
-        this.repository = repository;
+    public CrudService() {
         
         for (LifeCycleHook hook : LifeCycleHook.values())
             this.HOOKS.put(hook, new ArrayList<>());
+        
+        this.addBeforeUpdateHook(this::checkEntityState);
+        this.addBeforeUpdateHook(this::entityExists);
     }
 
     public Page<E> list(int page, int size) {
@@ -81,10 +83,7 @@ public abstract class CrudService<E extends BaseEntity, R extends JpaRepository<
         return this.repository.findById(id).get();
     }
 
-    public E update(@Valid E entity) throws UpdateException {
-        if (entity.getId() == null)
-            throw new UpdateException("Unmanaged entity. Use the create method.");
-            
+    public E update(@Valid E entity) throws UpdateException {            
         try {
             entity = this.executeHook(entity, LifeCycleHook.BEFORE_UPDATE);
             entity = this.create(entity);
@@ -93,7 +92,6 @@ public abstract class CrudService<E extends BaseEntity, R extends JpaRepository<
             throw new UpdateException(ex.getMessage(), ex);
         }
     }
-
 
     public void delete(Long id) throws DeleteException {
         try {
@@ -104,35 +102,51 @@ public abstract class CrudService<E extends BaseEntity, R extends JpaRepository<
             throw new DeleteException(ex.getMessage(), ex);
         }
     }
+    
+    private E checkEntityState(E entity) throws UpdateException {        
+        if (entity.getId() == null)
+            throw new UpdateException("Unmanaged entity. Use the create method.");
+        
+        return entity;
+    }
+    
+    private E entityExists(E entity) throws UpdateException {
+        boolean exists = this.repository.existsById(entity.getId());
+        
+        if (!exists)
+            throw new UpdateException("Entity not exists");
+        
+        return entity;
+    }
 
     public abstract List<Order> getDefaultSort();
     
-    public CrudService addBeforeCreateHook(CheckedFunction<E, E> function) {
+    public final CrudService addBeforeCreateHook(CheckedFunction<E, E> function) {
     	this.HOOKS.get(LifeCycleHook.BEFORE_CREATE).add(function);    	
     	return this;
     }
     
-    public CrudService addAfterCreateHook(CheckedFunction<E, E> function) {
+    public final CrudService addAfterCreateHook(CheckedFunction<E, E> function) {
     	this.HOOKS.get(LifeCycleHook.AFTER_CREATE).add(function);    	
     	return this;
     }
     
-    public CrudService addBeforeUpdateHook(CheckedFunction<E, E> function) {
+    public final CrudService addBeforeUpdateHook(CheckedFunction<E, E> function) {
     	this.HOOKS.get(LifeCycleHook.BEFORE_UPDATE).add(function);    	
     	return this;
     }
     
-    public CrudService addAfterUpdateHook(CheckedFunction<E, E> function) {
+    public final CrudService addAfterUpdateHook(CheckedFunction<E, E> function) {
     	this.HOOKS.get(LifeCycleHook.AFTER_UPDATE).add(function);    	
     	return this;
     }
     
-    public CrudService addBeforeDeleteHook(CheckedFunction<Long, Long> function) {
+    public final CrudService addBeforeDeleteHook(CheckedFunction<Long, Long> function) {
     	this.HOOKS.get(LifeCycleHook.BEFORE_DELETE).add(function);    	
     	return this;
     }
     
-    public CrudService addAfterDeleteHook(CheckedFunction<Long, Long> function) {
+    public final CrudService addAfterDeleteHook(CheckedFunction<Long, Long> function) {
     	this.HOOKS.get(LifeCycleHook.AFTER_DELETE).add(function);    	
     	return this;
     }
