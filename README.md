@@ -341,7 +341,7 @@ class PessoaEntityToPessoaDtoConverter implements OutputDtoConverter<Pessoa, Pes
     
     @Override
     public PessoaDto convert(Pessoa data) {
-        PessoaDto modeloDto = new PessoaDto();
+        PessoaDto pessoaDto = new PessoaDto();
         pessoaDto.id = data.getId();
         pessoaDto.nome = data.getNome();
         pessoaDto.cpf = data.cpf;
