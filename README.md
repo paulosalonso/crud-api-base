@@ -495,7 +495,7 @@ public class PessoaResource extends CrudResource<
 
 Para que o spring faça o mapeamentos dos métodos de CrudResource, é preciso configurar as propriedades para os paths no arquivo __applications.properties__:
 
-```
+```properties
 com.alon.spring.crud.path.list=/list
 com.alon.spring.crud.path.read=/read/{id}
 com.alon.spring.crud.path.create=/create
