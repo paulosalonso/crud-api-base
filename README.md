@@ -274,7 +274,26 @@ public class PessoaDto {
 }
 ```
 
-Perceba que apesar de ser um DTO com atributos públicos, os getters e setters foram incluídos. Isso é necessário para que a serialização/desserialização do objeto seja realizada pelo Spring. Também é necessário um construtor padrão. Como foi criado um construtor com todos os atributos, foi necessário declarar explicitamente o construtor padrão.
+#### PessoaEntityToPessoaDtoConverter
+
+```java
+@Component
+class PessoaEntityToPessoaDtoConverter implements OutputDtoConverter<Pessoa, PessoaDto> {
+    
+    @Override
+    public PessoaDto convert(Pessoa data) {
+        PessoaDto modeloDto = new PessoaDto();
+        pessoaDto.id = data.getId();
+        pessoaDto.nome = data.getNome();
+        pessoaDto.cpf = data.cpf;
+        
+        return modeloDto;
+    }
+    
+}
+```
+
+Perceba que apesar de ser um DTO com atributos públicos, os getters e setters foram incluídos. Isso é necessário para que a serialização/desserialização do objeto seja realizada pelo Spring. Também é necessário um construtor padrão. Como foi criado um construtor com todos os atributos, foi necessário declarar explicitamente o construtor padrão. Este mesmo padrão é necessário para os inputs e outputs.
 
 #### CreatePessoaInput
 
@@ -331,6 +350,68 @@ public UpdatePessoaInput implements InputDto {
     }
     
     // getters & setters
+}
+```
+
+#### UpdatePessoaInputConverter
+
+```java
+@Component
+public class UpdatePessoaInputConverter implements InputDtoConverter<UpdatePessoaInput, Pessoa> {
+    
+    @Override
+    public Pessoa convert(UpdatePessoaInput input) {
+        Pessoa pessoa = new Pessoa();
+        pessoa.setId(input.id);
+        pessoa.setNome(input.nome);
+        pessoa.setCpf(input.cpf);
+        
+        return pessoa;
+    }
+    
+}
+```
+
+#### ListPessoaOuput
+
+```java
+public class ListPessoaOutput extends ListOutput<PessoaDto> {
+
+    public ListPessoaOutput() {
+    }
+
+    public ListPessoaOutput(List<PessoaDto> content, int page, int pageSize, int totalPages, int totalSize) {
+        super(content, page, pageSize, totalPages, totalSize);
+    }
+    
+}
+```
+
+#### ListPessoaOutputConverter
+```java
+@Component
+public class ListPessoaOutputConverter implements OutputDtoConverter<Page<Pessoa>, ListPessoaOutput> {
+
+    @Autowired
+    private PessoaEntityToPessoaDtoConverter converter;
+    
+    @Override
+    public ListPessoaOutput convert(Page<Pessoa> data) {
+        List<PessoaDto> pessoasDto = data.getContent()
+                                         .stream()
+                                         .map(pessoa -> this.converter.convert(user))
+                                         .collect(Collectors.toList());
+        
+        ListPessoaOutput output = new ListPessoaOutput();
+        output.content = pssoasDto;
+        output.page = data.getNumber() + 1;
+        output.pageSize = modelosDto.size();
+        output.totalPages = data.getTotalPages();
+        output.totalSize = data.getNumberOfElements();
+        
+        return output;
+    }
+    
 }
 ```
 
