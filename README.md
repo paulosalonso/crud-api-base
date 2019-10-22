@@ -368,7 +368,7 @@ public class ListPessoaOutputConverter implements OutputDtoConverter<Page<Pessoa
                                          .collect(Collectors.toList());
         
         ListPessoaOutput output = new ListPessoaOutput();
-        output.content = pssoasDto;
+        output.content = pessoasDto;
         output.page = data.getNumber() + 1;
         output.pageSize = modelosDto.size();
         output.totalPages = data.getTotalPages();
@@ -470,7 +470,7 @@ public class PessoaResourceDtoConverterProvider implements ResourceDtoConverterP
 }
 ```
 
-Com a definição dos DTO's, implementamos PessoaResource:
+Com os DTO's e seus conversores definidos, implementamos PessoaResource:
 
 #### PessoaResource
 
@@ -493,20 +493,32 @@ public class PessoaResource extends CrudResource<
 }
 ```
 
-Com essa implementação já temos disponíveis os seguintes endpoints:
+Para que o spring faça o mapeamentos dos métodos de CrudResource, é preciso configurar as propriedades para os paths no arquivo __applications.properties__:
 
-* GET /pessoa
+```
+com.alon.spring.crud.path.list=/list
+com.alon.spring.crud.path.read=/read/{id}
+com.alon.spring.crud.path.create=/create
+com.alon.spring.crud.path.update=/update
+com.alon.spring.crud.path.delete=/delete/{id}
+```
+
+Os paths acima são apenas exemplos, eles podem ser configurados de acordo com a necessidade ou padrão do projeto.
+
+Com isso, temos os seguintes endpoints disponíveis para CRUD:
+
+* GET /pessoa/list
     * Retorna uma lista de pessoas
     * Aceita filtros através do query param "filter", utilizando a sintaxe de [Query Decoder](https://github.com/paulosalonso/query-decoder)
     * Aceita paginação através dos queries params "page" e "size"
     * Aceita ordenação através do query param "order", utilizando a sintaxe de [Query Decoder](https://github.com/paulosalonso/query-decoder)
-* GET /pessoa/{id}
+* GET /pessoa/read/{id}
     * Retorna o cadastro de pessoa referente ao id informado no lugar de __{id}__
-* POST /pessoa
+* POST /pessoa/create
     * Cadastra a pessoa enviada no corpo da requisição no formato JSON
-* PUT /pessoa
+* PUT /pessoa/update
     * Altera o cadastro da pessoa enviada no corpo da requisição no formato JSON
-* DELETE /pessoa/{id}
+* DELETE /pessoa/delete/{id}
     * Exclui o cadastro da pessoa referente ao id informado no lugar de __{id}__
     
 ## SpringJpaSpecificationDecoder
