@@ -346,7 +346,7 @@ class PessoaEntityToPessoaDtoConverter implements OutputDtoConverter<Pessoa, Pes
         pessoaDto.nome = data.getNome();
         pessoaDto.cpf = data.cpf;
         
-        return modeloDto;
+        return pessoaDto;
     }
     
 }
