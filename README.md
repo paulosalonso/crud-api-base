@@ -252,7 +252,7 @@ Entenda os tipos genéricos:
 
 ### Exemplo de implementação
 
-Primeiro, vamos criar os DTO's responsáveis pela comunicação com a API. Perceba que apesar de serem DTO's com atributos públicos, os getters e setters foram incluídos. Isso é necessário para que a serialização/desserialização do objeto seja realizada pelo Spring. Também é necessário um construtor padrão. Como foram criados construtorres com todos os atributos, foi necessário declarar explicitamente os construtores padrão.
+Primeiro, vamos criar os DTO's responsáveis pela comunicação com a API. Perceba que apesar de serem DTO's com atributos públicos, os getters e setters foram incluídos. Isso é necessário para que a serialização/desserialização do objeto seja realizada pelo Spring. Também é necessário um construtor padrão. Como foram criados construtores com todos os atributos, foi necessário declarar explicitamente os construtores padrão.
 
 #### PessoaDto
 
