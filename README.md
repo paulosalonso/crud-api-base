@@ -82,10 +82,10 @@ Note que o repositório implementa, além da interface JpaRepository, a interfac
 @Service
 public class PessoaService extends CrudService<Pessoa, PessoaRepository> {
 
-    @Autowired
-    public PessoaService(PessoaRepository repository) {
-        super(repository);
-    }
+   @Override
+   public List<Order> getDefaultOrder() {
+       Collections.singletonList(Order.asc("nome"));
+   }
 
 }
 ```
@@ -226,17 +226,113 @@ private Pessoa verificarNome(Pessoa pessoa) {
 
 ## CrudResource
 
-A classe __com.alon.spring.crud.resource.CrudResource__ implementa os endpoints para listagem e CRUD de entidades via API. Pra utilizá-la, é necessário ter uma implementação de __CrudService__, conforme o tipo genérico solicitado na declaração da classe:
+A classe __com.alon.spring.crud.resource.CrudResource__ implementa os endpoints para listagem e CRUD de entidades via API.
+Ela é uma classe abstrata e precisa ser estendida por uma classe anotada com __@RestController__. Essa é sua declaração:
 
 ```java
-public abstract class CrudResource<E extends BaseEntity, S extends CrudService<E, ?>> {
+public abstract class CrudResource< 
+        S extends CrudService,
+        C extends InputDto, 
+        U extends InputDto,
+        P extends ResourceDtoConverterProvider
+> {
 .
 .
 .
 }
 ```
 
+Entenda os tipos genéricos:
+
+* __S extends CrudService__: Serviço responsável pelo CRUD da entidade.
+* __C extends InputDto__: Tipo do parâmetro recebido pelo método __create__.
+* __U extends InputDto__: Tipo de parâmetro recebido pelo método __update__.
+* __P extends ResourceDtoConverterProvider__: Provedor de conversores de tipos de entrada para entidade, e entidade para tipos de saída.
+
+
 ### Exemplo de implementação
+
+#### PessoaDto
+
+```java
+public class PessoaDto {
+
+    public Long id;
+    public String nome;
+    public String cpf;
+    
+    public PessoaDto() {}
+    
+    public PessoaDto(Long id, String nome, String cpf){
+        this.id = id;
+        this.nome = nome;
+        this.cpf = cpf;
+    }
+    
+    // getters & setters
+
+}
+```
+
+Perceba que apesar de ser um DTO com atributos públicos, os getters e setters foram incluídos. Isso é necessário para que a serialização/desserialização do objeto seja realizada pelo Spring. Também é necessário um construtor padrão. Como foi criado um construtor com todos os atributos, foi necessário declarar explicitamente o construtor padrão.
+
+#### CreatePessoaInput
+
+```java
+public CreatePessoaInput implements InputDto {
+    
+    public String nome;
+    public String cpf;
+    
+    public CreatePessoaInput() {}
+    
+    public CreatePessoaInput(String nome, String cpf) {
+        this.nome = nome;
+        this.cpf = cpf;
+    }
+    
+    // getters & setters
+}
+```
+
+#### CreatePessoaInputConverter
+
+```java
+@Component
+public class CreatePessoaInputConverter implements InputDtoConverter<CreatePessoaInput, Pessoa> {
+    
+    @Override
+    public Pessoa convert(CreatePessoaInput input) {
+        Pessoa pessoa = new Pessoa();
+        pessoa.setNome(input.nome);
+        pessoa.setCpf(input.cpf);
+        
+        return pessoa;
+    }
+    
+}
+```
+
+#### UpdatePessoaInput
+
+```java
+public UpdatePessoaInput implements InputDto {
+    
+    public Long id;
+    public String nome;
+    public String cpf;
+    
+    public CreatePessoaInput() {}
+    
+    public CreatePessoaInput(Long id, String nome, String cpf) {
+        this.id = id;
+        this.nome = nome;
+        this.cpf = cpf;
+    }
+    
+    // getters & setters
+}
+```
 
 #### Classe PessoaResource
 
