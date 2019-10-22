@@ -5,7 +5,7 @@
 <dependency>
     <groupId>com.github.paulosalonso</groupId>
     <artifactId>spring-crud-base</artifactId>
-    <version>1.1.0</version>
+    <version>1.2.3</version>
 </dependency>
 ```
 
