@@ -9,6 +9,9 @@
 </dependency>
 ```
 
+###### Caso de uso
+[Ficticius Clean](https://github.com/paulosalonso/ficticius-clean)
+
 Projeto base para criação de serviços e recusos de CRUD com Spring e Spring Data JPA.
 
 ## CrudService
