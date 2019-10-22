@@ -252,6 +252,8 @@ Entenda os tipos genéricos:
 
 ### Exemplo de implementação
 
+Primeiro, vamos criar os DTO's responsáveis pela comunicação com a API. Perceba que apesar de serem DTO's com atributos públicos, os getters e setters foram incluídos. Isso é necessário para que a serialização/desserialização do objeto seja realizada pelo Spring. Também é necessário um construtor padrão. Como foram criados construtorres com todos os atributos, foi necessário declarar explicitamente os construtores padrão.
+
 #### PessoaDto
 
 ```java
@@ -274,26 +276,20 @@ public class PessoaDto {
 }
 ```
 
-#### PessoaEntityToPessoaDtoConverter
+#### ListPessoaOuput
 
 ```java
-@Component
-class PessoaEntityToPessoaDtoConverter implements OutputDtoConverter<Pessoa, PessoaDto> {
-    
-    @Override
-    public PessoaDto convert(Pessoa data) {
-        PessoaDto modeloDto = new PessoaDto();
-        pessoaDto.id = data.getId();
-        pessoaDto.nome = data.getNome();
-        pessoaDto.cpf = data.cpf;
-        
-        return modeloDto;
+public class ListPessoaOutput extends ListOutput<PessoaDto> {
+
+    public ListPessoaOutput() {
+    }
+
+    public ListPessoaOutput(List<PessoaDto> content, int page, int pageSize, int totalPages, int totalSize) {
+        super(content, page, pageSize, totalPages, totalSize);
     }
     
 }
 ```
-
-Perceba que apesar de ser um DTO com atributos públicos, os getters e setters foram incluídos. Isso é necessário para que a serialização/desserialização do objeto seja realizada pelo Spring. Também é necessário um construtor padrão. Como foi criado um construtor com todos os atributos, foi necessário declarar explicitamente o construtor padrão. Este mesmo padrão é necessário para os inputs e outputs.
 
 #### CreatePessoaInput
 
@@ -311,24 +307,6 @@ public CreatePessoaInput implements InputDto {
     }
     
     // getters & setters
-}
-```
-
-#### CreatePessoaInputConverter
-
-```java
-@Component
-public class CreatePessoaInputConverter implements InputDtoConverter<CreatePessoaInput, Pessoa> {
-    
-    @Override
-    public Pessoa convert(CreatePessoaInput input) {
-        Pessoa pessoa = new Pessoa();
-        pessoa.setNome(input.nome);
-        pessoa.setCpf(input.cpf);
-        
-        return pessoa;
-    }
-    
 }
 ```
 
@@ -353,35 +331,22 @@ public UpdatePessoaInput implements InputDto {
 }
 ```
 
-#### UpdatePessoaInputConverter
+Depois, criamos os conversores:
+
+#### PessoaEntityToPessoaDtoConverter
 
 ```java
 @Component
-public class UpdatePessoaInputConverter implements InputDtoConverter<UpdatePessoaInput, Pessoa> {
+class PessoaEntityToPessoaDtoConverter implements OutputDtoConverter<Pessoa, PessoaDto> {
     
     @Override
-    public Pessoa convert(UpdatePessoaInput input) {
-        Pessoa pessoa = new Pessoa();
-        pessoa.setId(input.id);
-        pessoa.setNome(input.nome);
-        pessoa.setCpf(input.cpf);
+    public PessoaDto convert(Pessoa data) {
+        PessoaDto modeloDto = new PessoaDto();
+        pessoaDto.id = data.getId();
+        pessoaDto.nome = data.getNome();
+        pessoaDto.cpf = data.cpf;
         
-        return pessoa;
-    }
-    
-}
-```
-
-#### ListPessoaOuput
-
-```java
-public class ListPessoaOutput extends ListOutput<PessoaDto> {
-
-    public ListPessoaOutput() {
-    }
-
-    public ListPessoaOutput(List<PessoaDto> content, int page, int pageSize, int totalPages, int totalSize) {
-        super(content, page, pageSize, totalPages, totalSize);
+        return modeloDto;
     }
     
 }
@@ -415,13 +380,110 @@ public class ListPessoaOutputConverter implements OutputDtoConverter<Page<Pessoa
 }
 ```
 
-#### Classe PessoaResource
+#### CreatePessoaInputConverter
+
+```java
+@Component
+public class CreatePessoaInputConverter implements InputDtoConverter<CreatePessoaInput, Pessoa> {
+    
+    @Override
+    public Pessoa convert(CreatePessoaInput input) {
+        Pessoa pessoa = new Pessoa();
+        pessoa.setNome(input.nome);
+        pessoa.setCpf(input.cpf);
+        
+        return pessoa;
+    }
+    
+}
+```
+
+#### UpdatePessoaInputConverter
+
+```java
+@Component
+public class UpdatePessoaInputConverter implements InputDtoConverter<UpdatePessoaInput, Pessoa> {
+    
+    @Override
+    public Pessoa convert(UpdatePessoaInput input) {
+        Pessoa pessoa = new Pessoa();
+        pessoa.setId(input.id);
+        pessoa.setNome(input.nome);
+        pessoa.setCpf(input.cpf);
+        
+        return pessoa;
+    }
+    
+}
+```
+
+E por fim, o provedor de conversores:
+
+#### PessoaResourceDtoConverterProvider
+
+```java
+@Component
+public class PessoaResourceDtoConverterProvider implements ResourceDtoConverterProvider {
+
+    @Autowired
+    private ListPessoaOutputConverter listConverter;
+    
+    @Autowired 
+    private PessoaEntityToPessoaDtoConverter entityToDtoConverter;
+    
+    @Autowired
+    private CreatePessoaInputConverter createInputConverter;
+    
+    @Autowired
+    private UpdatePessoaInputConverter updateInputConverter;
+    
+    @Override
+    public ListPessoaOutputConverter getListOutputDtoConverter() {
+        return this.listConverter;
+    }
+
+    @Override
+    public PessoaEntityToPessoaDtoConverter getReadOutputDtoConverter() {
+        return this.entityToDtoConverter;
+    }
+
+    @Override
+    public CreatePessoaInputConverter getCreateInputDtoConverter() {
+        return this.createInputConverter;
+    }
+
+    @Override
+    public PessoaEntityToPessoaDtoConverter getCreateOutputDtoConverter() {
+        return this.entityToDtoConverter;
+    }
+
+    @Override
+    public UpdatePessoaInputConverter getUpdateInputDtoConverter() {
+        return this.updateInputConverter;
+    }
+
+    @Override
+    public PessoaEntityToPessoaDtoConverter getUpdateOutputDtoConverter() {
+        return this.entityToDtoConverter;
+    }
+    
+}
+```
+
+Com a definição dos DTO's, implementamos PessoaResource:
+
+#### PessoaResource
 
 ```java
 @RestController
 @RequestMapping("/pessoa")
 @CrossOrigin
-public class PessoaResource extends CrudResource<Pessoa, PessoaService> {
+public class PessoaResource extends CrudResource<
+        PessoaService, 
+        CreatePessoaInput, 
+        UpdatePessoaInput,
+        PessoaResourceDtoConverterProvider
+> {
 
     @Autowired
     public PessoaResource(PessoaService service) {
@@ -442,8 +504,8 @@ Com essa implementação já temos disponíveis os seguintes endpoints:
     * Retorna o cadastro de pessoa referente ao id informado no lugar de __{id}__
 * POST /pessoa
     * Cadastra a pessoa enviada no corpo da requisição no formato JSON
-* PUT /pessoa/{id}
-    * Altera o cadastro da pessoa referente ao id informado no lugar de __{id}__ usando o JSON enviado no corpo da requisição
+* PUT /pessoa
+    * Altera o cadastro da pessoa enviada no corpo da requisição no formato JSON
 * DELETE /pessoa/{id}
     * Exclui o cadastro da pessoa referente ao id informado no lugar de __{id}__
     
