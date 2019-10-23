@@ -16,6 +16,7 @@ import com.alon.spring.crud.resource.dto.ResourceDtoConverterProvider;
 import com.alon.spring.crud.service.CreateException;
 import com.alon.spring.crud.service.CrudService;
 import com.alon.spring.crud.service.DeleteException;
+import com.alon.spring.crud.service.NotFoundException;
 import com.alon.spring.crud.service.UpdateException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -63,7 +64,7 @@ public abstract class CrudResource<
     }
 
     @GetMapping("${com.alon.spring.crud.path.read}")
-    public <E extends BaseEntity, O> O read(@PathVariable Long id) {
+    public <E extends BaseEntity, O> O read(@PathVariable Long id) throws NotFoundException {
         
         E entity = (E) this.service.read(id);
         
