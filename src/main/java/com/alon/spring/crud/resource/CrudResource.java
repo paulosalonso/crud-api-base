@@ -12,7 +12,6 @@ import org.springframework.web.bind.annotation.RequestParam;
 import com.alon.querydecoder.Expression;
 import com.alon.spring.crud.model.BaseEntity;
 import com.alon.spring.crud.repository.specification.SpringJpaSpecificationDecoder;
-import com.alon.spring.crud.resource.dto.InputDto;
 import com.alon.spring.crud.resource.dto.ResourceDtoConverterProvider;
 import com.alon.spring.crud.service.CreateException;
 import com.alon.spring.crud.service.CrudService;
@@ -31,8 +30,8 @@ import org.springframework.web.bind.annotation.ResponseStatus;
  */
 public abstract class CrudResource< 
         S extends CrudService,
-        C extends InputDto, 
-        U extends InputDto,
+        C, 
+        U,
         P extends ResourceDtoConverterProvider
 > {
 	
