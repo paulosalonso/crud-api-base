@@ -256,9 +256,9 @@ Entenda os tipos genéricos:
 
 É possível fazer com que a classe CrudResource utilize as próprias entidades (models) para entrada e saída de dados. Para isso, é preciso informar a classe da entidade como tipo para os genéricos __C__ e __U__ (a entidade deve implementar a interface __BaseEntity__), e __EntityOutputConverter__ para __P extends ResourceDtoConverterProvider__.
 
-As classes de conversão são injetadas em CrudResource, porém, como não estarão dentro do pacote escaneado pelo Spring para carregamento de componentes (que é o pacote do projeto principal) elas não serão providas automaticamente. Existem duas soluções para isso:
+As classes de conversão são injetadas em CrudResource, porém, como não estarão dentro do pacote escaneado pelo Spring para carregamento de componentes (que é o pacote do princial do projeto que está usando Spring CRUD Base, e seus descendentes) elas não serão providas automaticamente. Existem duas soluções para isso:
 
-Informar os pacotes nos quais o Spring deve procurar por componentes, sendo o pacote principal do seu projeto, e o pacote __com.alon.spring.crud__:
+Informar os pacotes nos quais o Spring deve procurar por componentes, sendo o pacote principal do seu projeto, e o pacote __com.alon.spring.crud__, através da anotação __@ComponentScan__:
 
 ```java
 @SpringBootApplication
@@ -306,7 +306,7 @@ public class SpringCrudBaseBeansProvider {
 
 Como uma boa prática, por questões de segurança tando da aplicação quanto das regras do negócio, os DTO's não devem expor dados internos da API. Para atender esse requisito podemos customizar os inputs e outputs dos métodos CRUD e listagem.
 
-Para facilitar a compreensão, os nomes dos atributos dos DTO's estão iguais ao da entidade Pessoa utilizada anteriormente.
+Para facilitar a compreensão, nos exemplos a seguir os nomes dos atributos dos DTO's estão iguais ao da entidade Pessoa utilizada anteriormente.
 
 Primeiro, criamos os DTO's responsáveis pela comunicação com a API. Perceba que apesar de serem DTO's com atributos públicos, os getters e setters foram incluídos. Isso é necessário para que a serialização/desserialização do objeto possa ser realizada pelo Spring. Também é necessário um construtor padrão. Como foram criados construtores com todos os atributos, foi necessário declarar explicitamente os construtores padrão.
 
@@ -544,7 +544,7 @@ public class PessoaResource extends CrudResource<
 
 ### Paths
 
-Para que o spring faça o mapeamentos dos métodos de CrudResource, é preciso configurar as propriedades para os paths no arquivo __applications.properties__:
+Para que o Spring possa mapear os métodos de CrudResource, é preciso configurar as propriedades para os paths no arquivo __applications.properties__ do projeto:
 
 ```properties
 com.alon.spring.crud.path.list=/list
