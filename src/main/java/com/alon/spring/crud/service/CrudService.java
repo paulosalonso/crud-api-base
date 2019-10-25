@@ -1,9 +1,18 @@
 package com.alon.spring.crud.service;
 
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 
+import javax.validation.Valid;
+
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.domain.Sort.Order;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -11,13 +20,6 @@ import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 
 import com.alon.querydecoder.Expression;
 import com.alon.spring.crud.model.BaseEntity;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Map;
-import javax.validation.Valid;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Sort;
 
 public abstract class CrudService<E extends BaseEntity, R extends JpaRepository<E, Long> & JpaSpecificationExecutor<E>> {
 	
@@ -81,8 +83,13 @@ public abstract class CrudService<E extends BaseEntity, R extends JpaRepository<
         }
     }
 
-    public E read(Long id) {
-        return this.repository.findById(id).get();
+    public E read(Long id) throws NotFoundException {
+        Optional<E> entity = this.repository.findById(id);
+        
+        if (entity.isEmpty())
+        	throw new NotFoundException(String.format("Entity with id %d not found.", id));
+        
+        return entity.get();
     }
 
     public E update(@Valid E entity) throws UpdateException {            

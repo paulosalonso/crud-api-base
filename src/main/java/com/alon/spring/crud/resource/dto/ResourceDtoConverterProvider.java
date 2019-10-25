@@ -6,11 +6,11 @@ public interface ResourceDtoConverterProvider {
                        
     public <D, O, C extends OutputDtoConverter<D, O>> C getReadOutputDtoConverter();
                        
-    public <I extends InputDto, D, C extends InputDtoConverter<I, D>> C getCreateInputDtoConverter();
+    public <I, D, C extends InputDtoConverter<I, D>> C getCreateInputDtoConverter();
                        
     public <D, O, C extends OutputDtoConverter<D, O>> C getCreateOutputDtoConverter();
                        
-    public <I extends InputDto, D, C extends InputDtoConverter<I, D>> C getUpdateInputDtoConverter();
+    public <I, D, C extends InputDtoConverter<I, D>> C getUpdateInputDtoConverter();
                        
     public <D, O, C extends OutputDtoConverter<D, O>> C getUpdateOutputDtoConverter();
                        
