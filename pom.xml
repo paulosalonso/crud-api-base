@@ -9,7 +9,7 @@
     </parent>
     <groupId>com.github.paulosalonso</groupId>
     <artifactId>spring-crud-base</artifactId>
-    <version>1.3.0-SNAPSHOT</version>
+    <version>1.3.0</version>
     <name>Spring CRUD Base</name>
     <description>Projeto base para criação de serviços e recusos de CRUD com Spring Data JPA.</description>
     <url>https://github.com/paulosalonso/spring-crud-base</url>
@@ -47,7 +47,7 @@
         <url>https://github.com/paulosalonso/spring-crud-base.git</url>
         <connection>scm:git:https://github.com/paulosalonso/spring-crud-base.git</connection>
         <developerConnection>scm:git:https://github.com/paulosalonso/spring-crud-base.git</developerConnection>
-        <tag>HEAD</tag>
+        <tag>spring-crud-base-1.3.0</tag>
     </scm>
     <dependencies>
         <dependency>
