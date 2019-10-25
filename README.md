@@ -597,7 +597,7 @@ O código acima deve retornar uma lista com todas as pessoas que contém "Paulo"
 
 ### NULL e NOT NULL
 
-Para verificar se valores são NULL ou NOT NULL, basta utilizar o operador EQ ([ou suprimir o operador, que é equivalente](https://github.com/paulosalonso/query-decoder#exemplos)), seguido da comparação desejada:
+Para verificar se valores são NULL ou NOT NULL, basta utilizar o operador EQ ([ou suprimir o operador, que é equivalente](https://github.com/paulosalonso/query-decoder#operadores)), seguido da comparação desejada:
 
 * nome[EQ]:NULL ou nome:NULL
 * nome[EQ]:NOT NULL ou nome: NOT NULL
