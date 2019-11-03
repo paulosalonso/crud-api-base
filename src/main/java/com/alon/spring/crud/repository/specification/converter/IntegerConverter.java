@@ -16,7 +16,7 @@ public class IntegerConverter implements DecoderConverter<Integer> {
     private IntegerConverter() {}
 
     @Override
-    public Integer convert(String value) throws Throwable {
+    public Integer convert(String value) {
         return Integer.valueOf(value);
     }
     

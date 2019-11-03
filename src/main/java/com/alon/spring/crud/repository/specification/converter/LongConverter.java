@@ -16,7 +16,7 @@ public class LongConverter implements DecoderConverter<Long> {
     private LongConverter() {}
 
     @Override
-    public Long convert(String value) throws Throwable {
+    public Long convert(String value) {
         return Long.valueOf(value);
     }
     
