@@ -15,7 +15,7 @@ public class InPredicateBuilder implements PredicateBuilder {
     public Predicate buildPredicate(CriteriaBuilder criteriaBuilder, Path path, String value) {
         
         List<Comparable> values = Stream.of(value.split(","))
-                                        .map(this::convertValue)
+                                        .map(str -> this.convertValue(path, str))
                                         .collect(Collectors.toList());
                 
         return path.in(values);
