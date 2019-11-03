@@ -15,16 +15,18 @@ public class BetweenPredicateBuilder implements PredicateBuilder {
         return criteriaBuilder.between(path, (Comparable) values[0], (Comparable) values[1]);
     }
     
-    private Object[] splitValues(Path path, String value) {
-        Object[] values = value.split("-");
+    private Comparable[] splitValues(Path path, String value) {
+        String[] values = value.split("-");
         
         if (values.length != 2)
             throw new IllegalArgumentException("For the between comparation a hyphen separated string with two values is needed.");
         
-        values[0] = this.convertValue(path, values[0].toString());
-        values[1] = this.convertValue(path, values[1].toString());
+        Comparable[] betweenValues = new Comparable[2];
         
-        return values;
+        betweenValues[0] = this.convertValue(path, values[0].toString());
+        betweenValues[1] = this.convertValue(path, values[1].toString());
+        
+        return betweenValues;
     }
     
     public static PredicateBuilder getInstance() {

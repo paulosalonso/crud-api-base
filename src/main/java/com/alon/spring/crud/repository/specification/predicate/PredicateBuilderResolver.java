@@ -15,7 +15,7 @@ public interface PredicateBuilderResolver {
             case IN: return InPredicateBuilder.getInstance();
             case LT: return LessThanPredicateBuilder.getInstance();
             case LTE: return LessThanOrEqualPredicateBuilder.getInstance();
-            default: return EqualPredicateBuilder.getInstance();
+            default: throw new IllegalArgumentException(String.format("No implementation for %s match type.", matchType.name()));
         }
         
     }

@@ -105,7 +105,8 @@ public class SpringJpaSpecificationDecoder<T> extends QueryDecoder<Predicate> im
     
     private List<String> splitPropertiesChain(String properties) {
         
-        return Stream.of(properties.split("."))
+        return Stream.of(properties.split("\\."))
+                     .map(value -> new String(value))
                      .collect(Collectors.toList());
         
     }
