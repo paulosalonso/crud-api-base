@@ -16,7 +16,7 @@ public class DoubleConverter implements DecoderConverter<Double> {
     private DoubleConverter() {}
 
     @Override
-    public Double convert(String value) throws Throwable {
+    public Double convert(String value) {
         return Double.valueOf(value);
     }
     
