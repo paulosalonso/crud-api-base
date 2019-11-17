@@ -5,6 +5,7 @@
  */
 package com.alon.spring.crud.repository.specification.converter;
 
+import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
@@ -23,13 +24,21 @@ public class DateTimeConverter implements DecoderConverter<Date> {
     private DateTimeConverter() {}
 
     @Override
-    public Date convert(String value) throws Throwable {
-        switch (value.length()) {
-            case 5: return TIME_FORMATTER.parse(value);
-            case 10: return DATE_FORMATTER.parse(value);
-            case 16: return DATE_TIME_FORMATTER.parse(value);
-            default: throw new IllegalArgumentException(String.format("Invalid date string -> %s", value));
+    public Date convert(String value) {
+        try {
+            switch (value.length()) {
+                case 5: return TIME_FORMATTER.parse(value);
+                case 10: return DATE_FORMATTER.parse(value);
+                case 16: return DATE_TIME_FORMATTER.parse(value);
+                default: throw this.buildException(value);
+            }
+        } catch (ParseException ex) {
+            throw this.buildException(value);
         }
+    }
+    
+    private IllegalArgumentException buildException(String value) {
+        return new IllegalArgumentException(String.format("Invalid date string -> %s", value));
     }
     
     public static DateTimeConverter getInstance() {

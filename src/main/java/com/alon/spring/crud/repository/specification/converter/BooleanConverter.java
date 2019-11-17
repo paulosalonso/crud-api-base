@@ -16,7 +16,7 @@ public class BooleanConverter implements DecoderConverter<Boolean> {
     private BooleanConverter() {}
 
     @Override
-    public Boolean convert(String value) throws Throwable {
+    public Boolean convert(String value) {
         return Boolean.valueOf(value);
     }
     

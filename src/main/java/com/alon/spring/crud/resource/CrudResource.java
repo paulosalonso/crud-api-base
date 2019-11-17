@@ -9,53 +9,105 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 
-import com.alon.spring.crud.service.CrudService;
 import com.alon.querydecoder.Expression;
-import com.alon.querydecoder.impl.SpringJpaSpecificationDecoder;
 import com.alon.spring.crud.model.BaseEntity;
+import com.alon.spring.crud.repository.specification.SpringJpaSpecificationDecoder;
+import com.alon.spring.crud.resource.dto.ResourceDtoConverterProvider;
+import com.alon.spring.crud.service.CreateException;
+import com.alon.spring.crud.service.CrudService;
+import com.alon.spring.crud.service.DeleteException;
+import com.alon.spring.crud.service.NotFoundException;
 import com.alon.spring.crud.service.UpdateException;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.bind.annotation.ResponseStatus;
 
-public abstract class CrudResource<E extends BaseEntity, S extends CrudService<E, ?>> {
+/**
+ * 
+ * @param <S> Service
+ * @param <C> Create input type
+ * @param <U> Update input type
+ * @param <P> DTO converter provider
+ */
+public abstract class CrudResource< 
+        S extends CrudService,
+        C, 
+        U,
+        P extends ResourceDtoConverterProvider
+> {
 	
-	protected S service;
+    @Autowired
+    protected S service;
+    
+    @Autowired
+    private P dtoConverterProvider;
 
-	public CrudResource(S service) {
-		this.service = service;
-	}
-	
-	@GetMapping
-	public Page<E> list(
-                @RequestParam(value = "filter", required = false)                              String  filter,
-                @RequestParam(value = "order",  required = false, defaultValue = "")           String  order,
-                @RequestParam(value = "page",   required = false, defaultValue = "0")          Integer page, 
-                @RequestParam(value = "size",   required = false, defaultValue = "0X7fffffff") Integer size
-	) {
-		if (filter == null)
-                    return this.service.list(page, size, new Expression(order));
-		else
-                    return this.service.list(new SpringJpaSpecificationDecoder<>(filter), page, size, new Expression(order));
-	}
-	
-	@GetMapping("/{id}")
-	public E read(@PathVariable Long id) {
-            return this.service.read(id);
-	}
-	
-	@PostMapping
-	protected E create(@RequestBody E entity) throws Exception {
-            return this.service.create(entity);
-	}
-	
-	@PutMapping("/{id}")
-	public E update(@PathVariable Long id, @RequestBody E entity) throws Exception {
-            if (!id.equals(entity.getId()))
-                throw new UpdateException("The entity id does not match the URL id.");
-            
-            return this.service.update(entity);
-	}
-	
-	@DeleteMapping("/{id}")
-	public void delete(@PathVariable Long id) throws Exception {
-            this.service.delete(id);
-	}
+    @GetMapping("${com.alon.spring.crud.path.list}")
+    public <E extends BaseEntity, O> O list(
+            @RequestParam(value = "filter", required = false)                              String  filter,
+            @RequestParam(value = "order",  required = false, defaultValue = "")           String  order,
+            @RequestParam(value = "page",   required = false, defaultValue = "0")          Integer page, 
+            @RequestParam(value = "size",   required = false, defaultValue = "0X7fffffff") Integer size
+    ) {
+        
+        Page<E> entities;
+        
+        if (filter == null)
+            entities = this.service.list(page, size, new Expression(order));
+        else
+            entities = this.service.list(new SpringJpaSpecificationDecoder<>(filter), page, size, new Expression(order));
+        
+        return (O) this.dtoConverterProvider
+                       .getListOutputDtoConverter()
+                       .convert(entities);
+        
+    }
+
+    @GetMapping("${com.alon.spring.crud.path.read}")
+    public <E extends BaseEntity, O> O read(@PathVariable Long id) throws NotFoundException {
+        
+        E entity = (E) this.service.read(id);
+        
+        return (O) this.dtoConverterProvider
+                       .getReadOutputDtoConverter()
+                       .convert(entity);
+        
+    }
+
+    @PostMapping("${com.alon.spring.crud.path.create}")
+    @ResponseStatus(HttpStatus.CREATED)
+    protected <E extends BaseEntity, O> O create(@RequestBody C input) throws CreateException {
+        
+        E entity = (E) this.dtoConverterProvider
+                           .getCreateInputDtoConverter()
+                           .convert(input);
+        
+        entity = (E) this.service.create(entity);
+        
+        return (O) this.dtoConverterProvider
+                       .getCreateOutputDtoConverter()
+                       .convert(entity);
+        
+    }
+
+    @PutMapping("${com.alon.spring.crud.path.update}")
+    public <E extends BaseEntity, O> O update(@RequestBody U input) throws UpdateException {
+        
+        E entity = (E) this.dtoConverterProvider
+                           .getUpdateInputDtoConverter()
+                           .convert(input);
+
+        entity = (E) this.service.update(entity);
+        
+        return (O) this.dtoConverterProvider
+                       .getUpdateOutputDtoConverter()
+                       .convert(entity);
+        
+    }
+
+    @DeleteMapping("${com.alon.spring.crud.path.delete}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void delete(@PathVariable Long id) throws DeleteException {
+        this.service.delete(id);
+    }
 }

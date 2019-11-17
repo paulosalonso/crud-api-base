@@ -9,14 +9,12 @@ import com.alon.querydecoder.Decoder;
 import com.alon.querydecoder.Expression;
 import com.alon.querydecoder.Group;
 import com.alon.querydecoder.LogicalOperator;
-import com.alon.querydecoder.MatchType;
 import com.alon.querydecoder.QueryDecoder;
-import com.alon.spring.crud.repository.specification.converter.ConverterResolver;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
+import com.alon.spring.crud.repository.specification.predicate.PredicateBuilder;
+import com.alon.spring.crud.repository.specification.predicate.PredicateBuilderResolver;
 import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import javax.persistence.criteria.CriteriaBuilder;
 import javax.persistence.criteria.CriteriaQuery;
 import javax.persistence.criteria.Path;
@@ -45,122 +43,79 @@ public class SpringJpaSpecificationDecoder<T> extends QueryDecoder<Predicate> im
 
     @Override
     public Predicate toPredicate(Root<T> root, CriteriaQuery<?> criteriaQuery, CriteriaBuilder criteriaBuilder) {
-        try {
-            return this.decode(root, criteriaBuilder);
-        } catch (Throwable ex) {
-            throw new RuntimeException(ex);
-        }
+        return this.decodeDecoder(super.decoder, root, criteriaBuilder);
     }
     
-    public Predicate decode(Root<T> root, CriteriaBuilder criteriaBuilder) throws Throwable {
-        if (this.decoder instanceof Group)
-            return this.decode((Group) this.decoder, root, criteriaBuilder);
+    private Predicate decodeDecoder(Decoder decoder, Root<T> root, CriteriaBuilder criteriaBuilder) {
         
-        return this.decode((Expression) this.decoder, root, criteriaBuilder);
-    }
-    
-    private Predicate decode(Decoder decoder, Root<T> root, CriteriaBuilder criteriaBuilder) throws Throwable {
         if (decoder instanceof Group)
-            return this.decode((Group) decoder, root, criteriaBuilder);
+            return this.decodeGroup((Group) decoder, root, criteriaBuilder);
         
-        return this.decode((Expression) decoder, root, criteriaBuilder);
+        return this.decodeExpression((Expression) decoder, root, criteriaBuilder);
+        
     }
     
-    private Predicate decode(Group group, Root<T> root, CriteriaBuilder criteriaBuilder) throws Throwable {
-        Predicate predicate = this.decode(group.getDecoder(), root, criteriaBuilder);
+    private Predicate decodeGroup(Group group, Root<T> root, CriteriaBuilder criteriaBuilder) {
+        
+        Predicate predicate = this.decodeDecoder(group.getDecoder(), root, criteriaBuilder);
+        
         return this.decodeNext(predicate, group, root, criteriaBuilder);
+        
     }
     
-    private Predicate decode(Expression expression, Root<T> root, CriteriaBuilder criteriaBuilder) throws Throwable {
-        Predicate predicate;
-        Path path = this.getPath(root, new ArrayList<>(Arrays.asList(expression.getField().split("\\."))));
+    private Predicate decodeExpression(Expression expression, Root<T> root, CriteriaBuilder criteriaBuilder) {
         
-        Object value, valueBT = null;
+        PredicateBuilder predicateBuilder = PredicateBuilderResolver.resolve(expression.getMatchType());
         
-        if (expression.getMatchType().equals(MatchType.BT)) {
-            String[] values = expression.getValue().split("-");
-            value = this.convert(path, values[0]);
-            valueBT = this.convert(path, values[1]);
-        } else
-            value = this.getValue(path, expression);
+        Path path = this.getPath(root, expression.getField());
         
-        switch (expression.getMatchType()) {
-            case BT : predicate = criteriaBuilder.between(path, (Comparable) value, (Comparable) valueBT); break;
-            case CT : predicate = criteriaBuilder.like(path, String.format("%%%s%%", value)); break;
-            case EQ : predicate = this.resolveEqualOrNullOrNotNull(criteriaBuilder, path, value); break;
-            case GT : predicate = criteriaBuilder.greaterThan(path, (Comparable) value); break;
-            case GTE: predicate = criteriaBuilder.greaterThanOrEqualTo(path, (Comparable) value); break;
-            case LT : predicate = criteriaBuilder.lessThan(path, (Comparable) value); break;
-            case LTE: predicate = criteriaBuilder.lessThanOrEqualTo(path, (Comparable) value); break;
-            case IN : predicate = path.in(value); break;
-            default : predicate = criteriaBuilder.equal(path, value);
-        }
+        Predicate predicate = predicateBuilder.buildPredicate(criteriaBuilder, path, expression.getValue());
         
         return this.decodeNext(predicate, expression, root, criteriaBuilder);
-    }
-    
-    private Predicate resolveEqualOrNullOrNotNull(CriteriaBuilder criteriaBuilder, Path path, Object value) {
-        if (value.toString().equalsIgnoreCase("NULL"))
-            return criteriaBuilder.isNull(path);
-        else if (value.toString().equalsIgnoreCase("NOT NULL"))
-            return criteriaBuilder.isNotNull(path);
         
-        return criteriaBuilder.equal(path, value);
     }
     
-    private Predicate decodeNext(Predicate predicate, Decoder decoder, Root<T> root, CriteriaBuilder criteriaBuilder) throws Throwable {
+    private Predicate decodeNext(Predicate predicate, Decoder decoder, Root<T> root, CriteriaBuilder criteriaBuilder) {
+        
         if (decoder.getNext() == null)
             return predicate;
         
-        Predicate nextPredicate = this.decode(decoder.getNext(), root, criteriaBuilder);
+        Predicate nextPredicate = this.decodeDecoder(decoder.getNext(), root, criteriaBuilder);
 
         if (decoder.getLogicalOperator().equals(LogicalOperator.AND))
             return criteriaBuilder.and(predicate, nextPredicate);
 
         return criteriaBuilder.or(predicate, nextPredicate);
+        
     }
     
-    private Path getPath(Path parent, List<String> props) {
-        Path p = parent.get(props.remove(0));
+    private Path getPath(Path parentPath, String properties) {
+        
+        List<String> propertiesList = this.splitPropertiesChain(properties);
+        
+        String property = propertiesList.remove(0);
+        Path path = parentPath.get(property);
 
-        if (!props.isEmpty())
-            return getPath(p, props);
+        if (!propertiesList.isEmpty())
+            return getPath(path, this.joinPropertiesChain(propertiesList));
 
-        return p;
+        return path;
+        
     }
     
-    private Object convert(Path path, String value) throws Throwable {
-        return ConverterResolver.resolve(path.getJavaType()).convert(value);
+    private List<String> splitPropertiesChain(String properties) {
+        
+        return Stream.of(properties.split("\\."))
+                     .map(value -> new String(value))
+                     .collect(Collectors.toList());
+        
     }
     
-    private Object getValue(Path path, Expression expression) throws Throwable {
-        if (isNullOrNotNull(expression.getValue()))
-            return expression.getValue();
+    private String joinPropertiesChain(List<String> properties) {
         
-        Object result;
-        String[] values;
+        return properties.stream()
+                         .collect(Collectors.joining("."));
         
-        switch (expression.getMatchType()) {
-            case CT:
-                values = expression.getValue().split((","));                
-                result = Collections.emptyList();
-                
-                for (String v : values)
-                    ((Collection) result).add(this.convert(path, v));
-                
-                break;
-            
-            default:
-                result = this.convert(path, expression.getValue());
-                break;
-        }
-        
-        return result;
-    }
-    
-    private boolean isNullOrNotNull(Object value) {
-        return Arrays.asList(new String[]{ "NULL", "NOT NULL"})
-                     .contains(value.toString().toUpperCase());
     }
     
 }
