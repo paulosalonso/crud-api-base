@@ -1,22 +1,20 @@
 # Spring CRUD Base
 
+Projeto base para criação de serviços e recusos de CRUD com Spring e Spring Data JPA.
+
 ###### Maven Dependency
+
 ```xml
 <dependency>
     <groupId>com.github.paulosalonso</groupId>
     <artifactId>spring-crud-base</artifactId>
-    <version>1.4.0</version>
+    <version>2.0.0</version>
 </dependency>
 ```
 
-###### Caso de uso
-[Ficticius Clean](https://github.com/paulosalonso/ficticius-clean)
-
-Projeto base para criação de serviços e recusos de CRUD com Spring e Spring Data JPA.
-
 ## CrudService
 
-A classe __com.alon.spring.crud.service.CrudService__ fornece métodos para listagem e CRUD de entidades. Um pré-requisito para utilização dessa classe é a implementação da interface __com.alon.spring.crud.model.BaseEntity__ pelas entidades JPA. Essa abordagem visa garantir que as entidades tenham os métodos __getId__ e __setId__.
+A interface __com.alon.spring.crud.service.CrudService__ fornece métodos padrão para listagem e CRUD de entidades. Um pré-requisito para utilização dessa classe é a implementação da interface __com.alon.spring.crud.model.BaseEntity__ pelas entidades JPA. Essa abordagem visa garantir que as entidades tenham os métodos __getId__ e __setId__.
 
 ### Exemplo de implementação
 
@@ -24,7 +22,7 @@ A classe __com.alon.spring.crud.service.CrudService__ fornece métodos para list
 
 ```java
 @Entity
-public class Pessoa implements BaseEntity {
+public class Pessoa implements BaseEntity<Long> {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -83,8 +81,16 @@ Note que o repositório implementa, além da interface JpaRepository, a interfac
 
 ```java
 @Service
-public class PessoaService extends CrudService<Pessoa, PessoaRepository> {
-
+public class PessoaService implements CrudService<Long, Pessoa, PessoaRepository> {
+   
+   @Autowired
+   private PessoaRepository repository;
+   
+   @Override
+   public PessoaRepository getRepository() {
+       return this.repository;
+   }
+    
    @Override
    public List<Order> getDefaultSort() {
        Collections.singletonList(Order.asc("nome"));
@@ -96,14 +102,9 @@ public class PessoaService extends CrudService<Pessoa, PessoaRepository> {
 Com estas implementações já é possível listar, criar, buscar, alterar e excluir entidades do tipo __Pessoa__:
 
 ```java
-.
-.
-.
 @Autowired
 PessoaService service;
-.
-.
-.
+
 // Busca a primeira página de pessoas, informando Integer.MAX_VALUE como tamanho da página e ordena pelo nome
 List<Pessoa> pessoas = service.list(0, Integer.MAX_VALUE, new Expression("nome:asc"));
 
@@ -121,34 +122,30 @@ service.update(pessoa);
 
 // Exclui a pessoa de id 1
 service.delete(1);
-.
-.
-.
 ```
 
 Note a anotação __@NotBlank__ nos atributos __nome__ e __cpf__ da entidade Pessoa. Os métodos __create__ e __update__ da classe __CrudService__ realizam a validação dos atributos anotados com validadores do pacote __javax.validation__. Nesse caso, se nome ou cpf estiverem nulos, vazios ou somente com espaços, chamar um desses métodos resultará em uma exceção.
 
-Note também os parâmetros utilizados na chamada de __service.list__. O último é uma instância de __Expression__. Essa classe faz parte do projeto [Query Decoder](https://github.com/paulosalonso/query-decoder). O projeto Query Decoder também tem a classe __SpringJpaSpecificationDecoder__, que aplica filtros nas consultas a partir de expressões. Veja o [readme](https://github.com/paulosalonso/query-decoder/blob/master/README.md) do projeto para mais detalhes.
+Note também os parâmetros utilizados na chamada de __service.list__. O último é uma instância de __Expression__ e neste escopo é responsável pela ordenação da listagem. Essa classe faz parte do projeto [Query Decoder](https://github.com/paulosalonso/query-decoder). Veja o [readme](https://github.com/paulosalonso/query-decoder/blob/master/README.md) do projeto para mais detalhes.
 
-```java
-.
-.
-.
-@Autowired
-PessoaService service;
-.
-.
-.
-// Busca pessoas que contém "Paulo" no nome
-List<Pessoa> pessoas = service.list(new SpringJpaSpecificationDecoder("nome[CT]:Paulo"), 0, Integer.MAX_VALUE, new Expression("nome:asc"));
-.
-.
-.
+A string informada no construtor de __Expression__ deve seguir o seguinte formato:
+
+```
+atributo:tipo_ordenacao
+```
+
+onde __tipo_ordenacao__ aceita os valores asc/ASC e desc/DESC. Caso o valor informado seja diferente, será considerado ASC por padrão. Exemplos:
+
+```
+new Expression("nome:asc");
+new Expression("nome:ASC");
+new Expression("nome:desc");
+new Expression("nome:DESC");
 ```
 
 ### Life Cycle Hooks
 
-A classe __CrudService__ conta com os __Life Cycle Hooks__, ou __Ganchos de Ciclo de Vida__. Os hooks são funções que são executadas antes e depois de alguns dos métodos de CRUD. Os hooks existentes são:
+A interface __CrudService__ conta com os __Life Cycle Hooks__, ou __Ganchos de Ciclo de Vida__. Os hooks são funções que são executadas antes e depois de alguns dos métodos de CRUD. Os hooks existentes são:
 
 * BEFORE_CREATE - antes da criação
 * AFTER_CREATE - depois da criação
@@ -170,21 +167,32 @@ Todos esses métodos esperam como parâmetro uma instância de __com.alon.spring
 
 Também é possível utilizar o recurso de __method reference__ para informar os hooks, como veremos no exemplo abaixo.
 
-No caso dos hooks para __create__ e __update__, o método apply recebe e retorna uma instância do tipo de entidade manipulado pelo serviço (no nosso exemplo, Pessoa). Já o hook de __delete__ recebe e devolve uma instância de __Long__, que é o id da entidade.
+No caso dos hooks para __create__ e __update__, o método apply recebe e retorna uma instância do tipo de entidade manipulado pelo serviço (no nosso exemplo, Pessoa). Já o hook de __delete__ recebe e devolve uma instância do tipo do ID da entidade.
 
 #### Serviço PessoaService com hooks para create e update
 
 ```java
 @Service
-public class PessoaService extends CrudService<Pessoa, PessoaRepository> {
+public class PessoaService implements CrudService<Long, Pessoa, PessoaRepository> {
 
     @Autowired
-    public PessoaService(PessoaRepository repository) {
-        super(repository);
+    private PessoaRepository repository;
+    
+    public PessoaService() {
         super.addBeforeCreateHook(this::validarNome);
         super.addBeforeCreateHook(this::validarCpf);
         super.addBeforeUpdateHook(this::validarNome);
         super.addBeforeUpdateHook(this::validarCpf);
+    }
+   
+    @Override
+    public PessoaRepository getRepository() {
+        return this.repository;
+    }
+    
+    @Override
+    public List<Order> getDefaultSort() {
+        Collections.singletonList(Order.asc("nome"));
     }
     
     private Pessoa validarNome(Pessoa pessoa) throws Exception {
@@ -350,7 +358,7 @@ public class ListPessoaOutput extends ListOutput<PessoaDto> {
 #### CreatePessoaInput
 
 ```java
-public CreatePessoaInput implements InputDto {
+public CreatePessoaInput {
     
     public String nome;
     public String cpf;
@@ -369,7 +377,7 @@ public CreatePessoaInput implements InputDto {
 #### UpdatePessoaInput
 
 ```java
-public UpdatePessoaInput implements InputDto {
+public UpdatePessoaInput {
     
     public Long id;
     public String nome;
@@ -604,8 +612,8 @@ Para verificar se valores são NULL ou NOT NULL, basta utilizar o operador EQ ([
 
 Esta operação é case insensitive, então as expressões abaixo têm o mesmo efeito:
 
-* nome[EQ]:null ou nome:null
-* nome[EQ]:not null ou nome:not null
+* nome:NULL ou nome:null
+* nome:NOT NULL ou nome:not null
 
 ### Encadeamento de atributos
 
