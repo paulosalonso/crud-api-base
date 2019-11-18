@@ -28,6 +28,10 @@ public interface CrudService<ID, E extends BaseEntity<ID>, R extends JpaReposito
         return this.list(0, Integer.MAX_VALUE);
     }
     
+    default Page<E> list(Expression order) {
+        return this.list(0, Integer.MAX_VALUE, order);
+    }
+    
     default Page<E> list(int page, int size) {
         return this.list(page, size, null);
     }
