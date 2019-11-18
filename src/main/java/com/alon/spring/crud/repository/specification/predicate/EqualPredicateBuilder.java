@@ -13,15 +13,14 @@ public class EqualPredicateBuilder implements PredicateBuilder {
         
         Comparable convertedValue = this.convertValue(path, value);
         
-        return this.resolveEqualOrNullOrNotNull(criteriaBuilder, path, convertedValue)
-                ;
+        return this.resolveEqualOrNullOrNotNull(criteriaBuilder, path, convertedValue);
     }
     
     private Predicate resolveEqualOrNullOrNotNull(CriteriaBuilder criteriaBuilder, Path path, Comparable value) {
         
-        if (value.toString().equalsIgnoreCase("NULL"))
+        if (value != null && value.toString().equalsIgnoreCase("NULL"))
             return criteriaBuilder.isNull(path);
-        else if (value.toString().equalsIgnoreCase("NOT NULL"))
+        else if (value != null && value.toString().equalsIgnoreCase("NOT NULL"))
             return criteriaBuilder.isNotNull(path);
         
         return criteriaBuilder.equal(path, value);

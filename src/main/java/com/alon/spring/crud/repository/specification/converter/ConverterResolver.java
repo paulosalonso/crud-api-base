@@ -21,11 +21,22 @@ public abstract class ConverterResolver {
     }
     
     public static <O extends Comparable> DecoderConverter<O> resolve(Class<O> clazz) {
-        DecoderConverter converter = CONVERTERS.get(clazz);
+        DecoderConverter converter;
+                
+        if (clazz.isEnum())
+            converter = resolveEnumConverter((Class<? extends Enum>) clazz);
+        else
+            converter = CONVERTERS.get(clazz);
         
         if (converter == null)
             converter = DefaultConverter.getInstance();
         
+        return converter;
+    }
+    
+    private static EnumConverter resolveEnumConverter(Class<? extends Enum> enumType) {
+        EnumConverter converter = EnumConverter.getInstance();
+        converter.setEnumType(enumType);        
         return converter;
     }
     
