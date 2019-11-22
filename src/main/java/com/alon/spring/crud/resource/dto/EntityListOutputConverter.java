@@ -14,7 +14,7 @@ public class EntityListOutputConverter<T extends BaseEntity> implements OutputDt
         output.page = data.getNumber() + 1;
         output.pageSize = data.getContent().size();
         output.totalPages = data.getTotalPages();
-        output.totalSize = data.getNumberOfElements();
+        output.totalSize = Long.valueOf(data.getTotalElements()).intValue();
         
         return output;
     }

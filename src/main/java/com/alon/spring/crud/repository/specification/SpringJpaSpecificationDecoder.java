@@ -29,7 +29,7 @@ import org.springframework.data.jpa.domain.Specification;
  */
 public class SpringJpaSpecificationDecoder<T> extends QueryDecoder<Predicate> implements Specification<T> {
     
-    public SpringJpaSpecificationDecoder(String query) {
+    private SpringJpaSpecificationDecoder(String query) {
         super(query, SpringJpaSpecificationDecoder::decode);
     }
     
@@ -116,6 +116,10 @@ public class SpringJpaSpecificationDecoder<T> extends QueryDecoder<Predicate> im
         return properties.stream()
                          .collect(Collectors.joining("."));
         
+    }
+    
+    public static SpringJpaSpecificationDecoder of(String query) {
+        return new SpringJpaSpecificationDecoder(query);
     }
     
 }

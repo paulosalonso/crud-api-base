@@ -21,8 +21,6 @@ import org.springframework.data.jpa.domain.Specification;
 public interface CrudService<ID, E extends BaseEntity<ID>, R extends JpaRepository<E, ID> & JpaSpecificationExecutor<E>> {
     
     public R getRepository();
-
-    public List<Sort.Order> getDefaultSort();
     
     default Page<E> list() {
         return this.list(0, Integer.MAX_VALUE);
@@ -33,19 +31,19 @@ public interface CrudService<ID, E extends BaseEntity<ID>, R extends JpaReposito
     }
     
     default Page<E> list(int page, int size) {
-        return this.list(page, size, null);
-    }
-    
-    default Page<E> list(Specification<E> specification, int page, int size) {
-        return this.list(specification, page, size, null);
+        return this.getRepository().findAll(PageRequest.of(page, size));
     }
 
     default Page<E> list(int page, int size, Expression order) {
-        return this.getRepository().findAll(Hidden.buildPageable(page, size, order, this.getDefaultSort()));
+        return this.getRepository().findAll(Hidden.buildPageable(page, size, order));
+    }
+    
+    default Page<E> list(Specification<E> specification, int page, int size) {
+        return this.getRepository().findAll(specification, PageRequest.of(page, size));
     }
 
     default Page<E> list(Specification<E> specification, int page, int size, Expression order) {
-        return this.getRepository().findAll(specification, Hidden.buildPageable(page, size, order, this.getDefaultSort()));
+        return this.getRepository().findAll(specification, Hidden.buildPageable(page, size, order));
     }
 
     default E create(@Valid E entity) throws CreateException {
@@ -63,7 +61,7 @@ public interface CrudService<ID, E extends BaseEntity<ID>, R extends JpaReposito
     }
 
     default E update(@Valid E entity) throws UpdateException {
-        if (entity.getId() == null)
+        if (entity.id() == null)
             throw new UpdateException("Unmanaged entity. Use the create method.");
             
         try {
@@ -132,15 +130,12 @@ public interface CrudService<ID, E extends BaseEntity<ID>, R extends JpaReposito
         
         private static Map<CrudService, Map<LifeCycleHook, List<CheckedFunction>>> GLOBAL_HOOKS = new HashMap<>();
         
-        private static Pageable buildPageable(int page, int size, Expression orders, List<Order> defaultSort) {
-            return PageRequest.of(page, size, buildSort(orders, defaultSort));
+        private static Pageable buildPageable(int page, int size, Expression orders) {
+            return PageRequest.of(page, size, buildSort(orders));
         }
 
-        private static Sort buildSort(Expression order, List<Order> defaultSort) {
+        private static Sort buildSort(Expression order) {
             
-            if (order == null || order.getField() == null)
-                return Sort.by(defaultSort);
-
             List<Order> orders = new ArrayList<>();
 
             do {

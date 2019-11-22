@@ -18,6 +18,7 @@ import com.alon.spring.crud.service.CrudService;
 import com.alon.spring.crud.service.DeleteException;
 import com.alon.spring.crud.service.NotFoundException;
 import com.alon.spring.crud.service.UpdateException;
+import java.util.Optional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.ResponseStatus;
@@ -44,18 +45,22 @@ public abstract class CrudResource<
 
     @GetMapping("${com.alon.spring.crud.path.list}")
     public <E extends BaseEntity, O> O list(
-            @RequestParam(value = "filter", required = false)                              String  filter,
-            @RequestParam(value = "order",  required = false, defaultValue = "")           String  order,
+            @RequestParam(value = "filter", required = false)                              Optional<String> filter,
+            @RequestParam(value = "order",  required = false)                              Optional<String> order,
             @RequestParam(value = "page",   required = false, defaultValue = "0")          Integer page, 
-            @RequestParam(value = "size",   required = false, defaultValue = "0X7fffffff") Integer size
+            @RequestParam(value = "size",   required = false, defaultValue = "2147483647") Integer size
     ) {
         
         Page<E> entities;
         
-        if (filter == null)
-            entities = this.service.list(page, size, new Expression(order));
+        if (filter.isPresent() && order.isPresent())
+            entities = this.service.list(SpringJpaSpecificationDecoder.of(filter.get()), 0, 0, new Expression(order.get()));        
+        else if (filter.isPresent())
+            entities = this.service.list(SpringJpaSpecificationDecoder.of(filter.get()), page, size);
+        else if (order.isPresent())
+            entities = this.service.list(page, size, new Expression(order.get()));
         else
-            entities = this.service.list(new SpringJpaSpecificationDecoder<>(filter), page, size, new Expression(order));
+            entities = this.service.list(page, size);
         
         return (O) this.dtoConverterProvider
                        .getListOutputDtoConverter()
