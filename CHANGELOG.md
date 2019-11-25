@@ -7,10 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## 2.1.0 - 2019-11-22
 
+### Added
+- The method setDtoConverterProvider in the CrudResource class. It now has an EntityDtoConverterProvider by default.
+
 ### Changed
 - The getId() method has been changed to id() in the BaseEntity interface, because it should not be considered a getter.
 
 ### Removed
+- Some genecic types of the CrudResource declaration.
+- Some generic types of the CrudService declaration.
 - The method setId(id) has been removed from the BaseEntity interface.
 - The method getDefaultOrder() has been removed from the CrudService interface. Now, the default order is the physical order in the database.
 

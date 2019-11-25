@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import com.alon.querydecoder.Expression;
 import com.alon.spring.crud.model.BaseEntity;
 import com.alon.spring.crud.repository.specification.SpringJpaSpecificationDecoder;
+import com.alon.spring.crud.resource.dto.EntityConverterProvider;
 import com.alon.spring.crud.resource.dto.ResourceDtoConverterProvider;
 import com.alon.spring.crud.service.CreateException;
 import com.alon.spring.crud.service.CrudService;
@@ -26,29 +27,24 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 /**
  * 
  * @param <S> Service
- * @param <C> Create input type
- * @param <U> Update input type
- * @param <P> DTO converter provider
  */
-public abstract class CrudResource< 
-        S extends CrudService,
-        C, 
-        U,
-        P extends ResourceDtoConverterProvider
-> {
+public abstract class CrudResource<S extends CrudService> {
 	
     @Autowired
     protected S service;
     
-    @Autowired
-    private P dtoConverterProvider;
+    private ResourceDtoConverterProvider dtoConverterProvider = new EntityConverterProvider();
+    
+    public void setDtoConverterProvider(ResourceDtoConverterProvider dtoConverterProvider) {
+        this.dtoConverterProvider = dtoConverterProvider;
+    }
 
     @GetMapping("${com.alon.spring.crud.path.list}")
     public <E extends BaseEntity, O> O list(
-            @RequestParam(value = "filter", required = false)                              Optional<String> filter,
-            @RequestParam(value = "order",  required = false)                              Optional<String> order,
-            @RequestParam(value = "page",   required = false, defaultValue = "0")          Integer page, 
-            @RequestParam(value = "size",   required = false, defaultValue = "2147483647") Integer size
+            @RequestParam(value = "filter", required = false)                       Optional<String> filter,
+            @RequestParam(value = "order",  required = false)                       Optional<String> order,
+            @RequestParam(value = "page",   required = false, defaultValue = "0")   Integer page,
+            @RequestParam(value = "size",   required = false, defaultValue = "100") Integer size
     ) {
         
         Page<E> entities;
@@ -81,7 +77,7 @@ public abstract class CrudResource<
 
     @PostMapping("${com.alon.spring.crud.path.create}")
     @ResponseStatus(HttpStatus.CREATED)
-    protected <E extends BaseEntity, O> O create(@RequestBody C input) throws CreateException {
+    protected <I, E extends BaseEntity, O> O create(@RequestBody I input) throws CreateException {
         
         E entity = (E) this.dtoConverterProvider
                            .getCreateInputDtoConverter()
@@ -96,7 +92,7 @@ public abstract class CrudResource<
     }
 
     @PutMapping("${com.alon.spring.crud.path.update}")
-    public <E extends BaseEntity, O> O update(@RequestBody U input) throws UpdateException {
+    public <I, E extends BaseEntity, O> O update(@RequestBody I input) throws UpdateException {
         
         E entity = (E) this.dtoConverterProvider
                            .getUpdateInputDtoConverter()
