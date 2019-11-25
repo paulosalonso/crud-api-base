@@ -24,16 +24,13 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.ResponseStatus;
 
-/**
- * 
- * @param <S> Service
- */
 public abstract class CrudResource<S extends CrudService> {
 	
     @Autowired
     protected S service;
     
-    private ResourceDtoConverterProvider dtoConverterProvider = new EntityConverterProvider();
+    @Autowired
+    private ResourceDtoConverterProvider dtoConverterProvider;
     
     public void setDtoConverterProvider(ResourceDtoConverterProvider dtoConverterProvider) {
         this.dtoConverterProvider = dtoConverterProvider;
