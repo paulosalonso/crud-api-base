@@ -28,15 +28,16 @@ import org.springframework.web.bind.annotation.ResponseStatus;
  * 
  * @param <S> Service
  */
-public abstract class CrudResource<S extends CrudService> {
+public abstract class CrudResource<C, U, S extends CrudService> {
 	
     @Autowired
     protected S service;
     
-    private ResourceDtoConverterProvider dtoConverterProvider = new EntityConverterProvider();
+    @Autowired
+    private EntityConverterProvider entityConverterProvider;
     
-    public void setDtoConverterProvider(ResourceDtoConverterProvider dtoConverterProvider) {
-        this.dtoConverterProvider = dtoConverterProvider;
+    public ResourceDtoConverterProvider getDtoConverterProvider() {
+        return this.entityConverterProvider;
     }
 
     @GetMapping("${com.alon.spring.crud.path.list}")
@@ -58,7 +59,7 @@ public abstract class CrudResource<S extends CrudService> {
         else
             entities = this.service.list(page, size);
         
-        return (O) this.dtoConverterProvider
+        return (O) this.getDtoConverterProvider()
                        .getListOutputDtoConverter()
                        .convert(entities);
         
@@ -69,7 +70,7 @@ public abstract class CrudResource<S extends CrudService> {
         
         E entity = (E) this.service.read(id);
         
-        return (O) this.dtoConverterProvider
+        return (O) this.getDtoConverterProvider()
                        .getReadOutputDtoConverter()
                        .convert(entity);
         
@@ -77,30 +78,30 @@ public abstract class CrudResource<S extends CrudService> {
 
     @PostMapping("${com.alon.spring.crud.path.create}")
     @ResponseStatus(HttpStatus.CREATED)
-    protected <I, E extends BaseEntity, O> O create(@RequestBody I input) throws CreateException {
+    protected <E extends BaseEntity, O> O create(@RequestBody C input) throws CreateException {
         
-        E entity = (E) this.dtoConverterProvider
+        E entity = (E) this.getDtoConverterProvider()
                            .getCreateInputDtoConverter()
                            .convert(input);
         
         entity = (E) this.service.create(entity);
         
-        return (O) this.dtoConverterProvider
+        return (O) this.getDtoConverterProvider()
                        .getCreateOutputDtoConverter()
                        .convert(entity);
         
     }
 
     @PutMapping("${com.alon.spring.crud.path.update}")
-    public <I, E extends BaseEntity, O> O update(@RequestBody I input) throws UpdateException {
+    public <E extends BaseEntity, O> O update(@RequestBody U input) throws UpdateException {
         
-        E entity = (E) this.dtoConverterProvider
+        E entity = (E) this.getDtoConverterProvider()
                            .getUpdateInputDtoConverter()
                            .convert(input);
 
         entity = (E) this.service.update(entity);
         
-        return (O) this.dtoConverterProvider
+        return (O) this.getDtoConverterProvider()
                        .getUpdateOutputDtoConverter()
                        .convert(entity);
         
