@@ -10,6 +10,7 @@ import com.alon.spring.crud.model.BaseEntity;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.function.Function;
 import javax.validation.Valid;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -83,32 +84,32 @@ public interface CrudService<R extends JpaRepository & JpaSpecificationExecutor>
         }
     }
     
-    default <E extends BaseEntity> CrudService addBeforeCreateHook(CheckedFunction<E, E> function) {
+    default <E extends BaseEntity> CrudService addBeforeCreateHook(Function<E, E> function) {
     	Hidden.getServiceHooks(this).get(LifeCycleHook.BEFORE_CREATE).add(function);
     	return this;
     }
     
-    default <E extends BaseEntity> CrudService addAfterCreateHook(CheckedFunction<E, E> function) {
+    default <E extends BaseEntity> CrudService addAfterCreateHook(Function<E, E> function) {
     	Hidden.getServiceHooks(this).get(LifeCycleHook.AFTER_CREATE).add(function);    	
     	return this;
     }
     
-    default <E extends BaseEntity> CrudService addBeforeUpdateHook(CheckedFunction<E, E> function) {
+    default <E extends BaseEntity> CrudService addBeforeUpdateHook(Function<E, E> function) {
     	Hidden.getServiceHooks(this).get(LifeCycleHook.BEFORE_UPDATE).add(function);    	
     	return this;
     }
     
-    default <E extends BaseEntity> CrudService addAfterUpdateHook(CheckedFunction<E, E> function) {
+    default <E extends BaseEntity> CrudService addAfterUpdateHook(Function<E, E> function) {
     	Hidden.getServiceHooks(this).get(LifeCycleHook.AFTER_UPDATE).add(function);    	
     	return this;
     }
     
-    default <E extends BaseEntity> CrudService addBeforeDeleteHook(CheckedFunction<Long, Long> function) {
+    default <E extends BaseEntity> CrudService addBeforeDeleteHook(Function<Long, Long> function) {
     	Hidden.getServiceHooks(this).get(LifeCycleHook.BEFORE_DELETE).add(function);    	
     	return this;
     }
     
-    default <E extends BaseEntity> CrudService addAfterDeleteHook(CheckedFunction<Long, Long> function) {
+    default <E extends BaseEntity> CrudService addAfterDeleteHook(Function<Long, Long> function) {
     	Hidden.getServiceHooks(this).get(LifeCycleHook.AFTER_DELETE).add(function);    	
     	return this;
     }
@@ -128,7 +129,7 @@ public interface CrudService<R extends JpaRepository & JpaSpecificationExecutor>
      */
     class Hidden {
         
-        private static Map<CrudService, Map<LifeCycleHook, List<CheckedFunction>>> GLOBAL_HOOKS = new HashMap<>();
+        private static Map<CrudService, Map<LifeCycleHook, List<Function>>> GLOBAL_HOOKS = new HashMap<>();
         
         private static Pageable buildPageable(int page, int size, Expression orders) {
             return PageRequest.of(page, size, buildSort(orders));
@@ -155,22 +156,22 @@ public interface CrudService<R extends JpaRepository & JpaSpecificationExecutor>
     
         private static <S extends CrudService, P> P executeHook(S service, P param, LifeCycleHook hookType) throws Throwable {
             
-            List<CheckedFunction> hooks = getHook(service, hookType);
+            List<Function> hooks = getHook(service, hookType);
 
-            for (CheckedFunction hook : hooks)
+            for (Function hook : hooks)
                 param = (P) hook.apply(param);
 
             return param;
             
         }
 
-        private static <T extends CrudService> List<CheckedFunction> getHook(T service, LifeCycleHook hookType) {
+        private static <T extends CrudService> List<Function> getHook(T service, LifeCycleHook hookType) {
             return getServiceHooks(service).get(hookType);
         }
         
-        private static <T extends CrudService> Map<LifeCycleHook, List<CheckedFunction>> getServiceHooks(T service) {
+        private static <T extends CrudService> Map<LifeCycleHook, List<Function>> getServiceHooks(T service) {
             
-            Map<LifeCycleHook, List<CheckedFunction>> hooks = GLOBAL_HOOKS.get(service);
+            Map<LifeCycleHook, List<Function>> hooks = GLOBAL_HOOKS.get(service);
 
             if (hooks == null)
                 hooks = initHooks(service);
@@ -179,9 +180,9 @@ public interface CrudService<R extends JpaRepository & JpaSpecificationExecutor>
             
         }
         
-        private static <T extends CrudService> Map<LifeCycleHook, List<CheckedFunction>> initHooks(T service) {
+        private static <T extends CrudService> Map<LifeCycleHook, List<Function>> initHooks(T service) {
             
-            Map<LifeCycleHook, List<CheckedFunction>> hooks = new HashMap<>();
+            Map<LifeCycleHook, List<Function>> hooks = new HashMap<>();
 
             for (LifeCycleHook hook : LifeCycleHook.values())
                 hooks.put(hook, new ArrayList<>());
