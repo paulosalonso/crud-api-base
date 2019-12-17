@@ -9,7 +9,7 @@ public class ContainsPredicateBuilder implements PredicateBuilder {
     private static PredicateBuilder INSTANCE;
 
     @Override
-    public Predicate buildPredicate(CriteriaBuilder criteriaBuilder, Path path, String value) {
+    public Predicate build(CriteriaBuilder criteriaBuilder, Path path, String value) {
         
         value = String.format("%%%s%%", this.convertValue(path, value));
         

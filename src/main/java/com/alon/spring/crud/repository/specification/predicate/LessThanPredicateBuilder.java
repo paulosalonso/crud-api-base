@@ -9,7 +9,7 @@ public class LessThanPredicateBuilder implements PredicateBuilder {
     private static PredicateBuilder INSTANCE;
 
     @Override
-    public Predicate buildPredicate(CriteriaBuilder criteriaBuilder, Path path, String value) {
+    public Predicate build(CriteriaBuilder criteriaBuilder, Path path, String value) {
         
         Comparable convertedValue = this.convertValue(path, value);
         

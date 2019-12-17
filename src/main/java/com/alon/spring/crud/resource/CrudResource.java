@@ -1,5 +1,7 @@
 package com.alon.spring.crud.resource;
 
+import com.alon.querydecoder.ExpressionParser;
+import com.alon.querydecoder.SingleExpressionParser;
 import org.springframework.data.domain.Page;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -11,7 +13,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 
 import com.alon.querydecoder.Expression;
 import com.alon.spring.crud.model.BaseEntity;
-import com.alon.spring.crud.repository.specification.SpringJpaSpecificationDecoder;
+import com.alon.spring.crud.repository.specification.SpringJpaSpecification;
 import com.alon.spring.crud.resource.dto.EntityConverterProvider;
 import com.alon.spring.crud.resource.dto.ResourceDtoConverterProvider;
 import com.alon.spring.crud.service.CreateException;
@@ -51,11 +53,11 @@ public abstract class CrudResource<C, U, S extends CrudService> {
         Page<E> entities;
         
         if (filter.isPresent() && order.isPresent())
-            entities = this.service.list(SpringJpaSpecificationDecoder.of(filter.get()), 0, 0, new Expression(order.get()));        
+            entities = this.service.list(SpringJpaSpecification.of(filter.get()), 0, 0, SingleExpressionParser.parse(order.get()));
         else if (filter.isPresent())
-            entities = this.service.list(SpringJpaSpecificationDecoder.of(filter.get()), page, size);
+            entities = this.service.list(SpringJpaSpecification.of(filter.get()), page, size);
         else if (order.isPresent())
-            entities = this.service.list(page, size, new Expression(order.get()));
+            entities = this.service.list(page, size, SingleExpressionParser.parse(order.get()));
         else
             entities = this.service.list(page, size);
         

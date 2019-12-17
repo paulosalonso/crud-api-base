@@ -1,23 +1,23 @@
 package com.alon.spring.crud.service;
 
 import com.alon.querydecoder.Expression;
-import java.util.List;
-
-import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
-
+import com.alon.querydecoder.SingleExpression;
 import com.alon.spring.crud.model.BaseEntity;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.function.Function;
-import javax.validation.Valid;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.domain.Sort.Order;
 import org.springframework.data.jpa.domain.Specification;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
+
+import javax.validation.Valid;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.function.Function;
 
 public interface CrudService<R extends JpaRepository & JpaSpecificationExecutor> {
     
@@ -27,7 +27,7 @@ public interface CrudService<R extends JpaRepository & JpaSpecificationExecutor>
         return this.list(0, Integer.MAX_VALUE);
     }
     
-    default <E extends BaseEntity> Page<E> list(Expression order) {
+    default <E extends BaseEntity> Page<E> list(SingleExpression order) {
         return this.list(0, Integer.MAX_VALUE, order);
     }
     
@@ -35,7 +35,7 @@ public interface CrudService<R extends JpaRepository & JpaSpecificationExecutor>
         return this.getRepository().findAll(PageRequest.of(page, size));
     }
 
-    default <E extends BaseEntity> Page<E> list(int page, int size, Expression order) {
+    default <E extends BaseEntity> Page<E> list(int page, int size, SingleExpression order) {
         return this.getRepository().findAll(Hidden.buildPageable(page, size, order));
     }
     
@@ -43,7 +43,7 @@ public interface CrudService<R extends JpaRepository & JpaSpecificationExecutor>
         return this.getRepository().findAll(specification, PageRequest.of(page, size));
     }
 
-    default <E extends BaseEntity> Page<E> list(Specification<E> specification, int page, int size, Expression order) {
+    default <E extends BaseEntity> Page<E> list(Specification<E> specification, int page, int size, SingleExpression order) {
         return this.getRepository().findAll(specification, Hidden.buildPageable(page, size, order));
     }
 
@@ -131,11 +131,11 @@ public interface CrudService<R extends JpaRepository & JpaSpecificationExecutor>
         
         private static Map<CrudService, Map<LifeCycleHook, List<Function>>> GLOBAL_HOOKS = new HashMap<>();
         
-        private static Pageable buildPageable(int page, int size, Expression orders) {
+        private static Pageable buildPageable(int page, int size, SingleExpression orders) {
             return PageRequest.of(page, size, buildSort(orders));
         }
 
-        private static Sort buildSort(Expression order) {
+        private static Sort buildSort(SingleExpression order) {
             
             List<Order> orders = new ArrayList<>();
 
@@ -147,7 +147,7 @@ public interface CrudService<R extends JpaRepository & JpaSpecificationExecutor>
                 else
                     orders.add(Order.asc(order.getField()));
 
-                order = (Expression) order.getNext();
+                order = (SingleExpression) order.getNext();
             } while (order != null);
 
             return Sort.by(orders);

@@ -9,7 +9,7 @@ public class BetweenPredicateBuilder implements PredicateBuilder {
     private static PredicateBuilder INSTANCE;
 
     @Override
-    public Predicate buildPredicate(CriteriaBuilder criteriaBuilder, Path path, String value) {
+    public Predicate build(CriteriaBuilder criteriaBuilder, Path path, String value) {
         Object[] values = this.splitValues(path, value);
         
         return criteriaBuilder.between(path, (Comparable) values[0], (Comparable) values[1]);
