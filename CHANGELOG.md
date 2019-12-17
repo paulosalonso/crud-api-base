@@ -5,9 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## 2.1.0 - 2019-11-22
+## 2.1.0 - 2019-12-16
 
 ### Added
+- The StartsWith (SW) match type.
+- The EndsWith (EW) match type.
+- Negation for all match types.
 - The method setDtoConverterProvider in the CrudResource class. It now has an EntityDtoConverterProvider by default.
 
 ### Changed
@@ -17,7 +20,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The CrusService now has a standard for EntityConverterProvider, no longer need to set ever.
 
 ### Removed
-- Some genecic types of the CrudResource declaration.
 - Some generic types of the CrudService declaration.
 - The method setId(id) has been removed from the BaseEntity interface.
 - The method getDefaultOrder() has been removed from the CrudService interface. Now, the default order is the physical order in the database.
