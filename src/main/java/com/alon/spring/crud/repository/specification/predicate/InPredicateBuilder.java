@@ -12,7 +12,7 @@ public class InPredicateBuilder implements PredicateBuilder {
     private static PredicateBuilder INSTANCE;
 
     @Override
-    public Predicate buildPredicate(CriteriaBuilder criteriaBuilder, Path path, String value) {
+    public Predicate build(CriteriaBuilder criteriaBuilder, Path path, String value) {
         
         List<Comparable> values = Stream.of(value.split(","))
                                         .map(str -> this.convertValue(path, str))

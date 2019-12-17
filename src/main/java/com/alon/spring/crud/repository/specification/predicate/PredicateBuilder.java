@@ -7,7 +7,7 @@ import javax.persistence.criteria.Predicate;
 
 public interface PredicateBuilder {
     
-    public Predicate buildPredicate(CriteriaBuilder criteriaBuilder, Path path, String value);
+    public Predicate build(CriteriaBuilder criteriaBuilder, Path path, String value);
     
     default public Comparable convertValue(Path path, String value) {
         return ConverterResolver.resolve(path.getJavaType())

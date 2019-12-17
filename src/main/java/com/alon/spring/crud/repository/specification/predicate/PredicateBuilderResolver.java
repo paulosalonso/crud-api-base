@@ -10,6 +10,8 @@ public interface PredicateBuilderResolver {
             case BT: return BetweenPredicateBuilder.getInstance();
             case CT: return ContainsPredicateBuilder.getInstance();
             case EQ: return EqualPredicateBuilder.getInstance();
+            case SW: return StartsWithPredicateBuilder.getInstance();
+            case EW: return EndsWithPredicateBuilder.getInstance();
             case GT: return GreaterThanPredicateBuilder.getInstance();
             case GTE: return GreaterThanOrEqualPredicateBuilder.getInstance();
             case IN: return InPredicateBuilder.getInstance();
