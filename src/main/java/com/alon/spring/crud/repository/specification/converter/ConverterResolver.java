@@ -1,8 +1,3 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
 package com.alon.spring.crud.repository.specification.converter;
 
 import java.math.BigDecimal;
@@ -10,10 +5,6 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
-/**
- *
- * @author paulo
- */
 public abstract class ConverterResolver {
     
     private static final Map<Class<?>, DecoderConverter<?>> CONVERTERS = new HashMap<>();
@@ -29,12 +20,23 @@ public abstract class ConverterResolver {
         CONVERTERS.put(Date.class, DateTimeConverter.getInstance());
     }
     
-    public static <O> DecoderConverter<O> resolve(Class<O> clazz) {
-        DecoderConverter converter = CONVERTERS.get(clazz);
+    public static <O extends Comparable> DecoderConverter<O> resolve(Class<O> clazz) {
+        DecoderConverter converter;
+                
+        if (clazz.isEnum())
+            converter = resolveEnumConverter((Class<? extends Enum>) clazz);
+        else
+            converter = CONVERTERS.get(clazz);
         
         if (converter == null)
             converter = DefaultConverter.getInstance();
         
+        return converter;
+    }
+    
+    private static EnumConverter resolveEnumConverter(Class<? extends Enum> enumType) {
+        EnumConverter converter = EnumConverter.getInstance();
+        converter.setEnumType(enumType);        
         return converter;
     }
     

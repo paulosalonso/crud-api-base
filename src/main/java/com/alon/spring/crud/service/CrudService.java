@@ -1,157 +1,197 @@
 package com.alon.spring.crud.service;
 
-import java.util.List;
-
+import com.alon.querydecoder.Expression;
+import com.alon.querydecoder.SingleExpression;
+import com.alon.spring.crud.model.BaseEntity;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.domain.Sort.Order;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 
-import com.alon.querydecoder.Expression;
-import com.alon.spring.crud.model.BaseEntity;
+import javax.validation.Valid;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
-import javax.validation.Valid;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Sort;
+import java.util.function.Function;
 
-public abstract class CrudService<E extends BaseEntity, R extends JpaRepository<E, Long> & JpaSpecificationExecutor<E>> {
-	
-    protected R repository;
+public interface CrudService<R extends JpaRepository & JpaSpecificationExecutor> {
     
-    private final Map<LifeCycleHook, List<CheckedFunction>> HOOKS = new HashMap<>(); 
-
-    public CrudService(R repository) {
-        this.repository = repository;
-        
-        for (LifeCycleHook hook : LifeCycleHook.values())
-            this.HOOKS.put(hook, new ArrayList<>());
+    public R getRepository();
+    
+    default <E extends BaseEntity> Page<E> list() {
+        return this.list(0, Integer.MAX_VALUE);
+    }
+    
+    default <E extends BaseEntity> Page<E> list(SingleExpression order) {
+        return this.list(0, Integer.MAX_VALUE, order);
+    }
+    
+    default <E extends BaseEntity> Page<E> list(int page, int size) {
+        return this.getRepository().findAll(PageRequest.of(page, size));
     }
 
-    public Page<E> list(int page, int size, Expression order) {
-        return this.repository.findAll(this.buildPageable(page, size, order));
+    default <E extends BaseEntity> Page<E> list(int page, int size, SingleExpression order) {
+        return this.getRepository().findAll(Hidden.buildPageable(page, size, order));
+    }
+    
+    default <E extends BaseEntity> Page<E> list(Specification<E> specification, int page, int size) {
+        return this.getRepository().findAll(specification, PageRequest.of(page, size));
     }
 
-    public Page<E> list(Specification<E> specification, int page, int size, Expression order) {
-        return this.repository.findAll(specification, this.buildPageable(page, size, order));
+    default <E extends BaseEntity> Page<E> list(Specification<E> specification, int page, int size, SingleExpression order) {
+        return this.getRepository().findAll(specification, Hidden.buildPageable(page, size, order));
     }
 
-    private Pageable buildPageable(int page, int size, Expression orders) {
-        return PageRequest.of(page, size, this.getSort(orders));
-    }
-
-    private Sort getSort(Expression order) {
-        if (order.getField() == null)
-            return Sort.by(this.getDefaultSort());
-
-        List<Order> orders = new ArrayList<>();
-
-        do {
-            boolean desc = order.getValue().equalsIgnoreCase("DESC");
-
-            if (desc)
-                orders.add(Order.desc(order.getField()));
-            else
-                orders.add(Order.asc(order.getField()));
-
-            order = (Expression) order.getNext();
-        } while (order != null);
-
-        return Sort.by(orders);
-    }
-
-    public E create(@Valid E entity) throws CreateException {
+    default <E extends BaseEntity> E create(@Valid E entity) throws CreateException {
         try {
-            entity = this.executeHook(entity, LifeCycleHook.BEFORE_CREATE);
-            entity = this.repository.save(entity);
-            return this.executeHook(entity, LifeCycleHook.AFTER_CREATE);
+            entity = Hidden.executeHook(this, entity, LifeCycleHook.BEFORE_CREATE);
+            entity = (E) this.getRepository().save(entity);
+            return Hidden.executeHook(this, entity, LifeCycleHook.AFTER_CREATE);
         } catch (Throwable ex) {
             throw new CreateException(ex.getMessage(), ex);
         }
     }
 
-    public E read(Long id) {
-        return this.repository.findById(id).get();
+    default <ID, E extends BaseEntity<ID>> E read(ID id) {
+        return (E) this.getRepository().findById(id).get();
     }
 
-    public E update(@Valid E entity) throws UpdateException {
-        if (entity.getId() == null)
+    default <E extends BaseEntity> E update(@Valid E entity) throws UpdateException {
+        if (entity.id() == null)
             throw new UpdateException("Unmanaged entity. Use the create method.");
             
         try {
-            entity = this.executeHook(entity, LifeCycleHook.BEFORE_UPDATE);
+            entity = Hidden.executeHook(this, entity, LifeCycleHook.BEFORE_UPDATE);
             entity = this.create(entity);
-            return this.executeHook(entity, LifeCycleHook.AFTER_UPDATE);
+            return Hidden.executeHook(this, entity, LifeCycleHook.AFTER_UPDATE);
         } catch (Throwable ex) {
             throw new UpdateException(ex.getMessage(), ex);
         }
     }
 
-
-    public void delete(Long id) throws DeleteException {
+    default <ID> void delete(ID id) throws DeleteException {
         try {
-            this.executeHook(id, LifeCycleHook.BEFORE_DELETE);
-            this.repository.deleteById(id);
-            this.executeHook(id, LifeCycleHook.AFTER_DELETE);
+            Hidden.executeHook(this, id, LifeCycleHook.BEFORE_DELETE);
+            this.getRepository().deleteById(id);
+            Hidden.executeHook(this, id, LifeCycleHook.AFTER_DELETE);
         } catch (Throwable ex) {
             throw new DeleteException(ex.getMessage(), ex);
         }
     }
-
-    public abstract List<Order> getDefaultSort();
     
-    public CrudService addBeforeCreateHook(CheckedFunction<E, E> function) {
-    	this.HOOKS.get(LifeCycleHook.BEFORE_CREATE).add(function);    	
+    default <E extends BaseEntity> CrudService addBeforeCreateHook(Function<E, E> function) {
+    	Hidden.getServiceHooks(this).get(LifeCycleHook.BEFORE_CREATE).add(function);
     	return this;
     }
     
-    public CrudService addAfterCreateHook(CheckedFunction<E, E> function) {
-    	this.HOOKS.get(LifeCycleHook.AFTER_CREATE).add(function);    	
+    default <E extends BaseEntity> CrudService addAfterCreateHook(Function<E, E> function) {
+    	Hidden.getServiceHooks(this).get(LifeCycleHook.AFTER_CREATE).add(function);    	
     	return this;
     }
     
-    public CrudService addBeforeUpdateHook(CheckedFunction<E, E> function) {
-    	this.HOOKS.get(LifeCycleHook.BEFORE_UPDATE).add(function);    	
+    default <E extends BaseEntity> CrudService addBeforeUpdateHook(Function<E, E> function) {
+    	Hidden.getServiceHooks(this).get(LifeCycleHook.BEFORE_UPDATE).add(function);    	
     	return this;
     }
     
-    public CrudService addAfterUpdateHook(CheckedFunction<E, E> function) {
-    	this.HOOKS.get(LifeCycleHook.AFTER_UPDATE).add(function);    	
+    default <E extends BaseEntity> CrudService addAfterUpdateHook(Function<E, E> function) {
+    	Hidden.getServiceHooks(this).get(LifeCycleHook.AFTER_UPDATE).add(function);    	
     	return this;
     }
     
-    public CrudService addBeforeDeleteHook(CheckedFunction<Long, Long> function) {
-    	this.HOOKS.get(LifeCycleHook.BEFORE_DELETE).add(function);    	
+    default <E extends BaseEntity> CrudService addBeforeDeleteHook(Function<Long, Long> function) {
+    	Hidden.getServiceHooks(this).get(LifeCycleHook.BEFORE_DELETE).add(function);    	
     	return this;
     }
     
-    public CrudService addAfterDeleteHook(CheckedFunction<Long, Long> function) {
-    	this.HOOKS.get(LifeCycleHook.AFTER_DELETE).add(function);    	
+    default <E extends BaseEntity> CrudService addAfterDeleteHook(Function<Long, Long> function) {
+    	Hidden.getServiceHooks(this).get(LifeCycleHook.AFTER_DELETE).add(function);    	
     	return this;
-    }
-    
-    private <O> O executeHook(O param, LifeCycleHook hookType) throws Throwable {
-    	List<CheckedFunction> hooks = this.getHook(hookType);
-        
-    	for (CheckedFunction hook : hooks)
-            param = (O) hook.apply(param);
-        
-        return param;
-    }
-    
-    private List<CheckedFunction> getHook(LifeCycleHook hookType) {
-    	return HOOKS.get(hookType);
     }
         
-    private enum LifeCycleHook {
+    enum LifeCycleHook {
     	BEFORE_CREATE,
     	AFTER_CREATE,
     	BEFORE_UPDATE,
     	AFTER_UPDATE,
     	BEFORE_DELETE,
     	AFTER_DELETE
+    }
+    
+    /**
+     * This class has the function of restricting methods, 
+     * because private methods are not allowed in interfaces.
+     */
+    class Hidden {
+        
+        private static Map<CrudService, Map<LifeCycleHook, List<Function>>> GLOBAL_HOOKS = new HashMap<>();
+        
+        private static Pageable buildPageable(int page, int size, SingleExpression orders) {
+            return PageRequest.of(page, size, buildSort(orders));
+        }
+
+        private static Sort buildSort(SingleExpression order) {
+            
+            List<Order> orders = new ArrayList<>();
+
+            do {
+                boolean desc = order.getValue().equalsIgnoreCase("DESC");
+
+                if (desc)
+                    orders.add(Order.desc(order.getField()));
+                else
+                    orders.add(Order.asc(order.getField()));
+
+                order = (SingleExpression) order.getNext();
+            } while (order != null);
+
+            return Sort.by(orders);
+            
+        }
+    
+        private static <S extends CrudService, P> P executeHook(S service, P param, LifeCycleHook hookType) throws Throwable {
+            
+            List<Function> hooks = getHook(service, hookType);
+
+            for (Function hook : hooks)
+                param = (P) hook.apply(param);
+
+            return param;
+            
+        }
+
+        private static <T extends CrudService> List<Function> getHook(T service, LifeCycleHook hookType) {
+            return getServiceHooks(service).get(hookType);
+        }
+        
+        private static <T extends CrudService> Map<LifeCycleHook, List<Function>> getServiceHooks(T service) {
+            
+            Map<LifeCycleHook, List<Function>> hooks = GLOBAL_HOOKS.get(service);
+
+            if (hooks == null)
+                hooks = initHooks(service);
+
+            return hooks;
+            
+        }
+        
+        private static <T extends CrudService> Map<LifeCycleHook, List<Function>> initHooks(T service) {
+            
+            Map<LifeCycleHook, List<Function>> hooks = new HashMap<>();
+
+            for (LifeCycleHook hook : LifeCycleHook.values())
+                hooks.put(hook, new ArrayList<>());
+
+            GLOBAL_HOOKS.put(service, hooks);
+
+            return hooks;
+            
+        }
+        
     }
 }

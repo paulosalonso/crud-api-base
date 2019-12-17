@@ -18,7 +18,7 @@ public class BigDecimalConverter implements DecoderConverter<BigDecimal> {
     private BigDecimalConverter() {}
 
     @Override
-    public BigDecimal convert(String value) throws Throwable {
+    public BigDecimal convert(String value) {
         return new BigDecimal(value);
     }
     

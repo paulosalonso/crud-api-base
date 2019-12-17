@@ -16,7 +16,7 @@ public class FloatConverter implements DecoderConverter<Float> {
     private FloatConverter() {}
 
     @Override
-    public Float convert(String value) throws Throwable {
+    public Float convert(String value) {
         return Float.valueOf(value);
     }
     
