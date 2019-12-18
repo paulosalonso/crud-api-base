@@ -13,41 +13,39 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 
 import javax.validation.Valid;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.io.Serializable;
+import java.util.*;
 import java.util.function.Function;
 
-public interface CrudService<R extends JpaRepository & JpaSpecificationExecutor> {
+public interface CrudService<I extends Serializable, E extends BaseEntity<I>, R extends JpaRepository<E, I> & JpaSpecificationExecutor<E>> {
     
     public R getRepository();
     
-    default <E extends BaseEntity> Page<E> list() {
+    default Page<E> list() {
         return this.list(0, Integer.MAX_VALUE);
     }
     
-    default <E extends BaseEntity> Page<E> list(SingleExpression order) {
+    default Page<E> list(SingleExpression order) {
         return this.list(0, Integer.MAX_VALUE, order);
     }
     
-    default <E extends BaseEntity> Page<E> list(int page, int size) {
+    default Page<E> list(int page, int size) {
         return this.getRepository().findAll(PageRequest.of(page, size));
     }
 
-    default <E extends BaseEntity> Page<E> list(int page, int size, SingleExpression order) {
+    default Page<E> list(int page, int size, SingleExpression order) {
         return this.getRepository().findAll(Hidden.buildPageable(page, size, order));
     }
     
-    default <E extends BaseEntity> Page<E> list(Specification<E> specification, int page, int size) {
+    default Page<E> list(Specification<E> specification, int page, int size) {
         return this.getRepository().findAll(specification, PageRequest.of(page, size));
     }
 
-    default <E extends BaseEntity> Page<E> list(Specification<E> specification, int page, int size, SingleExpression order) {
+    default Page<E> list(Specification<E> specification, int page, int size, SingleExpression order) {
         return this.getRepository().findAll(specification, Hidden.buildPageable(page, size, order));
     }
 
-    default <E extends BaseEntity> E create(@Valid E entity) throws CreateException {
+    default E create(@Valid E entity) throws CreateException {
         try {
             entity = Hidden.executeHook(this, entity, LifeCycleHook.BEFORE_CREATE);
             entity = (E) this.getRepository().save(entity);
@@ -57,14 +55,19 @@ public interface CrudService<R extends JpaRepository & JpaSpecificationExecutor>
         }
     }
 
-    default <ID, E extends BaseEntity<ID>> E read(ID id) {
-        return (E) this.getRepository().findById(id).get();
+    default E read(I id) throws NotFoundException {
+        Optional<E> opt = this.getRepository().findById(id);
+
+        if (opt.isEmpty())
+            throw new NotFoundException(String.format("Entity not found. ID: %d", id));
+
+        return opt.get();
     }
 
-    default <E extends BaseEntity> E update(@Valid E entity) throws UpdateException {
+    default E update(@Valid E entity) throws UpdateException {
         if (entity.id() == null)
             throw new UpdateException("Unmanaged entity. Use the create method.");
-            
+
         try {
             entity = Hidden.executeHook(this, entity, LifeCycleHook.BEFORE_UPDATE);
             entity = this.create(entity);
@@ -74,7 +77,7 @@ public interface CrudService<R extends JpaRepository & JpaSpecificationExecutor>
         }
     }
 
-    default <ID> void delete(ID id) throws DeleteException {
+    default void delete(I id) throws DeleteException {
         try {
             Hidden.executeHook(this, id, LifeCycleHook.BEFORE_DELETE);
             this.getRepository().deleteById(id);
@@ -84,32 +87,32 @@ public interface CrudService<R extends JpaRepository & JpaSpecificationExecutor>
         }
     }
     
-    default <E extends BaseEntity> CrudService addBeforeCreateHook(Function<E, E> function) {
+    default CrudService addBeforeCreateHook(Function<E, E> function) {
     	Hidden.getServiceHooks(this).get(LifeCycleHook.BEFORE_CREATE).add(function);
     	return this;
     }
     
-    default <E extends BaseEntity> CrudService addAfterCreateHook(Function<E, E> function) {
+    default CrudService addAfterCreateHook(Function<E, E> function) {
     	Hidden.getServiceHooks(this).get(LifeCycleHook.AFTER_CREATE).add(function);    	
     	return this;
     }
     
-    default <E extends BaseEntity> CrudService addBeforeUpdateHook(Function<E, E> function) {
+    default CrudService addBeforeUpdateHook(Function<E, E> function) {
     	Hidden.getServiceHooks(this).get(LifeCycleHook.BEFORE_UPDATE).add(function);    	
     	return this;
     }
     
-    default <E extends BaseEntity> CrudService addAfterUpdateHook(Function<E, E> function) {
+    default CrudService addAfterUpdateHook(Function<E, E> function) {
     	Hidden.getServiceHooks(this).get(LifeCycleHook.AFTER_UPDATE).add(function);    	
     	return this;
     }
     
-    default <E extends BaseEntity> CrudService addBeforeDeleteHook(Function<Long, Long> function) {
+    default CrudService addBeforeDeleteHook(Function<Long, Long> function) {
     	Hidden.getServiceHooks(this).get(LifeCycleHook.BEFORE_DELETE).add(function);    	
     	return this;
     }
     
-    default <E extends BaseEntity> CrudService addAfterDeleteHook(Function<Long, Long> function) {
+    default CrudService addAfterDeleteHook(Function<Long, Long> function) {
     	Hidden.getServiceHooks(this).get(LifeCycleHook.AFTER_DELETE).add(function);    	
     	return this;
     }

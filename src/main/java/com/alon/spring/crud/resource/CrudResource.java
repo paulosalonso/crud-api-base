@@ -1,49 +1,48 @@
 package com.alon.spring.crud.resource;
 
-import com.alon.querydecoder.ExpressionParser;
 import com.alon.querydecoder.SingleExpressionParser;
-import org.springframework.data.domain.Page;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestParam;
-
-import com.alon.querydecoder.Expression;
 import com.alon.spring.crud.model.BaseEntity;
 import com.alon.spring.crud.repository.specification.SpringJpaSpecification;
-import com.alon.spring.crud.resource.dto.EntityConverterProvider;
-import com.alon.spring.crud.resource.dto.ResourceDtoConverterProvider;
-import com.alon.spring.crud.service.CreateException;
-import com.alon.spring.crud.service.CrudService;
-import com.alon.spring.crud.service.DeleteException;
-import com.alon.spring.crud.service.NotFoundException;
-import com.alon.spring.crud.service.UpdateException;
-import java.util.Optional;
+import com.alon.spring.crud.resource.dto.*;
+import com.alon.spring.crud.service.*;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
-import org.springframework.web.bind.annotation.ResponseStatus;
+import org.springframework.web.bind.annotation.*;
 
-/**
- * 
- * @param <S> Service
- */
-public abstract class CrudResource<C, U, S extends CrudService> {
+import java.util.Optional;
+
+public abstract class CrudResource<E extends BaseEntity, C, U, S extends CrudService> {
 	
     @Autowired
     protected S service;
-    
-    @Autowired
-    private EntityConverterProvider entityConverterProvider;
-    
-    public ResourceDtoConverterProvider getDtoConverterProvider() {
-        return this.entityConverterProvider;
+
+    private OutputDtoConverter<Page<E>, ListOutput<Object>> listOutputConverter = new EntityListOutputConverter();
+    private OutputDtoConverter<E, Object> outputConverter = new EntityOutputConverter();
+    private InputDtoConverter<C, E> createInputConverter = new EntityInputConverter();
+    private InputDtoConverter<U, E> updateInputConverter = new EntityInputConverter();
+
+    public void setOutputConverter(OutputDtoConverter<E, Object> outputConverter) {
+        this.outputConverter = outputConverter;
+
+        listOutputConverter = new OutputDtoConverter<>() {
+            @Override
+            public ListOutput<Object> convert(Page<E> data) {
+                return ListOutput.of(data, outputConverter);
+            }
+        };
+    }
+
+    public void setCreateInputConverter(InputDtoConverter<C, E> createInputConverter) {
+        this.createInputConverter = createInputConverter;
+    }
+
+    public void setUpdateInputConverter(InputDtoConverter<U, E> updateInputConverter) {
+        this.updateInputConverter = updateInputConverter;
     }
 
     @GetMapping("${com.alon.spring.crud.path.list}")
-    public <E extends BaseEntity, O> O list(
+    public ListOutput<Object> list(
             @RequestParam(value = "filter", required = false)                       Optional<String> filter,
             @RequestParam(value = "order",  required = false)                       Optional<String> order,
             @RequestParam(value = "page",   required = false, defaultValue = "0")   Integer page,
@@ -61,51 +60,45 @@ public abstract class CrudResource<C, U, S extends CrudService> {
         else
             entities = this.service.list(page, size);
         
-        return (O) this.getDtoConverterProvider()
-                       .getListOutputDtoConverter()
-                       .convert(entities);
+        return this.listOutputConverter
+                   .convert(entities);
         
     }
 
     @GetMapping("${com.alon.spring.crud.path.read}")
-    public <E extends BaseEntity, O> O read(@PathVariable Long id) throws NotFoundException {
+    public Object read(@PathVariable Long id) throws NotFoundException {
         
         E entity = (E) this.service.read(id);
         
-        return (O) this.getDtoConverterProvider()
-                       .getReadOutputDtoConverter()
-                       .convert(entity);
+        return this.outputConverter
+                   .convert(entity);
         
     }
 
     @PostMapping("${com.alon.spring.crud.path.create}")
     @ResponseStatus(HttpStatus.CREATED)
-    protected <E extends BaseEntity, O> O create(@RequestBody C input) throws CreateException {
+    protected Object create(@RequestBody C input) throws CreateException {
         
-        E entity = (E) this.getDtoConverterProvider()
-                           .getCreateInputDtoConverter()
+        E entity = (E) this.createInputConverter
                            .convert(input);
         
         entity = (E) this.service.create(entity);
         
-        return (O) this.getDtoConverterProvider()
-                       .getCreateOutputDtoConverter()
-                       .convert(entity);
+        return this.outputConverter
+                   .convert(entity);
         
     }
 
     @PutMapping("${com.alon.spring.crud.path.update}")
-    public <E extends BaseEntity, O> O update(@RequestBody U input) throws UpdateException {
+    public Object update(@RequestBody U input) throws UpdateException {
         
-        E entity = (E) this.getDtoConverterProvider()
-                           .getUpdateInputDtoConverter()
+        E entity = (E) this.updateInputConverter
                            .convert(input);
 
         entity = (E) this.service.update(entity);
         
-        return (O) this.getDtoConverterProvider()
-                       .getUpdateOutputDtoConverter()
-                       .convert(entity);
+        return this.outputConverter
+                   .convert(entity);
         
     }
 
