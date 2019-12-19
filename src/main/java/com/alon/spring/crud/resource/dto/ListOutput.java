@@ -38,7 +38,7 @@ public class ListOutput<T> {
     }
     
     public static <L extends ListOutput, T extends BaseEntity, O> ListOutput<O> 
-        of(Page<T> page, OutputDtoConverter<T, O> outputConverter) {
+        of(Page<T> page, Projection<T, O> outputConverter) {
         
         return new ListOutputBuilder(ListOutput.class)
                 .page(page.getNumber() + 1)
@@ -47,7 +47,7 @@ public class ListOutput<T> {
                 .totalSize(Long.valueOf(page.getTotalElements()).intValue())
                 .content(page.getContent()
                              .stream()
-                             .map(value -> outputConverter.convert(value))
+                             .map(value -> outputConverter.project(value))
                              .collect(Collectors.toList()))
                 .build();
         

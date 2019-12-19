@@ -1,6 +1,5 @@
 package com.alon.spring.crud.service;
 
-import com.alon.querydecoder.Expression;
 import com.alon.querydecoder.SingleExpression;
 import com.alon.spring.crud.model.BaseEntity;
 import org.springframework.data.domain.Page;
