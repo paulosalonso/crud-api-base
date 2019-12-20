@@ -1,19 +1,20 @@
-package com.alon.spring.crud.resource.dto;
+package com.alon.spring.crud.resource.projection;
 
 import com.alon.spring.crud.model.BaseEntity;
-import java.util.List;
-import java.util.stream.Collectors;
 import org.springframework.data.domain.Page;
 
-public class ListOutput<T> {
+import java.util.List;
+import java.util.stream.Collectors;
+
+public class ListOutput {
     
-    protected List<T> content;
+    protected List content;
     protected int page;
     protected int pageSize;
     protected int totalPages;
     protected int totalSize;
 
-    public List<T> getContent() {
+    public List getContent() {
         return content;
     }
 
@@ -33,33 +34,33 @@ public class ListOutput<T> {
         return totalSize;
     }
     
-    public static <L extends ListOutput> ListOutputBuilder<L> of(Class<L> type) {
-        return new ListOutputBuilder<>(type);
+    public static ListOutputBuilder of() {
+        return new ListOutputBuilder();
     }
     
-    public static <L extends ListOutput, T extends BaseEntity, O> ListOutput<O> 
-        of(Page<T> page, Projection<T, O> outputConverter) {
+    public static <T extends BaseEntity, O> ListOutput
+        of(Page<T> page, Projection<T, O> projection) {
         
-        return new ListOutputBuilder(ListOutput.class)
+        return new ListOutputBuilder()
                 .page(page.getNumber() + 1)
                 .pageSize(page.getNumberOfElements())
                 .totalPages(page.getTotalPages())
                 .totalSize(Long.valueOf(page.getTotalElements()).intValue())
                 .content(page.getContent()
                              .stream()
-                             .map(value -> outputConverter.project(value))
+                             .map(projection::project)
                              .collect(Collectors.toList()))
                 .build();
         
     }
     
-    public static class ListOutputBuilder<L extends ListOutput> {
+    public static final class ListOutputBuilder {
         
-        private L output;
+        private ListOutput output;
         
-        private ListOutputBuilder(Class<L> type) {
+        private ListOutputBuilder() {
             try {
-                this.output = type.getConstructor().newInstance();
+                this.output = new ListOutput();
             } catch (Exception ex) {
                 throw new InternalError(ex);
             }
@@ -70,27 +71,27 @@ public class ListOutput<T> {
             return this;
         }
         
-        public ListOutputBuilder<L> page(int page) {
+        public ListOutputBuilder page(int page) {
             this.output.page = page;
             return this;
         }
         
-        public ListOutputBuilder<L> pageSize(int pageSize) {
+        public ListOutputBuilder pageSize(int pageSize) {
             this.output.pageSize = pageSize;
             return this;
         }
         
-        public ListOutputBuilder<L> totalPages(int totalPages) {
+        public ListOutputBuilder totalPages(int totalPages) {
             this.output.totalPages = totalPages;
             return this;
         }
         
-        public ListOutputBuilder<L> totalSize(int totalSize) {
+        public ListOutputBuilder totalSize(int totalSize) {
             this.output.totalSize = totalSize;
             return this;
         }
         
-        public L build() {
+        public ListOutput build() {
             return this.output;
         }
         

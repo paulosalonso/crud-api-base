@@ -1,4 +1,4 @@
-package com.alon.spring.crud.resource.dto;
+package com.alon.spring.crud.resource.projection;
 
 /**
  * 

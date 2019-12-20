@@ -1,6 +1,5 @@
-package com.alon.spring.crud.resource.dto;
+package com.alon.spring.crud.resource.projection;
 
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
 
 import com.alon.spring.crud.model.BaseEntity;

@@ -1,4 +1,4 @@
-package com.alon.spring.crud.resource.dto;
+package com.alon.spring.crud.resource.input;
 
 import com.alon.spring.crud.model.BaseEntity;
 import org.springframework.stereotype.Component;

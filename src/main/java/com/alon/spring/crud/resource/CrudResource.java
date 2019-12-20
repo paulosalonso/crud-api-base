@@ -3,9 +3,9 @@ package com.alon.spring.crud.resource;
 import com.alon.querydecoder.SingleExpressionParser;
 import com.alon.spring.crud.model.BaseEntity;
 import com.alon.spring.crud.repository.specification.SpringJpaSpecification;
-import com.alon.spring.crud.resource.dto.EntityInputMapper;
-import com.alon.spring.crud.resource.dto.InputMapper;
-import com.alon.spring.crud.resource.dto.ListOutput;
+import com.alon.spring.crud.resource.input.EntityInputMapper;
+import com.alon.spring.crud.resource.input.InputMapper;
+import com.alon.spring.crud.resource.projection.ListOutput;
 import com.alon.spring.crud.service.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -34,7 +34,7 @@ public abstract class CrudResource<E extends BaseEntity, C, U, S extends CrudSer
     }
 
     @GetMapping("${com.alon.spring.crud.path.list:}")
-    public ListOutput<Object> list(
+    public ListOutput list(
             @RequestParam(value = "filter", required = false) Optional<String> filter,
             @RequestParam(value = "order", required = false) Optional<String> order,
             @RequestParam(value = "page", required = false, defaultValue = "1") Integer page,
