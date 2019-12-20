@@ -18,7 +18,7 @@ public abstract class CrudResource<E extends BaseEntity, C, U, S extends CrudSer
     protected S service;
 
     @Autowired
-    private ProjectionService projectionService;
+    protected ProjectionService projectionService;
 
     private InputMapper<C, E> createInputMapper = new EntityInputMapper();
     private InputMapper<U, E> updateInputMapper = new EntityInputMapper();
