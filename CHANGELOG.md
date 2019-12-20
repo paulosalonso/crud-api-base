@@ -7,8 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## 2.2.0 - 2019-12-17
 
-### Changed
-- Now converters must be assigned via CrudService setters. The ResourceDtoConverterProvider interface and the EntityConverterProvider class have been removed.
+### Added
+- Projection feature, which provides a dynamic output view of the entities output.
+
+### Removed
+- The interfaces of convertion layer.
 
 ## 2.1.0 - 2019-12-16
 
