@@ -1,8 +1,6 @@
 package com.alon.spring.crud.resource;
 
-import com.alon.querydecoder.SingleExpressionParser;
 import com.alon.spring.crud.model.BaseEntity;
-import com.alon.spring.crud.repository.specification.SpringJpaSpecification;
 import com.alon.spring.crud.resource.input.EntityInputMapper;
 import com.alon.spring.crud.resource.input.InputMapper;
 import com.alon.spring.crud.resource.projection.ListOutput;
@@ -12,7 +10,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.Optional;
+import java.util.List;
 
 public abstract class CrudResource<E extends BaseEntity, C, U, S extends CrudService> {
 	
@@ -35,25 +33,25 @@ public abstract class CrudResource<E extends BaseEntity, C, U, S extends CrudSer
 
     @GetMapping("${com.alon.spring.crud.path.list:}")
     public ListOutput list(
-            @RequestParam(value = "filter", required = false) Optional<String> filter,
-            @RequestParam(value = "order", required = false) Optional<String> order,
+            @RequestParam(value = "filter", required = false) String filter,
+            @RequestParam(value = "order", required = false) String order,
             @RequestParam(value = "page", required = false, defaultValue = "1") Integer page,
             @RequestParam(value = "size", required = false, defaultValue = "100") Integer size,
+            @RequestParam(value = "expand", required = false, defaultValue = "") List<String> expand,
             @RequestParam(value = "projection", required = false, defaultValue = "default") String projection
     ) {
 
         page = normalizePage(page);
 
-        Page<E> entities;
+        SearchCriteria criteria = SearchCriteria.of()
+                .filter(filter)
+                .order(order)
+                .page(page)
+                .size(size)
+                .expand(expand)
+                .build();
 
-        if (filter.isPresent() && order.isPresent())
-            entities = this.service.list(SpringJpaSpecification.of(filter.get()), 0, 0, SingleExpressionParser.parse(order.get()));
-        else if (filter.isPresent())
-            entities = this.service.list(SpringJpaSpecification.of(filter.get()), page, size);
-        else if (order.isPresent())
-            entities = this.service.list(page, size, SingleExpressionParser.parse(order.get()));
-        else
-            entities = this.service.list(page, size);
+        Page<E> entities = this.service.search(criteria);
         
         return this.projectionService
                    .project(projection, entities);

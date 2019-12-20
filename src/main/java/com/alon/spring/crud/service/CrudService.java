@@ -2,46 +2,41 @@ package com.alon.spring.crud.service;
 
 import com.alon.querydecoder.SingleExpression;
 import com.alon.spring.crud.model.BaseEntity;
+import com.cosium.spring.data.jpa.entity.graph.repository.EntityGraphJpaRepository;
+import com.cosium.spring.data.jpa.entity.graph.repository.EntityGraphJpaSpecificationExecutor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.domain.Sort.Order;
-import org.springframework.data.jpa.domain.Specification;
-import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 
 import javax.validation.Valid;
 import java.io.Serializable;
 import java.util.*;
 import java.util.function.Function;
 
-public interface CrudService<I extends Serializable, E extends BaseEntity<I>, R extends JpaRepository<E, I> & JpaSpecificationExecutor<E>> {
+public interface CrudService<I extends Serializable, E extends BaseEntity<I>, R extends EntityGraphJpaRepository<E, I> & EntityGraphJpaSpecificationExecutor<E>> {
     
     public R getRepository();
-    
-    default Page<E> list() {
-        return this.list(0, Integer.MAX_VALUE);
-    }
-    
-    default Page<E> list(SingleExpression order) {
-        return this.list(0, Integer.MAX_VALUE, order);
-    }
-    
-    default Page<E> list(int page, int size) {
-        return this.getRepository().findAll(PageRequest.of(page, size));
-    }
 
-    default Page<E> list(int page, int size, SingleExpression order) {
-        return this.getRepository().findAll(Hidden.buildPageable(page, size, order));
-    }
-    
-    default Page<E> list(Specification<E> specification, int page, int size) {
-        return this.getRepository().findAll(specification, PageRequest.of(page, size));
-    }
+    default Page<E> search(SearchCriteria criteria) {
 
-    default Page<E> list(Specification<E> specification, int page, int size, SingleExpression order) {
-        return this.getRepository().findAll(specification, Hidden.buildPageable(page, size, order));
+        R repository = this.getRepository();
+        Pageable pageable = Hidden.buildPageable(criteria);
+
+        switch (criteria.getSearchOption()) {
+            case SPECIFICATION:
+            case SPECIFICATION_ORDER: return repository.findAll(criteria.getFilter(), pageable);
+            case SPECIFICATION_EXPAND:
+            case SPECIFICATION_ORDER_EXPAND: return repository
+                    .findAll(criteria.getFilter(), pageable, criteria.getExpand());
+            case ORDER_EXPAND:
+            case EXPAND: return repository.findAll(pageable, criteria.getExpand());
+            case NONE:
+            case ORDER:
+            default: return repository.findAll(pageable);
+        }
+
     }
 
     default E create(@Valid E entity) throws CreateException {
@@ -132,9 +127,12 @@ public interface CrudService<I extends Serializable, E extends BaseEntity<I>, R 
     class Hidden {
         
         private static Map<CrudService, Map<LifeCycleHook, List<Function>>> GLOBAL_HOOKS = new HashMap<>();
-        
-        private static Pageable buildPageable(int page, int size, SingleExpression orders) {
-            return PageRequest.of(page, size, buildSort(orders));
+
+        private static Pageable buildPageable(SearchCriteria criteria) {
+            if (criteria.getOrder() != null)
+                return PageRequest.of(criteria.getPage(), criteria.getSize(), buildSort(criteria.getOrder()));
+            else
+                return PageRequest.of(criteria.getPage(), criteria.getSize());
         }
 
         private static Sort buildSort(SingleExpression order) {
