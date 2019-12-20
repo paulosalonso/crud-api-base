@@ -1,5 +1,7 @@
 package com.alon.spring.crud.resource.projection;
 
+import com.alon.spring.crud.service.ProjectionException;
+
 /**
  * 
  * @param <I> Input data to be projected
@@ -7,6 +9,6 @@ package com.alon.spring.crud.resource.projection;
  */
 public interface Projection<I, O> {
     
-    public O project(I input);
+    public O project(I input) throws ProjectionException;
     
 }

@@ -25,7 +25,12 @@ public class ProjectionService {
         try {
             return (O) this.getProjection(projectionName).project(input);
         } catch (Exception e) {
-            throw new ProjectionException(e);
+            String message = String.format(
+                    "Error projecting entity %s with projector '%s'", 
+                    input.getClass().getSimpleName(), 
+                    projectionName);
+            
+            throw new ProjectionException(message, e);
         }
     }
 
