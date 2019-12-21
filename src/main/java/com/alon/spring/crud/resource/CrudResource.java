@@ -4,13 +4,20 @@ import com.alon.spring.crud.model.BaseEntity;
 import com.alon.spring.crud.resource.input.EntityInputMapper;
 import com.alon.spring.crud.resource.input.InputMapper;
 import com.alon.spring.crud.resource.projection.ListOutput;
-import com.alon.spring.crud.service.*;
+import com.alon.spring.crud.service.CrudService;
+import com.alon.spring.crud.service.ProjectionService;
+import com.alon.spring.crud.service.SearchCriteria;
+import com.alon.spring.crud.service.exception.CreateException;
+import com.alon.spring.crud.service.exception.DeleteException;
+import com.alon.spring.crud.service.exception.ReadException;
+import com.alon.spring.crud.service.exception.UpdateException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import javax.validation.Valid;
 
 public abstract class CrudResource<E extends BaseEntity, C, U, S extends CrudService> {
 	
@@ -62,7 +69,7 @@ public abstract class CrudResource<E extends BaseEntity, C, U, S extends CrudSer
     public Object read(
             @PathVariable Long id,
             @RequestParam(name = "projection", required = false, defaultValue = "default") String projection
-    ) throws NotFoundException {
+    ) throws ReadException {
         
         E entity = (E) this.service.read(id);
         
@@ -74,7 +81,7 @@ public abstract class CrudResource<E extends BaseEntity, C, U, S extends CrudSer
     @PostMapping("${com.alon.spring.crud.path.create:}")
     @ResponseStatus(HttpStatus.CREATED)
     protected Object create(
-            @RequestBody C input,
+            @RequestBody @Valid C input,
             @RequestParam(name = "projection", required = false, defaultValue = "default") String projection
     ) throws CreateException {
         
@@ -90,7 +97,7 @@ public abstract class CrudResource<E extends BaseEntity, C, U, S extends CrudSer
 
     @PutMapping("${com.alon.spring.crud.path.update:}")
     public Object update(
-            @RequestBody U input,
+            @RequestBody @Valid U input,
             @RequestParam(name = "projection", required = false, defaultValue = "default") String projection
     ) throws UpdateException {
         

@@ -2,6 +2,11 @@ package com.alon.spring.crud.service;
 
 import com.alon.querydecoder.SingleExpression;
 import com.alon.spring.crud.model.BaseEntity;
+import com.alon.spring.crud.service.exception.CreateException;
+import com.alon.spring.crud.service.exception.DeleteException;
+import com.alon.spring.crud.service.exception.NotFoundException;
+import com.alon.spring.crud.service.exception.ReadException;
+import com.alon.spring.crud.service.exception.UpdateException;
 import com.cosium.spring.data.jpa.entity.graph.repository.EntityGraphJpaRepository;
 import com.cosium.spring.data.jpa.entity.graph.repository.EntityGraphJpaSpecificationExecutor;
 import org.springframework.data.domain.Page;
@@ -20,26 +25,50 @@ public interface CrudService<I extends Serializable, E extends BaseEntity<I>, R 
     public R getRepository();
 
     default Page<E> search(SearchCriteria criteria) {
+        
+        try {
+            Hidden.executeHook(this, criteria, LifeCycleHook.BEFORE_SEARCH);
+            Pageable pageable = Hidden.buildPageable(criteria);
+            Page<E> result;
 
-        R repository = this.getRepository();
-        Pageable pageable = Hidden.buildPageable(criteria);
-
-        switch (criteria.getSearchOption()) {
-            case SPECIFICATION:
-            case SPECIFICATION_ORDER: return repository.findAll(criteria.getFilter(), pageable);
-            case SPECIFICATION_EXPAND:
-            case SPECIFICATION_ORDER_EXPAND: return repository
-                    .findAll(criteria.getFilter(), pageable, criteria.getExpand());
-            case ORDER_EXPAND:
-            case EXPAND: return repository.findAll(pageable, criteria.getExpand());
-            case NONE:
-            case ORDER:
-            default: return repository.findAll(pageable);
+            switch (criteria.getSearchOption()) {
+                case SPECIFICATION:
+                case SPECIFICATION_ORDER: 
+                    
+                    result = this.getRepository()
+                        .findAll(criteria.getFilter(), pageable); 
+                    break;
+                        
+                case SPECIFICATION_EXPAND:
+                case SPECIFICATION_ORDER_EXPAND: 
+                    
+                    result = this.getRepository()
+                            .findAll(criteria.getFilter(), pageable, criteria.getExpand()); 
+                    break;
+                        
+                case ORDER_EXPAND:
+                case EXPAND: 
+                    
+                    result = this.getRepository()
+                            .findAll(pageable, criteria.getExpand()); 
+                    break;
+                    
+                case ORDER:
+                case NONE:
+                default: result = this.getRepository().findAll(pageable);
+            }
+            
+            Hidden.executeHook(this, result, LifeCycleHook.AFTER_SEARCH);
+            
+            return result;
+        } catch (Throwable ex) {
+            String message = String.format("Error searching entities: %s", ex.getMessage());
+            throw new ReadException(message, ex);
         }
 
     }
 
-    default E create(@Valid E entity) throws CreateException {
+    default E create(@Valid E entity) {
         try {
             entity = Hidden.executeHook(this, entity, LifeCycleHook.BEFORE_CREATE);
             entity = (E) this.getRepository().save(entity);
@@ -49,16 +78,24 @@ public interface CrudService<I extends Serializable, E extends BaseEntity<I>, R 
         }
     }
 
-    default E read(I id) throws NotFoundException {
-        Optional<E> opt = this.getRepository().findById(id);
+    default E read(I id) {
+        try {
+            id = Hidden.executeHook(this, id, LifeCycleHook.BEFORE_READ);
+            Optional<E> opt = this.getRepository().findById(id);
 
-        if (opt.isEmpty())
-            throw new NotFoundException(String.format("Entity not found. ID: %d", id));
+            if (opt.isEmpty())
+                throw new NotFoundException(String.format("ID not found -> %d", id));
 
-        return opt.get();
+            id = Hidden.executeHook(this, id, LifeCycleHook.AFTER_READ);
+            
+            return opt.get();
+        } catch (Throwable ex) {
+            String message = String.format("Error reading entity: %s", ex.getMessage());
+            throw new ReadException(message, ex);
+        }
     }
 
-    default E update(@Valid E entity) throws UpdateException {
+    default E update(@Valid E entity) {
         if (entity.id() == null)
             throw new UpdateException("Unmanaged entity. Use the create method.");
 
@@ -71,7 +108,7 @@ public interface CrudService<I extends Serializable, E extends BaseEntity<I>, R 
         }
     }
 
-    default void delete(I id) throws DeleteException {
+    default void delete(I id) {
         try {
             Hidden.executeHook(this, id, LifeCycleHook.BEFORE_DELETE);
             this.getRepository().deleteById(id);
@@ -79,6 +116,26 @@ public interface CrudService<I extends Serializable, E extends BaseEntity<I>, R 
         } catch (Throwable ex) {
             throw new DeleteException(ex.getMessage(), ex);
         }
+    }
+    
+    default CrudService addBeforeSearchHook(Function<SearchCriteria, SearchCriteria> function) {
+    	Hidden.getServiceHooks(this).get(LifeCycleHook.BEFORE_SEARCH).add(function);
+    	return this;
+    }
+    
+    default CrudService addAfterSearchHook(Function<Page<E>, Page<E>> function) {
+    	Hidden.getServiceHooks(this).get(LifeCycleHook.AFTER_SEARCH).add(function);    	
+    	return this;
+    }
+    
+    default CrudService addBeforeReadHook(Function<I, I> function) {
+    	Hidden.getServiceHooks(this).get(LifeCycleHook.BEFORE_READ).add(function);
+    	return this;
+    }
+    
+    default CrudService addAfterReadHook(Function<E, E> function) {
+    	Hidden.getServiceHooks(this).get(LifeCycleHook.AFTER_READ).add(function);    	
+    	return this;
     }
     
     default CrudService addBeforeCreateHook(Function<E, E> function) {
@@ -112,7 +169,11 @@ public interface CrudService<I extends Serializable, E extends BaseEntity<I>, R 
     }
         
     enum LifeCycleHook {
-    	BEFORE_CREATE,
+    	BEFORE_SEARCH,
+        AFTER_SEARCH,
+        BEFORE_READ,
+        AFTER_READ,
+        BEFORE_CREATE,
     	AFTER_CREATE,
     	BEFORE_UPDATE,
     	AFTER_UPDATE,

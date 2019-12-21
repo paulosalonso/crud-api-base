@@ -1,6 +1,6 @@
 package com.alon.spring.crud.resource.projection;
 
-import com.alon.spring.crud.service.ProjectionException;
+import com.alon.spring.crud.service.exception.ProjectionException;
 
 /**
  * 

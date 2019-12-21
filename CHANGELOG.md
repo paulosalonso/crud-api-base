@@ -8,7 +8,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## 2.2.0 - 2019-12-17
 
 ### Added
+- Some generic types of the CrudService and CrudResource declaration.
 - Projection feature, which provides a dynamic output view of the entities output.
+- Hooks for before and after search and read methods.
+- Bean validation for request body on read and create endpoints.
+- ReadException on read flow.
+
+### Changed
+- All the exceptions are now RuntimeExceptions.
 
 ### Removed
 - The interfaces of convertion layer.

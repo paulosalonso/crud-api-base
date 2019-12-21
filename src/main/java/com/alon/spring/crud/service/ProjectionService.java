@@ -4,6 +4,7 @@ import com.alon.spring.crud.model.BaseEntity;
 import com.alon.spring.crud.resource.projection.EntityProjection;
 import com.alon.spring.crud.resource.projection.ListOutput;
 import com.alon.spring.crud.resource.projection.Projection;
+import com.alon.spring.crud.service.exception.ProjectionException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
 import org.springframework.data.domain.Page;

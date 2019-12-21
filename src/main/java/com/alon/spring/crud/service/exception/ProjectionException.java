@@ -1,4 +1,4 @@
-package com.alon.spring.crud.service;
+package com.alon.spring.crud.service.exception;
 
 public class ProjectionException extends RuntimeException {
 
