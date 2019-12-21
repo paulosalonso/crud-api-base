@@ -38,8 +38,8 @@ public abstract class CrudResource<E extends BaseEntity, C, U, S extends CrudSer
         this.updateInputMapper = updateInputMapper;
     }
 
-    @GetMapping("${com.alon.spring.crud.path.list:}")
-    public ListOutput list(
+    @GetMapping("${com.alon.spring.crud.path.search:}")
+    public ListOutput search(
             @RequestParam(value = "filter", required = false) String filter,
             @RequestParam(value = "order", required = false) String order,
             @RequestParam(value = "page", required = false, defaultValue = "1") Integer page,

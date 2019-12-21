@@ -16,6 +16,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 - All the exceptions are now RuntimeExceptions.
+- Méthod 'list' in CrudResource and CrudService is now called 'search'.
+- The expected property 'com.alon.spring.crud.path.list' is now expected as 'com.alon.spring.crud.path.search'.
 
 ### Removed
 - The interfaces of convertion layer.
