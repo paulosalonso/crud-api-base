@@ -7,6 +7,7 @@ import com.alon.spring.crud.service.exception.DeleteException;
 import com.alon.spring.crud.service.exception.NotFoundException;
 import com.alon.spring.crud.service.exception.ReadException;
 import com.alon.spring.crud.service.exception.UpdateException;
+import com.cosium.spring.data.jpa.entity.graph.domain.DynamicEntityGraph;
 import com.cosium.spring.data.jpa.entity.graph.repository.EntityGraphJpaRepository;
 import com.cosium.spring.data.jpa.entity.graph.repository.EntityGraphJpaSpecificationExecutor;
 import org.springframework.data.domain.Page;
@@ -78,10 +79,16 @@ public interface CrudService<I extends Serializable, E extends BaseEntity<I>, R 
         }
     }
 
-    default E read(I id) {
+    default E read(I id, List<String> expand) {
         try {
             id = Hidden.executeHook(this, id, LifeCycleHook.BEFORE_READ);
-            Optional<E> opt = this.getRepository().findById(id);
+            
+            Optional<E> opt;
+            
+            if (expand != null && !expand.isEmpty())
+                opt = this.getRepository().findById(id, new DynamicEntityGraph(expand));
+            else
+                opt = this.getRepository().findById(id);
 
             if (opt.isEmpty())
                 throw new NotFoundException(String.format("ID not found -> %d", id));

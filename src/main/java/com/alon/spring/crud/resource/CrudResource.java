@@ -61,20 +61,21 @@ public abstract class CrudResource<E extends BaseEntity, C, U, S extends CrudSer
         Page<E> entities = this.service.search(criteria);
         
         return this.projectionService
-                   .project(projection, entities);
+                   .project(projection, entities, expand);
         
     }
 
     @GetMapping("${com.alon.spring.crud.path.read:/{id}}")
     public Object read(
             @PathVariable Long id,
+            @RequestParam(value = "expand", required = false, defaultValue = "") List<String> expand,
             @RequestParam(name = "projection", required = false, defaultValue = "default") String projection
     ) throws ReadException {
         
-        E entity = (E) this.service.read(id);
+        E entity = (E) this.service.read(id, expand);
         
         return this.projectionService
-                   .project(projection, entity);
+                   .project(projection, entity, expand);
         
     }
 
@@ -91,7 +92,7 @@ public abstract class CrudResource<E extends BaseEntity, C, U, S extends CrudSer
         entity = (E) this.service.create(entity);
         
         return this.projectionService
-                   .project(projection, entity);
+                   .project(projection, entity, List.of());
         
     }
 
@@ -107,7 +108,7 @@ public abstract class CrudResource<E extends BaseEntity, C, U, S extends CrudSer
         entity = (E) this.service.update(entity);
         
         return this.projectionService
-                   .project(projection, entity);
+                   .project(projection, entity, List.of());
         
     }
 
