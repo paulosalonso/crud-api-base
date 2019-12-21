@@ -3,7 +3,7 @@ package com.alon.spring.crud.resource;
 import com.alon.spring.crud.model.BaseEntity;
 import com.alon.spring.crud.resource.input.EntityInputMapper;
 import com.alon.spring.crud.resource.input.InputMapper;
-import com.alon.spring.crud.resource.projection.ListOutput;
+import com.alon.spring.crud.resource.projection.OutputPage;
 import com.alon.spring.crud.service.CrudService;
 import com.alon.spring.crud.service.ProjectionService;
 import com.alon.spring.crud.service.SearchCriteria;
@@ -39,7 +39,7 @@ public abstract class CrudResource<E extends BaseEntity, C, U, S extends CrudSer
     }
 
     @GetMapping("${com.alon.spring.crud.path.search:}")
-    public ListOutput search(
+    public OutputPage search(
             @RequestParam(value = "filter", required = false) String filter,
             @RequestParam(value = "order", required = false) String order,
             @RequestParam(value = "page", required = false, defaultValue = "1") Integer page,

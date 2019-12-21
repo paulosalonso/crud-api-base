@@ -2,7 +2,7 @@ package com.alon.spring.crud.service;
 
 import com.alon.spring.crud.model.BaseEntity;
 import com.alon.spring.crud.resource.projection.EntityProjection;
-import com.alon.spring.crud.resource.projection.ListOutput;
+import com.alon.spring.crud.resource.projection.OutputPage;
 import com.alon.spring.crud.resource.projection.Projection;
 import com.alon.spring.crud.service.exception.ProjectionException;
 import java.util.List;
@@ -40,18 +40,18 @@ public class ProjectionService {
         }
     }
 
-    public <I extends BaseEntity> ListOutput project(Page<I> input, List<String> expandedFields) {
+    public <I extends BaseEntity> OutputPage project(Page<I> input, List<String> expandedFields) {
         return this.project("default", input, expandedFields);
     }
 
-    public <I extends BaseEntity> ListOutput project(String projectionName, Page<I> input, List<String> expandedFields) {
+    public <I extends BaseEntity> OutputPage project(String projectionName, Page<I> input, List<String> expandedFields) {
 
         try {
             Projection projection = this.getProjection(projectionName);
             
             validateExpandRequeriment(projectionName, projection, expandedFields);
             
-            return ListOutput.of(input, projection);
+            return OutputPage.of(input, projection);
         } catch (Exception e) {
             throw new ProjectionException(e);
         }

@@ -34,14 +34,14 @@ public class OutputPage {
         return totalSize;
     }
     
-    public static ListOutputBuilder of() {
-        return new ListOutputBuilder();
+    public static OutputPageBuilder of() {
+        return new OutputPageBuilder();
     }
     
-    public static <T extends BaseEntity, O> ListOutput
+    public static <T extends BaseEntity, O> OutputPage
         of(Page<T> page, Projection<T, O> projection) {
         
-        return new ListOutputBuilder()
+        return new OutputPageBuilder()
                 .page(page.getNumber() + 1)
                 .pageSize(page.getNumberOfElements())
                 .totalPages(page.getTotalPages())
@@ -54,44 +54,44 @@ public class OutputPage {
         
     }
     
-    public static final class ListOutputBuilder {
+    public static final class OutputPageBuilder {
         
-        private ListOutput output;
+        private OutputPage output;
         
-        private ListOutputBuilder() {
+        private OutputPageBuilder() {
             try {
-                this.output = new ListOutput();
+                this.output = new OutputPage();
             } catch (Exception ex) {
                 throw new InternalError(ex);
             }
         }
         
-        public <C> ListOutputBuilder content(List<C> content) {
+        public <C> OutputPageBuilder content(List<C> content) {
             this.output.content = content;
             return this;
         }
         
-        public ListOutputBuilder page(int page) {
+        public OutputPageBuilder page(int page) {
             this.output.page = page;
             return this;
         }
         
-        public ListOutputBuilder pageSize(int pageSize) {
+        public OutputPageBuilder pageSize(int pageSize) {
             this.output.pageSize = pageSize;
             return this;
         }
         
-        public ListOutputBuilder totalPages(int totalPages) {
+        public OutputPageBuilder totalPages(int totalPages) {
             this.output.totalPages = totalPages;
             return this;
         }
         
-        public ListOutputBuilder totalSize(int totalSize) {
+        public OutputPageBuilder totalSize(int totalSize) {
             this.output.totalSize = totalSize;
             return this;
         }
         
-        public ListOutput build() {
+        public OutputPage build() {
             return this.output;
         }
         
