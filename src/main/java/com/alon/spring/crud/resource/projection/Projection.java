@@ -12,7 +12,7 @@ public interface Projection<I, O> {
     
     public O project(I input) throws ProjectionException;
     
-    default List<String> expandDepends() {
+    default List<String> requiredExpand() {
         return List.of();
     }
     

@@ -17,6 +17,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Optional;
 import javax.validation.Valid;
 
 public abstract class CrudResource<E extends BaseEntity, C, U, S extends CrudService> {
@@ -45,8 +46,11 @@ public abstract class CrudResource<E extends BaseEntity, C, U, S extends CrudSer
             @RequestParam(value = "page", required = false, defaultValue = "1") Integer page,
             @RequestParam(value = "size", required = false, defaultValue = "100") Integer size,
             @RequestParam(value = "expand", required = false, defaultValue = "") List<String> expand,
-            @RequestParam(value = "projection", required = false, defaultValue = "default") String projection
+            @RequestParam(value = "projection", required = false) Optional<String> projection
     ) {
+        
+        String normalizedProjection = this.normalizeProjection(projection);
+        List<String> normalizedExpand = this.normalizeExpand(normalizedProjection, expand);
 
         page = normalizePage(page);
 
@@ -60,8 +64,7 @@ public abstract class CrudResource<E extends BaseEntity, C, U, S extends CrudSer
 
         Page<E> entities = this.service.search(criteria);
         
-        return this.projectionService
-                   .project(projection, entities, expand);
+        return this.projectionService.project(normalizedProjection, entities, normalizedExpand);
         
     }
 
@@ -69,13 +72,15 @@ public abstract class CrudResource<E extends BaseEntity, C, U, S extends CrudSer
     public Object read(
             @PathVariable Long id,
             @RequestParam(value = "expand", required = false, defaultValue = "") List<String> expand,
-            @RequestParam(name = "projection", required = false, defaultValue = "default") String projection
+            @RequestParam(name = "projection", required = false) Optional<String> projection
     ) throws ReadException {
+        
+        String normalizedProjection = this.normalizeProjection(projection);
+        List<String> normalizedExpand = this.normalizeExpand(normalizedProjection, expand);
         
         E entity = (E) this.service.read(id, expand);
         
-        return this.projectionService
-                   .project(projection, entity, expand);
+        return this.projectionService.project(normalizedProjection, entity, normalizedExpand);
         
     }
 
@@ -83,32 +88,32 @@ public abstract class CrudResource<E extends BaseEntity, C, U, S extends CrudSer
     @ResponseStatus(HttpStatus.CREATED)
     protected Object create(
             @RequestBody @Valid C input,
-            @RequestParam(name = "projection", required = false, defaultValue = "default") String projection
+            @RequestParam(name = "projection", required = false) Optional<String> projection
     ) throws CreateException {
         
-        E entity = (E) this.createInputMapper
-                           .convert(input);
+        E entity = (E) this.createInputMapper.convert(input);
         
         entity = (E) this.service.create(entity);
         
-        return this.projectionService
-                   .project(projection, entity, List.of());
+        String normalizedProjection = this.normalizeProjection(projection);
+        
+        return this.projectionService.project(normalizedProjection, entity, List.of());
         
     }
 
     @PutMapping("${com.alon.spring.crud.path.update:}")
     public Object update(
             @RequestBody @Valid U input,
-            @RequestParam(name = "projection", required = false, defaultValue = "default") String projection
+            @RequestParam(name = "projection", required = false) Optional<String> projection
     ) throws UpdateException {
         
-        E entity = (E) this.updateInputMapper
-                           .convert(input);
+        E entity = (E) this.updateInputMapper.convert(input);
 
         entity = (E) this.service.update(entity);
         
-        return this.projectionService
-                   .project(projection, entity, List.of());
+        String normalizedProjection = this.normalizeProjection(projection);
+        
+        return this.projectionService.project(normalizedProjection, entity, List.of());
         
     }
 
@@ -117,9 +122,29 @@ public abstract class CrudResource<E extends BaseEntity, C, U, S extends CrudSer
     public void delete(@PathVariable Long id) throws DeleteException {
         this.service.delete(id);
     }
-
+    
+    /**
+     * Override this method to change the default projection
+     */
+    protected String defaultProjection() {
+        return ProjectionService.ENTITY_PROJECTION;
+    }
+    
     private int normalizePage(int page) {
         return --page;
+    }
+    
+    private String normalizeProjection(Optional<String> projection) {
+        return projection.orElse(this.defaultProjection());
+    }
+    
+    private List<String> normalizeExpand(String projectionName, List<String> receivedExpand) {
+        
+        if (projectionName.equals(ProjectionService.ENTITY_PROJECTION))
+            return receivedExpand;
+        
+        return this.projectionService.getRequiredExpand(projectionName);
+        
     }
 
 }
