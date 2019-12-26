@@ -7,6 +7,6 @@ package com.alon.spring.crud.resource.input;
  */
 public interface InputMapper<I, R> {
     
-    public R convert(I input);
+    public R map(I input);
     
 }

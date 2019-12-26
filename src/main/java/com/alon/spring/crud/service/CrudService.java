@@ -1,6 +1,5 @@
 package com.alon.spring.crud.service;
 
-import com.alon.querydecoder.SingleExpression;
 import com.alon.spring.crud.model.BaseEntity;
 import com.alon.spring.crud.service.exception.CreateException;
 import com.alon.spring.crud.service.exception.DeleteException;
@@ -21,7 +20,11 @@ import java.io.Serializable;
 import java.util.*;
 import java.util.function.Function;
 
-public interface CrudService<I extends Serializable, E extends BaseEntity<I>, R extends EntityGraphJpaRepository<E, I> & EntityGraphJpaSpecificationExecutor<E>> {
+public interface CrudService<
+        I extends Serializable, 
+        E extends BaseEntity<I>, 
+        R extends EntityGraphJpaRepository<E, I> & EntityGraphJpaSpecificationExecutor<E>
+> {
     
     public R getRepository();
 
@@ -33,15 +36,15 @@ public interface CrudService<I extends Serializable, E extends BaseEntity<I>, R 
             Page<E> result;
 
             switch (criteria.getSearchOption()) {
-                case SPECIFICATION:
-                case SPECIFICATION_ORDER: 
+                case FILTER:
+                case FILTER_ORDER: 
                     
                     result = this.getRepository()
                         .findAll(criteria.getFilter(), pageable); 
                     break;
                         
-                case SPECIFICATION_EXPAND:
-                case SPECIFICATION_ORDER_EXPAND: 
+                case FILTER_EXPAND:
+                case FILTER_ORDER_EXPAND: 
                     
                     result = this.getRepository()
                             .findAll(criteria.getFilter(), pageable, criteria.getExpand()); 
@@ -203,20 +206,16 @@ public interface CrudService<I extends Serializable, E extends BaseEntity<I>, R 
                 return PageRequest.of(criteria.getPage(), criteria.getSize());
         }
 
-        private static Sort buildSort(SingleExpression order) {
+        private static Sort buildSort(List<String> order) {
             
             List<Order> orders = new ArrayList<>();
-
-            do {
-                boolean desc = order.getValue().equalsIgnoreCase("DESC");
-
-                if (desc)
-                    orders.add(Order.desc(order.getField()));
+            
+            order.forEach(item -> {
+                if (item.startsWith("-"))
+                    orders.add(Order.desc(item));
                 else
-                    orders.add(Order.asc(order.getField()));
-
-                order = (SingleExpression) order.getNext();
-            } while (order != null);
+                    orders.add(Order.asc(item));
+            });
 
             return Sort.by(orders);
             

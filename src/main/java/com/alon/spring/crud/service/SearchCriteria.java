@@ -1,8 +1,5 @@
 package com.alon.spring.crud.service;
 
-import com.alon.querydecoder.SingleExpression;
-import com.alon.querydecoder.SingleExpressionParser;
-import com.alon.spring.crud.repository.specification.SpringJpaSpecification;
 import com.cosium.spring.data.jpa.entity.graph.domain.DynamicEntityGraph;
 import com.cosium.spring.data.jpa.entity.graph.domain.EntityGraph;
 import org.springframework.data.jpa.domain.Specification;
@@ -12,7 +9,7 @@ import java.util.List;
 public class SearchCriteria {
 
     private Specification filter;
-    private SingleExpression order;
+    private List<String> order;
     private EntityGraph expand;
     private int page;
     private int size;
@@ -21,7 +18,7 @@ public class SearchCriteria {
         return filter;
     }
 
-    public SingleExpression getOrder() {
+    public List<String> getOrder() {
         return order;
     }
 
@@ -37,20 +34,20 @@ public class SearchCriteria {
         return size;
     }
 
-    public SearchOption getSearchOption() {
+    public SearchType getSearchOption() {
 
         String option = "";
 
         if (this.filter != null)
-            option += SearchOption.SPECIFICATION.getOption();
+            option += SearchType.FILTER.getOption();
 
         if (this.order != null)
-            option += SearchOption.ORDER.getOption();
+            option += SearchType.ORDER.getOption();
 
         if (this.expand != null)
-            option += SearchOption.EXPAND.getOption();
+            option += SearchType.EXPAND.getOption();
 
-        return SearchOption.getByOptionString(option);
+        return SearchType.getByOptionString(option);
 
     }
 
@@ -66,16 +63,14 @@ public class SearchCriteria {
             this.searchCriteria = new SearchCriteria();
         }
 
-        public SearchCriteriaBuilder filter(String filter) {
-            if (filter != null)
-                this.searchCriteria.filter = SpringJpaSpecification.of(filter);
-
+        public SearchCriteriaBuilder filter(Specification filter) {
+            this.searchCriteria.filter = filter;
             return this;
         }
 
-        public SearchCriteriaBuilder order(String order) {
+        public SearchCriteriaBuilder order(List<String> order) {
             if (order != null)
-                this.searchCriteria.order = SingleExpressionParser.parse(order);
+                this.searchCriteria.order = order;
 
             return this;
         }

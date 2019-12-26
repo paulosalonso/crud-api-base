@@ -1,24 +1,23 @@
 package com.alon.spring.crud.service;
 
 import java.util.List;
-import java.util.stream.Stream;
 
-public enum SearchOption {
+public enum SearchType {
 
     NONE(""),
-    SPECIFICATION("S"),
-    SPECIFICATION_ORDER("SO"),
-    SPECIFICATION_EXPAND("SE"),
-    SPECIFICATION_ORDER_EXPAND("SOE"),
+    FILTER("F"),
+    FILTER_ORDER("FO"),
+    FILTER_EXPAND("FE"),
+    FILTER_ORDER_EXPAND("FOE"),
     ORDER("O"),
     ORDER_EXPAND("OE"),
     EXPAND("E");
 
-    private static final List<SearchOption> options = List.of(SearchOption.values());
+    private static final List<SearchType> options = List.of(SearchType.values());
 
     private String option;
 
-    private SearchOption(String option) {
+    private SearchType(String option) {
         this.option = option;
     }
 
@@ -26,7 +25,7 @@ public enum SearchOption {
         return option;
     }
 
-    public static SearchOption getByOptionString(String option) {
+    public static SearchType getByOptionString(String option) {
 
         return options.stream()
                       .filter(searchOption -> searchOption.option.equals(option))

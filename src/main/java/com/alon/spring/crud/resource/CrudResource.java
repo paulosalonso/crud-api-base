@@ -3,6 +3,7 @@ package com.alon.spring.crud.resource;
 import com.alon.spring.crud.model.BaseEntity;
 import com.alon.spring.crud.resource.input.EntityInputMapper;
 import com.alon.spring.crud.resource.input.InputMapper;
+import com.alon.spring.crud.resource.input.SearchInput;
 import com.alon.spring.crud.resource.projection.OutputPage;
 import com.alon.spring.crud.service.CrudService;
 import com.alon.spring.crud.service.ProjectionService;
@@ -11,7 +12,7 @@ import com.alon.spring.crud.service.exception.CreateException;
 import com.alon.spring.crud.service.exception.DeleteException;
 import com.alon.spring.crud.service.exception.ReadException;
 import com.alon.spring.crud.service.exception.UpdateException;
-import org.springframework.beans.factory.annotation.Autowired;
+import com.alon.spring.specification.ExpressionSpecification;
 import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
@@ -19,30 +20,45 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 import java.util.Optional;
 import javax.validation.Valid;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.jpa.domain.Specification;
+import org.springframework.web.server.ResponseStatusException;
 
-public abstract class CrudResource<E extends BaseEntity, C, U, S extends CrudService> {
+public abstract class CrudResource<
+        MANAGED_ENTITY_TYPE extends BaseEntity, 
+        SEARCH_INPUT_TYPE extends SearchInput, 
+        CREATE_INPUT_TYPE, 
+        UPDATE_INPUT_TYPE, 
+        SERVICE_TYPE extends CrudService
+> {
 	
-    @Autowired
-    protected S service;
+    protected final SERVICE_TYPE service;
+    
+    protected final ProjectionService projectionService;
+    
+    private InputMapper<CREATE_INPUT_TYPE, MANAGED_ENTITY_TYPE> createInputMapper = new EntityInputMapper();
+    private InputMapper<UPDATE_INPUT_TYPE, MANAGED_ENTITY_TYPE> updateInputMapper = new EntityInputMapper();
+    
+    @Value("${com.alon.spring.crud.search.filter.expression.enabled:false}") 
+    protected boolean enableSearchByExpression;
+    
+    public CrudResource(SERVICE_TYPE service, ProjectionService projectionService) {
+        this.service = service;
+        this.projectionService = projectionService;
+    }
 
-    @Autowired
-    protected ProjectionService projectionService;
-
-    private InputMapper<C, E> createInputMapper = new EntityInputMapper();
-    private InputMapper<U, E> updateInputMapper = new EntityInputMapper();
-
-    public void setCreateInputMapper(InputMapper<C, E> createInputMapper) {
+    public void setCreateInputMapper(InputMapper<CREATE_INPUT_TYPE, MANAGED_ENTITY_TYPE> createInputMapper) {
         this.createInputMapper = createInputMapper;
     }
 
-    public void setUpdateInputMapper(InputMapper<U, E> updateInputMapper) {
+    public void setUpdateInputMapper(InputMapper<UPDATE_INPUT_TYPE, MANAGED_ENTITY_TYPE> updateInputMapper) {
         this.updateInputMapper = updateInputMapper;
     }
 
     @GetMapping("${com.alon.spring.crud.path.search:}")
     public OutputPage search(
-            @RequestParam(value = "filter", required = false) String filter,
-            @RequestParam(value = "order", required = false) String order,
+            SEARCH_INPUT_TYPE filter,
+            @RequestParam(value = "order", required = false, defaultValue = "") List<String> order,
             @RequestParam(value = "page", required = false, defaultValue = "1") Integer page,
             @RequestParam(value = "size", required = false, defaultValue = "100") Integer size,
             @RequestParam(value = "expand", required = false, defaultValue = "") List<String> expand,
@@ -50,21 +66,54 @@ public abstract class CrudResource<E extends BaseEntity, C, U, S extends CrudSer
     ) {
         
         String normalizedProjection = this.normalizeProjection(projection);
-        List<String> normalizedExpand = this.normalizeExpand(normalizedProjection, expand);
-
-        page = normalizePage(page);
+        expand = this.normalizeExpand(normalizedProjection, expand);
 
         SearchCriteria criteria = SearchCriteria.of()
-                .filter(filter)
+                .filter(filter.toSpecification())
                 .order(order)
-                .page(page)
+                .page(this.normalizePage(page))
                 .size(size)
                 .expand(expand)
                 .build();
 
-        Page<E> entities = this.service.search(criteria);
+        Page<MANAGED_ENTITY_TYPE> entities = this.service.search(criteria);
         
-        return this.projectionService.project(normalizedProjection, entities, normalizedExpand);
+        return this.projectionService.project(normalizedProjection, entities, expand);
+        
+    }
+    
+    @GetMapping("${com.alon.spring.crud.path.search:}/by-expression")
+    public OutputPage search(
+            @RequestParam(value = "filter", required = false) Optional<String> filter,
+            @RequestParam(value = "order", required = false, defaultValue = "") List<String> order,
+            @RequestParam(value = "page", required = false, defaultValue = "1") Integer page,
+            @RequestParam(value = "size", required = false, defaultValue = "100") Integer size,
+            @RequestParam(value = "expand", required = false, defaultValue = "") List<String> expand,
+            @RequestParam(value = "projection", required = false) Optional<String> projection
+    ) {
+        
+        if (!enableSearchByExpression)
+            throw new ResponseStatusException(HttpStatus.LOCKED);
+        
+        String normalizedProjection = this.normalizeProjection(projection);
+        expand = this.normalizeExpand(normalizedProjection, expand);
+        
+        Specification specification = null;
+        
+        if (filter.isPresent())
+            specification = ExpressionSpecification.of(filter.get());
+
+        SearchCriteria criteria = SearchCriteria.of()
+                .filter(specification)
+                .order(order)
+                .page(this.normalizePage(page))
+                .size(size)
+                .expand(expand)
+                .build();
+
+        Page<MANAGED_ENTITY_TYPE> entities = this.service.search(criteria);
+        
+        return this.projectionService.project(normalizedProjection, entities, expand);
         
     }
 
@@ -78,7 +127,7 @@ public abstract class CrudResource<E extends BaseEntity, C, U, S extends CrudSer
         String normalizedProjection = this.normalizeProjection(projection);
         List<String> normalizedExpand = this.normalizeExpand(normalizedProjection, expand);
         
-        E entity = (E) this.service.read(id, expand);
+        MANAGED_ENTITY_TYPE entity = (MANAGED_ENTITY_TYPE) this.service.read(id, expand);
         
         return this.projectionService.project(normalizedProjection, entity, normalizedExpand);
         
@@ -87,13 +136,13 @@ public abstract class CrudResource<E extends BaseEntity, C, U, S extends CrudSer
     @PostMapping("${com.alon.spring.crud.path.create:}")
     @ResponseStatus(HttpStatus.CREATED)
     protected Object create(
-            @RequestBody @Valid C input,
+            @RequestBody @Valid CREATE_INPUT_TYPE input,
             @RequestParam(name = "projection", required = false) Optional<String> projection
     ) throws CreateException {
         
-        E entity = (E) this.createInputMapper.convert(input);
+        MANAGED_ENTITY_TYPE entity = (MANAGED_ENTITY_TYPE) this.createInputMapper.map(input);
         
-        entity = (E) this.service.create(entity);
+        entity = (MANAGED_ENTITY_TYPE) this.service.create(entity);
         
         String normalizedProjection = this.normalizeProjection(projection);
         
@@ -103,13 +152,13 @@ public abstract class CrudResource<E extends BaseEntity, C, U, S extends CrudSer
 
     @PutMapping("${com.alon.spring.crud.path.update:}")
     public Object update(
-            @RequestBody @Valid U input,
+            @RequestBody @Valid UPDATE_INPUT_TYPE input,
             @RequestParam(name = "projection", required = false) Optional<String> projection
     ) throws UpdateException {
         
-        E entity = (E) this.updateInputMapper.convert(input);
+        MANAGED_ENTITY_TYPE entity = (MANAGED_ENTITY_TYPE) this.updateInputMapper.map(input);
 
-        entity = (E) this.service.update(entity);
+        entity = (MANAGED_ENTITY_TYPE) this.service.update(entity);
         
         String normalizedProjection = this.normalizeProjection(projection);
         
@@ -124,21 +173,21 @@ public abstract class CrudResource<E extends BaseEntity, C, U, S extends CrudSer
     }
     
     /**
-     * Override this method to change the default projection
+     * Override this method to change default projection
      */
     protected String defaultProjection() {
         return ProjectionService.ENTITY_PROJECTION;
     }
     
-    private int normalizePage(int page) {
+    protected int normalizePage(int page) {
         return --page;
     }
     
-    private String normalizeProjection(Optional<String> projection) {
+    protected String normalizeProjection(Optional<String> projection) {
         return projection.orElse(this.defaultProjection());
     }
     
-    private List<String> normalizeExpand(String projectionName, List<String> receivedExpand) {
+    protected List<String> normalizeExpand(String projectionName, List<String> receivedExpand) {
         
         if (projectionName.equals(ProjectionService.ENTITY_PROJECTION))
             return receivedExpand;

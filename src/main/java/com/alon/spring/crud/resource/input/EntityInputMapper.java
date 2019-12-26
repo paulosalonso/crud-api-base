@@ -7,7 +7,7 @@ import org.springframework.stereotype.Component;
 public class EntityInputMapper<I extends BaseEntity> implements InputMapper<I, I> {
 
     @Override
-    public I convert(I input) {
+    public I map(I input) {
         return input;
     }
     

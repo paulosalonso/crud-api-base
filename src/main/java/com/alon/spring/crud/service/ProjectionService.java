@@ -9,7 +9,6 @@ import java.util.Map;
 import java.util.Optional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
 import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
@@ -19,7 +18,7 @@ public class ProjectionService {
     
     private static final Logger LOGGER = LoggerFactory.getLogger(ProjectionService.class);
     
-    public static final String ENTITY_PROJECTION = "entity-default";
+    public static final String ENTITY_PROJECTION = "entity-projection";
     
     private ApplicationContext applicationContext;
     
