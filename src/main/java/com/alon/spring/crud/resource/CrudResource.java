@@ -28,10 +28,11 @@ public abstract class CrudResource<
         MANAGED_ENTITY_TYPE extends BaseEntity, 
         CREATE_INPUT_TYPE, 
         UPDATE_INPUT_TYPE,
-        SEARCH_INPUT_TYPE extends SearchInput
+        SEARCH_INPUT_TYPE extends SearchInput,
+        SERVICE_TYPE extends CrudService
 > {
 	
-    protected final CrudService service;
+    protected final SERVICE_TYPE service;
     
     protected final ProjectionService projectionService;
     
@@ -41,7 +42,7 @@ public abstract class CrudResource<
     @Value("${com.alon.spring.crud.search.filter.expression.enabled:false}") 
     protected boolean enableSearchByExpression;
     
-    public CrudResource(CrudService service, ProjectionService projectionService) {
+    public CrudResource(SERVICE_TYPE service, ProjectionService projectionService) {
         this.service = service;
         this.projectionService = projectionService;
     }
