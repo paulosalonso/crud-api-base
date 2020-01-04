@@ -1,6 +1,7 @@
 package com.alon.spring.crud.resource.projection;
 
 import com.alon.spring.crud.service.exception.ProjectionException;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -13,7 +14,7 @@ public interface Projection<I, O> {
     public O project(I input) throws ProjectionException;
     
     default List<String> requiredExpand() {
-        return List.of();
+        return Collections.emptyList();
     }
     
 }

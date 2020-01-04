@@ -21,19 +21,19 @@ import java.util.*;
 import java.util.function.Function;
 
 public interface CrudService<
-        I extends Serializable, 
-        E extends BaseEntity<I>, 
-        R extends EntityGraphJpaRepository<E, I> & EntityGraphJpaSpecificationExecutor<E>
+        ENTITY_ID_TYPE extends Serializable, 
+        ENTITY_TYPE extends BaseEntity<ENTITY_ID_TYPE>, 
+        REPOSITORY extends EntityGraphJpaRepository<ENTITY_TYPE, ENTITY_ID_TYPE> & EntityGraphJpaSpecificationExecutor<ENTITY_TYPE>
 > {
     
-    public R getRepository();
+    public REPOSITORY getRepository();
 
-    default Page<E> search(SearchCriteria criteria) {
+    default Page<ENTITY_TYPE> search(SearchCriteria criteria) {
         
         try {
             Hidden.executeHook(this, criteria, LifeCycleHook.BEFORE_SEARCH);
             Pageable pageable = Hidden.buildPageable(criteria);
-            Page<E> result;
+            Page<ENTITY_TYPE> result;
 
             switch (criteria.getSearchOption()) {
                 case FILTER:
@@ -72,21 +72,25 @@ public interface CrudService<
 
     }
 
-    default E create(@Valid E entity) {
+    default ENTITY_TYPE create(@Valid ENTITY_TYPE entity) {
         try {
             entity = Hidden.executeHook(this, entity, LifeCycleHook.BEFORE_CREATE);
-            entity = (E) this.getRepository().save(entity);
+            entity = (ENTITY_TYPE) this.getRepository().save(entity);
             return Hidden.executeHook(this, entity, LifeCycleHook.AFTER_CREATE);
         } catch (Throwable ex) {
             throw new CreateException(ex.getMessage(), ex);
         }
     }
+    
+    default ENTITY_TYPE read(ENTITY_ID_TYPE id) {
+        return this.read(id, null);
+    }
 
-    default E read(I id, List<String> expand) {
+    default ENTITY_TYPE read(ENTITY_ID_TYPE id, List<String> expand) {
         try {
             id = Hidden.executeHook(this, id, LifeCycleHook.BEFORE_READ);
             
-            Optional<E> opt;
+            Optional<ENTITY_TYPE> opt;
             
             if (expand != null && !expand.isEmpty())
                 opt = this.getRepository().findById(id, new DynamicEntityGraph(expand));
@@ -105,20 +109,20 @@ public interface CrudService<
         }
     }
 
-    default E update(@Valid E entity) {
+    default ENTITY_TYPE update(@Valid ENTITY_TYPE entity) {
         if (entity.id() == null)
             throw new UpdateException("Unmanaged entity. Use the create method.");
 
         try {
             entity = Hidden.executeHook(this, entity, LifeCycleHook.BEFORE_UPDATE);
-            entity = this.create(entity);
+            entity = (ENTITY_TYPE) this.getRepository().save(entity);
             return Hidden.executeHook(this, entity, LifeCycleHook.AFTER_UPDATE);
         } catch (Throwable ex) {
             throw new UpdateException(ex.getMessage(), ex);
         }
     }
 
-    default void delete(I id) {
+    default void delete(ENTITY_ID_TYPE id) {
         try {
             Hidden.executeHook(this, id, LifeCycleHook.BEFORE_DELETE);
             this.getRepository().deleteById(id);
@@ -133,47 +137,47 @@ public interface CrudService<
     	return this;
     }
     
-    default CrudService addAfterSearchHook(Function<Page<E>, Page<E>> function) {
+    default CrudService addAfterSearchHook(Function<Page<ENTITY_TYPE>, Page<ENTITY_TYPE>> function) {
     	Hidden.getServiceHooks(this).get(LifeCycleHook.AFTER_SEARCH).add(function);    	
     	return this;
     }
     
-    default CrudService addBeforeReadHook(Function<I, I> function) {
+    default CrudService addBeforeReadHook(Function<ENTITY_ID_TYPE, ENTITY_ID_TYPE> function) {
     	Hidden.getServiceHooks(this).get(LifeCycleHook.BEFORE_READ).add(function);
     	return this;
     }
     
-    default CrudService addAfterReadHook(Function<E, E> function) {
+    default CrudService addAfterReadHook(Function<ENTITY_TYPE, ENTITY_TYPE> function) {
     	Hidden.getServiceHooks(this).get(LifeCycleHook.AFTER_READ).add(function);    	
     	return this;
     }
     
-    default CrudService addBeforeCreateHook(Function<E, E> function) {
+    default CrudService addBeforeCreateHook(Function<ENTITY_TYPE, ENTITY_TYPE> function) {
     	Hidden.getServiceHooks(this).get(LifeCycleHook.BEFORE_CREATE).add(function);
     	return this;
     }
     
-    default CrudService addAfterCreateHook(Function<E, E> function) {
+    default CrudService addAfterCreateHook(Function<ENTITY_TYPE, ENTITY_TYPE> function) {
     	Hidden.getServiceHooks(this).get(LifeCycleHook.AFTER_CREATE).add(function);    	
     	return this;
     }
     
-    default CrudService addBeforeUpdateHook(Function<E, E> function) {
+    default CrudService addBeforeUpdateHook(Function<ENTITY_TYPE, ENTITY_TYPE> function) {
     	Hidden.getServiceHooks(this).get(LifeCycleHook.BEFORE_UPDATE).add(function);    	
     	return this;
     }
     
-    default CrudService addAfterUpdateHook(Function<E, E> function) {
+    default CrudService addAfterUpdateHook(Function<ENTITY_TYPE, ENTITY_TYPE> function) {
     	Hidden.getServiceHooks(this).get(LifeCycleHook.AFTER_UPDATE).add(function);    	
     	return this;
     }
     
-    default CrudService addBeforeDeleteHook(Function<Long, Long> function) {
+    default CrudService addBeforeDeleteHook(Function<ENTITY_ID_TYPE, ENTITY_ID_TYPE> function) {
     	Hidden.getServiceHooks(this).get(LifeCycleHook.BEFORE_DELETE).add(function);    	
     	return this;
     }
     
-    default CrudService addAfterDeleteHook(Function<Long, Long> function) {
+    default CrudService addAfterDeleteHook(Function<ENTITY_ID_TYPE, ENTITY_ID_TYPE> function) {
     	Hidden.getServiceHooks(this).get(LifeCycleHook.AFTER_DELETE).add(function);    	
     	return this;
     }
@@ -201,9 +205,9 @@ public interface CrudService<
 
         private static Pageable buildPageable(SearchCriteria criteria) {
             if (criteria.getOrder() != null)
-                return PageRequest.of(criteria.getPage(), criteria.getSize(), buildSort(criteria.getOrder()));
+                return PageRequest.of(criteria.getPage(), criteria.getPageSize(), buildSort(criteria.getOrder()));
             else
-                return PageRequest.of(criteria.getPage(), criteria.getSize());
+                return PageRequest.of(criteria.getPage(), criteria.getPageSize());
         }
 
         private static Sort buildSort(List<String> order) {
@@ -212,7 +216,7 @@ public interface CrudService<
             
             order.forEach(item -> {
                 if (item.startsWith("-"))
-                    orders.add(Order.desc(item));
+                    orders.add(Order.desc(item.substring(1)));
                 else
                     orders.add(Order.asc(item));
             });

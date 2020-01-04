@@ -1,5 +1,6 @@
 package com.alon.spring.crud.service;
 
+import com.alon.spring.specification.ExpressionSpecification;
 import com.cosium.spring.data.jpa.entity.graph.domain.DynamicEntityGraph;
 import com.cosium.spring.data.jpa.entity.graph.domain.EntityGraph;
 import org.springframework.data.jpa.domain.Specification;
@@ -11,8 +12,8 @@ public class SearchCriteria {
     private Specification filter;
     private List<String> order;
     private EntityGraph expand;
-    private int page;
-    private int size;
+    private int page = 1;
+    private int pageSize = 100;
 
     public Specification getFilter() {
         return filter;
@@ -30,8 +31,8 @@ public class SearchCriteria {
         return page;
     }
 
-    public int getSize() {
-        return size;
+    public int getPageSize() {
+        return pageSize;
     }
 
     public SearchType getSearchOption() {
@@ -67,11 +68,14 @@ public class SearchCriteria {
             this.searchCriteria.filter = filter;
             return this;
         }
+        
+        public SearchCriteriaBuilder filter(String filter) {
+            this.searchCriteria.filter = ExpressionSpecification.of(filter);
+            return this;
+        }
 
         public SearchCriteriaBuilder order(List<String> order) {
-            if (order != null)
-                this.searchCriteria.order = order;
-
+            this.searchCriteria.order = order;
             return this;
         }
 
@@ -87,8 +91,8 @@ public class SearchCriteria {
             return this;
         }
 
-        public SearchCriteriaBuilder size(int size) {
-            this.searchCriteria.size = size;
+        public SearchCriteriaBuilder pageSize(int pageSize) {
+            this.searchCriteria.pageSize = pageSize;
             return this;
         }
 
