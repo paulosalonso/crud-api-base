@@ -80,7 +80,7 @@ public class SearchCriteria {
         }
 
         public SearchCriteriaBuilder expand(List<String> expand) {
-            if (!expand.isEmpty())
+            if (expand != null && !expand.isEmpty())
                 this.searchCriteria.expand = new DynamicEntityGraph(expand);
 
             return this;
