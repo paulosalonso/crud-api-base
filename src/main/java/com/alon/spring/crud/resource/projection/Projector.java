@@ -9,7 +9,7 @@ import java.util.List;
  * @param <I> Input data to be projected
  * @param <O> Ouput projection
  */
-public interface Projection<I, O> {
+public interface Projector<I, O> {
     
     public O project(I input) throws ProjectionException;
     

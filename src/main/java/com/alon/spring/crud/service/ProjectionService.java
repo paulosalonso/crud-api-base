@@ -2,7 +2,7 @@ package com.alon.spring.crud.service;
 
 import com.alon.spring.crud.model.BaseEntity;
 import com.alon.spring.crud.resource.projection.OutputPage;
-import com.alon.spring.crud.resource.projection.Projection;
+import com.alon.spring.crud.resource.projection.Projector;
 import com.alon.spring.crud.service.exception.ProjectionException;
 import java.util.List;
 import java.util.Map;
@@ -22,12 +22,12 @@ public class ProjectionService {
     
     private ApplicationContext applicationContext;
     
-    private final Map<String, Projection> projections;
+    private final Map<String, Projector> projections;
     
     public ProjectionService(ApplicationContext applicationContext) {
         this.applicationContext = applicationContext;
         
-        this.projections = this.applicationContext.getBeansOfType(Projection.class);
+        this.projections = this.applicationContext.getBeansOfType(Projector.class);
     }
 
     public <I extends BaseEntity, O> O project(String projectionName, I input, List<String> expandedFields) {
@@ -36,9 +36,9 @@ public class ProjectionService {
             return (O) input;
         
         try {
-            Projection projection = this.getProjection(projectionName);
+            Projector projector = this.getProjection(projectionName);
             
-            return (O) projection.project(input);
+            return (O) projector.project(input);
         } catch (Exception e) {
             String message = String.format(
                     "Error projecting entity %s with projector '%s'", 
@@ -54,8 +54,8 @@ public class ProjectionService {
     public <I extends BaseEntity> OutputPage project(String projectionName, Page<I> input, List<String> expandedFields) {
 
         try {
-            Projection projection = this.getProjection(projectionName);
-            return OutputPage.of(input, projection);
+            Projector projector = this.getProjection(projectionName);
+            return OutputPage.of(input, projector);
         } catch (Exception e) {
             String message = String.format(
                     "Error projecting entity %s with projector '%s'", 
@@ -68,36 +68,36 @@ public class ProjectionService {
 
     }
 
-    private Projection getProjection(String projectionName) {
+    private Projector getProjection(String projectionName) {
 
-        Projection projection = this.projections.get(projectionName);
+        Projector projector = this.projections.get(projectionName);
 
-        return Optional.ofNullable(projection)
+        return Optional.ofNullable(projector)
                        .orElse(this.projections.get(ENTITY_PROJECTION));
 
     }
     
     public List<String> getRequiredExpand(String projectionName) {
         
-        Projection projection = this.projections.get(projectionName);
+        Projector projector = this.projections.get(projectionName);
         
-        if (projection == null)
+        if (projector == null)
             throw new IllegalArgumentException(
                     String.format("The projection %s not exists.", projectionName));
         
-        return projection.requiredExpand();
+        return projector.requiredExpand();
         
     }
     
     public void validateExpandRequeriment(String projectionName, List<String> expandedFields) {
         
-        Projection projection = this.getProjection(projectionName);
+        Projector projector = this.getProjection(projectionName);
         
-        if (!expandedFields.containsAll(projection.requiredExpand())) {            
+        if (!expandedFields.containsAll(projector.requiredExpand())) {            
             String message = String.format(
                     "%s projection requires follow expanded fields: %s, but received: %s",
                     projectionName,
-                    projection.requiredExpand(),
+                    projector.requiredExpand(),
                     expandedFields
             );
             

@@ -38,8 +38,19 @@ public class OutputPage {
         return new OutputPageBuilder();
     }
     
-    public static <T extends BaseEntity, O> OutputPage
-        of(Page<T> page, Projection<T, O> projection) {
+    public static <T extends BaseEntity, O> OutputPage of(Page<T> page) {
+        
+        return new OutputPageBuilder()
+                .page(page.getNumber() + 1)
+                .pageSize(page.getNumberOfElements())
+                .totalPages(page.getTotalPages())
+                .totalSize(Long.valueOf(page.getTotalElements()).intValue())
+                .content(page.getContent())
+                .build();
+        
+    }
+    
+    public static <T extends BaseEntity, O> OutputPage of(Page<T> page, Projector<T, O> projection) {
         
         return new OutputPageBuilder()
                 .page(page.getNumber() + 1)
