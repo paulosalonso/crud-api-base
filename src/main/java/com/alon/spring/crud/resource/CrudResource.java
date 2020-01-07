@@ -20,6 +20,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 import java.util.Optional;
 import javax.validation.Valid;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.web.server.ResponseStatusException;
@@ -34,7 +35,8 @@ public abstract class CrudResource<
 	
     protected final SERVICE_TYPE service;
     
-    protected final ProjectionService projectionService;
+    @Autowired
+    protected ProjectionService projectionService;
     
     private InputMapper<CREATE_INPUT_TYPE, MANAGED_ENTITY_TYPE> createInputMapper = new EntityInputMapper();
     private InputMapper<UPDATE_INPUT_TYPE, MANAGED_ENTITY_TYPE> updateInputMapper = new EntityInputMapper();
@@ -42,9 +44,8 @@ public abstract class CrudResource<
     @Value("${com.alon.spring.crud.search.filter.expression.enabled:false}") 
     protected boolean enableSearchByExpression;
     
-    public CrudResource(SERVICE_TYPE service, ProjectionService projectionService) {
+    public CrudResource(SERVICE_TYPE service) {
         this.service = service;
-        this.projectionService = projectionService;
     }
 
     protected final void setCreateInputMapper(InputMapper<CREATE_INPUT_TYPE, MANAGED_ENTITY_TYPE> createInputMapper) {
