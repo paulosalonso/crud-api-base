@@ -5,6 +5,28 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## 2.2.0 - 2019-12-26
+
+### Added
+- Some generic types of the CrudService and CrudResource declaration.
+- Projection feature, which provides a dynamic output view of the entities output.
+- Hooks for before and after search and read methods.
+- Bean validation for request body on read and create endpoints.
+- ReadException on read flow.
+- Search endpoint with filter based on a pojo.
+
+### Changed
+- All the exceptions are now RuntimeExceptions.
+- Méthod 'list' in CrudResource and CrudService is now called 'search'.
+- The expected property 'com.alon.spring.crud.path.list' in application.properties is now expected as 'com.alon.spring.crud.path.search'.
+- ListOutput has been renamed to OutpuPage.
+- CrudResource dependencies are now injected by the constructor instead @Autowired, thus facilitating unit testing.
+- The search with expression filter has been locked by default and can be unlocked with a property called com.alon.spring.crud.search.filter.expression.enabled with value true
+
+
+### Removed
+- The interfaces of convertion layer.
+
 ## 2.1.0 - 2019-12-16
 
 ### Added
