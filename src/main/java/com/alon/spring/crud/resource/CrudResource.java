@@ -1,117 +1,200 @@
 package com.alon.spring.crud.resource;
 
-import com.alon.querydecoder.ExpressionParser;
-import com.alon.querydecoder.SingleExpressionParser;
-import org.springframework.data.domain.Page;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestParam;
-
-import com.alon.querydecoder.Expression;
 import com.alon.spring.crud.model.BaseEntity;
-import com.alon.spring.crud.repository.specification.SpringJpaSpecification;
-import com.alon.spring.crud.resource.dto.EntityConverterProvider;
-import com.alon.spring.crud.resource.dto.ResourceDtoConverterProvider;
-import com.alon.spring.crud.service.CreateException;
+import com.alon.spring.crud.resource.input.EntityInputMapper;
+import com.alon.spring.crud.resource.input.InputMapper;
+import com.alon.spring.crud.resource.input.SearchInput;
+import com.alon.spring.crud.resource.projection.OutputPage;
 import com.alon.spring.crud.service.CrudService;
-import com.alon.spring.crud.service.DeleteException;
-import com.alon.spring.crud.service.NotFoundException;
-import com.alon.spring.crud.service.UpdateException;
-import java.util.Optional;
-import org.springframework.beans.factory.annotation.Autowired;
+import com.alon.spring.crud.service.ProjectionService;
+import com.alon.spring.crud.service.SearchCriteria;
+import com.alon.spring.crud.service.exception.CreateException;
+import com.alon.spring.crud.service.exception.DeleteException;
+import com.alon.spring.crud.service.exception.ReadException;
+import com.alon.spring.crud.service.exception.UpdateException;
+import com.alon.spring.specification.ExpressionSpecification;
+import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
-import org.springframework.web.bind.annotation.ResponseStatus;
+import org.springframework.web.bind.annotation.*;
 
-/**
- * 
- * @param <S> Service
- */
-public abstract class CrudResource<C, U, S extends CrudService> {
+import java.util.List;
+import java.util.Optional;
+import javax.validation.Valid;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.jpa.domain.Specification;
+import org.springframework.web.server.ResponseStatusException;
+
+public abstract class CrudResource<
+        MANAGED_ENTITY_TYPE extends BaseEntity, 
+        CREATE_INPUT_TYPE, 
+        UPDATE_INPUT_TYPE,
+        SEARCH_INPUT_TYPE extends SearchInput,
+        SERVICE_TYPE extends CrudService
+> {
 	
-    @Autowired
-    protected S service;
+    protected final SERVICE_TYPE service;
     
     @Autowired
-    private EntityConverterProvider entityConverterProvider;
+    protected ProjectionService projectionService;
     
-    public ResourceDtoConverterProvider getDtoConverterProvider() {
-        return this.entityConverterProvider;
+    private InputMapper<CREATE_INPUT_TYPE, MANAGED_ENTITY_TYPE> createInputMapper = new EntityInputMapper();
+    private InputMapper<UPDATE_INPUT_TYPE, MANAGED_ENTITY_TYPE> updateInputMapper = new EntityInputMapper();
+    
+    @Value("${com.alon.spring.crud.search.filter.expression.enabled:false}") 
+    protected boolean enableSearchByExpression;
+    
+    public CrudResource(SERVICE_TYPE service) {
+        this.service = service;
     }
 
-    @GetMapping("${com.alon.spring.crud.path.list}")
-    public <E extends BaseEntity, O> O list(
-            @RequestParam(value = "filter", required = false)                       Optional<String> filter,
-            @RequestParam(value = "order",  required = false)                       Optional<String> order,
-            @RequestParam(value = "page",   required = false, defaultValue = "0")   Integer page,
-            @RequestParam(value = "size",   required = false, defaultValue = "100") Integer size
+    protected final void setCreateInputMapper(InputMapper<CREATE_INPUT_TYPE, MANAGED_ENTITY_TYPE> createInputMapper) {
+        this.createInputMapper = createInputMapper;
+    }
+
+    protected final void setUpdateInputMapper(InputMapper<UPDATE_INPUT_TYPE, MANAGED_ENTITY_TYPE> updateInputMapper) {
+        this.updateInputMapper = updateInputMapper;
+    }
+
+    @GetMapping("${com.alon.spring.crud.path.search:}")
+    public OutputPage search(
+            SEARCH_INPUT_TYPE filter,
+            @RequestParam(value = "order", required = false) List<String> order,
+            @RequestParam(value = "page", required = false, defaultValue = "1") Integer page,
+            @RequestParam(value = "pageSize", required = false, defaultValue = "100") Integer pageSize,
+            @RequestParam(value = "expand", required = false) List<String> expand,
+            @RequestParam(value = "projection", required = false) String projection
     ) {
         
-        Page<E> entities;
+        String normalizedProjection = this.normalizeProjection(projection);
+        expand = this.normalizeExpand(normalizedProjection, expand);
+
+        SearchCriteria criteria = SearchCriteria.of()
+                .filter(filter.toSpecification())
+                .order(order)
+                .page(this.normalizePage(page))
+                .pageSize(pageSize)
+                .expand(expand)
+                .build();
+
+        Page<MANAGED_ENTITY_TYPE> entities = this.service.search(criteria);
         
-        if (filter.isPresent() && order.isPresent())
-            entities = this.service.list(SpringJpaSpecification.of(filter.get()), 0, 0, SingleExpressionParser.parse(order.get()));
-        else if (filter.isPresent())
-            entities = this.service.list(SpringJpaSpecification.of(filter.get()), page, size);
-        else if (order.isPresent())
-            entities = this.service.list(page, size, SingleExpressionParser.parse(order.get()));
-        else
-            entities = this.service.list(page, size);
+        return this.projectionService.project(normalizedProjection, entities, expand);
         
-        return (O) this.getDtoConverterProvider()
-                       .getListOutputDtoConverter()
-                       .convert(entities);
+    }
+    
+    @GetMapping("${com.alon.spring.crud.path.search:}/by-expression")
+    public OutputPage search(
+            @RequestParam(value = "filter") Optional<String> filter,
+            @RequestParam(value = "order", required = false) List<String> order,
+            @RequestParam(value = "page", required = false, defaultValue = "1") Integer page,
+            @RequestParam(value = "pageSize", required = false, defaultValue = "100") Integer pageSize,
+            @RequestParam(value = "expand", required = false) List<String> expand,
+            @RequestParam(value = "projection", required = false) String projection
+    ) {
+        
+        if (!enableSearchByExpression)
+            throw new ResponseStatusException(HttpStatus.LOCKED);
+        
+        String normalizedProjection = this.normalizeProjection(projection);
+        expand = this.normalizeExpand(normalizedProjection, expand);
+        
+        Specification specification = null;
+        
+        if (filter.isPresent())
+            specification = ExpressionSpecification.of(filter.get());
+
+        SearchCriteria criteria = SearchCriteria.of()
+                .filter(specification)
+                .order(order)
+                .page(this.normalizePage(page))
+                .pageSize(pageSize)
+                .expand(expand)
+                .build();
+
+        Page<MANAGED_ENTITY_TYPE> entities = this.service.search(criteria);
+        
+        return this.projectionService.project(normalizedProjection, entities, expand);
         
     }
 
-    @GetMapping("${com.alon.spring.crud.path.read}")
-    public <E extends BaseEntity, O> O read(@PathVariable Long id) throws NotFoundException {
+    @GetMapping("${com.alon.spring.crud.path.read:/{id}}")
+    public Object read(
+            @PathVariable Long id,
+            @RequestParam(value = "expand", required = false) List<String> expand,
+            @RequestParam(name = "projection", required = false) String projection
+    ) throws ReadException {
         
-        E entity = (E) this.service.read(id);
+        String normalizedProjection = this.normalizeProjection(projection);
+        List<String> normalizedExpand = this.normalizeExpand(normalizedProjection, expand);
         
-        return (O) this.getDtoConverterProvider()
-                       .getReadOutputDtoConverter()
-                       .convert(entity);
+        MANAGED_ENTITY_TYPE entity = (MANAGED_ENTITY_TYPE) this.service.read(id, expand);
+        
+        return this.projectionService.project(normalizedProjection, entity, normalizedExpand);
         
     }
 
-    @PostMapping("${com.alon.spring.crud.path.create}")
+    @PostMapping("${com.alon.spring.crud.path.create:}")
     @ResponseStatus(HttpStatus.CREATED)
-    protected <E extends BaseEntity, O> O create(@RequestBody C input) throws CreateException {
+    protected Object create(
+            @RequestBody @Valid CREATE_INPUT_TYPE input,
+            @RequestParam(name = "projection", required = false) String projection
+    ) throws CreateException {
         
-        E entity = (E) this.getDtoConverterProvider()
-                           .getCreateInputDtoConverter()
-                           .convert(input);
+        MANAGED_ENTITY_TYPE entity = (MANAGED_ENTITY_TYPE) this.createInputMapper.map(input);
         
-        entity = (E) this.service.create(entity);
+        entity = (MANAGED_ENTITY_TYPE) this.service.create(entity);
         
-        return (O) this.getDtoConverterProvider()
-                       .getCreateOutputDtoConverter()
-                       .convert(entity);
+        String normalizedProjection = this.normalizeProjection(projection);
         
-    }
-
-    @PutMapping("${com.alon.spring.crud.path.update}")
-    public <E extends BaseEntity, O> O update(@RequestBody U input) throws UpdateException {
-        
-        E entity = (E) this.getDtoConverterProvider()
-                           .getUpdateInputDtoConverter()
-                           .convert(input);
-
-        entity = (E) this.service.update(entity);
-        
-        return (O) this.getDtoConverterProvider()
-                       .getUpdateOutputDtoConverter()
-                       .convert(entity);
+        return this.projectionService.project(normalizedProjection, entity, List.of());
         
     }
 
-    @DeleteMapping("${com.alon.spring.crud.path.delete}")
+    @PutMapping("${com.alon.spring.crud.path.update:}")
+    public Object update(
+            @RequestBody @Valid UPDATE_INPUT_TYPE input,
+            @RequestParam(name = "projection", required = false) String projection
+    ) throws UpdateException {
+        
+        MANAGED_ENTITY_TYPE entity = (MANAGED_ENTITY_TYPE) this.updateInputMapper.map(input);
+
+        entity = (MANAGED_ENTITY_TYPE) this.service.update(entity);
+        
+        String normalizedProjection = this.normalizeProjection(projection);
+        
+        return this.projectionService.project(normalizedProjection, entity, List.of());
+        
+    }
+
+    @DeleteMapping("${com.alon.spring.crud.path.delete:/{id}}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void delete(@PathVariable Long id) throws DeleteException {
         this.service.delete(id);
     }
+    
+    /**
+     * Override this method to change default projection
+     */
+    protected String defaultProjection() {
+        return ProjectionService.ENTITY_PROJECTION;
+    }
+    
+    protected int normalizePage(int page) {
+        return --page;
+    }
+    
+    protected String normalizeProjection(String projection) {
+        return Optional.ofNullable(projection).orElse(this.defaultProjection());
+    }
+    
+    protected List<String> normalizeExpand(String projectionName, List<String> receivedExpand) {
+        
+        if (projectionName.equals(ProjectionService.ENTITY_PROJECTION))
+            return receivedExpand;
+        
+        return this.projectionService.getRequiredExpand(projectionName);
+        
+    }
+
 }
