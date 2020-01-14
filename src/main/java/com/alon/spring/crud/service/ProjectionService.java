@@ -4,9 +4,14 @@ import com.alon.spring.crud.model.BaseEntity;
 import com.alon.spring.crud.resource.projection.OutputPage;
 import com.alon.spring.crud.resource.projection.Projector;
 import com.alon.spring.crud.service.exception.ProjectionException;
+import java.lang.reflect.ParameterizedType;
+import java.lang.reflect.Type;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.ApplicationContext;
@@ -22,21 +27,25 @@ public class ProjectionService {
     
     private ApplicationContext applicationContext;
     
+    private RepresentationService representationService;
+    
     private final Map<String, Projector> projections;
     
-    public ProjectionService(ApplicationContext applicationContext) {
+    private final Map<Class, Map<String, Map<String, Object>>> representationsCache = new HashMap<>();
+    
+    public ProjectionService(ApplicationContext applicationContext, RepresentationService representationService) {
         this.applicationContext = applicationContext;
-        
+        this.representationService = representationService;
         this.projections = this.applicationContext.getBeansOfType(Projector.class);
     }
 
-    public <I extends BaseEntity, O> O project(String projectionName, I input, List<String> expandedFields) {
+    public <I extends BaseEntity, O> O project(String projectionName, I input) {
         
         if (projectionName.equals(ENTITY_PROJECTION))
             return (O) input;
         
         try {
-            Projector projector = this.getProjection(projectionName);
+            Projector projector = this.getProjector(projectionName);
             
             return (O) projector.project(input);
         } catch (Exception e) {
@@ -51,10 +60,10 @@ public class ProjectionService {
         
     }
 
-    public <I extends BaseEntity> OutputPage project(String projectionName, Page<I> input, List<String> expandedFields) {
+    public <I extends BaseEntity> OutputPage project(String projectionName, Page<I> input) {
 
         try {
-            Projector projector = this.getProjection(projectionName);
+            Projector projector = this.getProjector(projectionName);
             return OutputPage.of(input, projector);
         } catch (Exception e) {
             String message = String.format(
@@ -67,8 +76,23 @@ public class ProjectionService {
         }
 
     }
+    
+    public List<String> getRequiredExpand(String projectionName) {
+        
+        Projector projector = this.projections.get(projectionName);
+        
+        if (projector == null)
+            return Collections.emptyList();
+        
+        return projector.requiredExpand();
+        
+    }
+    
+    public boolean projectionExists(String projectionName) {
+        return this.projections.containsKey(projectionName);
+    }
 
-    private Projector getProjection(String projectionName) {
+    private Projector getProjector(String projectionName) {
 
         Projector projector = this.projections.get(projectionName);
 
@@ -77,32 +101,76 @@ public class ProjectionService {
 
     }
     
-    public List<String> getRequiredExpand(String projectionName) {
+    public Map<String, Map<String, Object>> getProjectionsRepresentationsByEntityType(Class<? extends BaseEntity> clazz) {
         
-        Projector projector = this.projections.get(projectionName);
+        if (this.representationsCache.containsKey(clazz))
+            return this.representationsCache.get(clazz);
         
-        if (projector == null)
-            throw new IllegalArgumentException(
-                    String.format("The projection %s not exists.", projectionName));
+        Map<String, Projector> projections = this.getProjectionsByEntityType(clazz);
         
-        return projector.requiredExpand();
+        Map<String, Map<String, Object>> response = new HashMap<>();
+        
+        projections.forEach((projectionName, projector) -> {
+            Class projectionOuput = (Class) this.getProjectorOutputType(projector);
+            Map<String, Object> representation = this.representationService.getRepresentationOf(projectionOuput);
+            response.put(projectionName, representation);
+        });
+        
+        this.representationsCache.put(clazz, response);
+        
+        return response;
         
     }
     
-    public void validateExpandRequeriment(String projectionName, List<String> expandedFields) {
+    private Map<String, Projector> getProjectionsByEntityType(Class<? extends BaseEntity> type) {
         
-        Projector projector = this.getProjection(projectionName);
+        List<String> entityProjectionsNames = this.projections
+                .keySet()
+                .stream()
+                .filter(key -> this.checkProjectorInputType(key, type))
+                .collect(Collectors.toList());
         
-        if (!expandedFields.containsAll(projector.requiredExpand())) {            
-            String message = String.format(
-                    "%s projection requires follow expanded fields: %s, but received: %s",
-                    projectionName,
-                    projector.requiredExpand(),
-                    expandedFields
-            );
-            
-            throw new ProjectionException(message);    
-        }
+        Map<String, Projector> result = new HashMap<>();
+        
+        entityProjectionsNames.forEach(projectionName -> 
+                result.put(projectionName, this.projections.get(projectionName)));
+        
+        return result;
+        
+    }
+    
+    private boolean checkProjectorInputType(String projectionName, Class<? extends BaseEntity> expectedInputType) {
+        
+        Projector projector = this.projections.get(projectionName);
+
+        Type inputType = this.getProjectorInputType(projector);
+        
+        if (!(inputType instanceof Class))
+            return false;
+        
+        return ((Class) inputType).isAssignableFrom(expectedInputType);
+        
+    }
+    
+    private Type getProjectorInputType(Projector projector) {
+        ParameterizedType projectorType = this.getProjectorParameterizedType(projector);        
+        return projectorType.getActualTypeArguments()[0];
+    }
+    
+    private Type getProjectorOutputType(Projector projector) {
+        ParameterizedType projectorType = this.getProjectorParameterizedType(projector);
+        return projectorType.getActualTypeArguments()[1];
+    }
+    
+    private ParameterizedType getProjectorParameterizedType(Projector projector) {
+        
+        Optional<Type> projectorTypeOpt = List.of(projector.getClass().getGenericInterfaces())
+                .stream()
+                .filter(type -> type instanceof ParameterizedType)
+                .filter(type -> ((ParameterizedType) type).getRawType().equals(Projector.class))
+                .findFirst();
+        
+        return (ParameterizedType) projectorTypeOpt.get();
         
     }
 

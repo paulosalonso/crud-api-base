@@ -7,22 +7,29 @@ import com.alon.spring.crud.resource.input.SearchInput;
 import com.alon.spring.crud.resource.projection.OutputPage;
 import com.alon.spring.crud.service.CrudService;
 import com.alon.spring.crud.service.ProjectionService;
+import com.alon.spring.crud.service.RepresentationService;
 import com.alon.spring.crud.service.SearchCriteria;
 import com.alon.spring.crud.service.exception.CreateException;
 import com.alon.spring.crud.service.exception.DeleteException;
 import com.alon.spring.crud.service.exception.ReadException;
 import com.alon.spring.crud.service.exception.UpdateException;
 import com.alon.spring.specification.ExpressionSpecification;
+import java.lang.reflect.Field;
+import java.lang.reflect.ParameterizedType;
+import java.util.HashMap;
 import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 import javax.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.jpa.domain.Specification;
+import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.server.ResponseStatusException;
 
 public abstract class CrudResource<
@@ -38,6 +45,11 @@ public abstract class CrudResource<
     @Autowired
     protected ProjectionService projectionService;
     
+    @Autowired
+    private RepresentationService representationService;
+    
+    private final Class<MANAGED_ENTITY_TYPE> managedEntityClass;
+    
     private InputMapper<CREATE_INPUT_TYPE, MANAGED_ENTITY_TYPE> createInputMapper = new EntityInputMapper();
     private InputMapper<UPDATE_INPUT_TYPE, MANAGED_ENTITY_TYPE> updateInputMapper = new EntityInputMapper();
     
@@ -46,6 +58,11 @@ public abstract class CrudResource<
     
     public CrudResource(SERVICE_TYPE service) {
         this.service = service;
+        this.managedEntityClass = this.extractManagedEntityTypeClass();
+    }
+    
+    protected String getDefaultProjection() {
+        return ProjectionService.ENTITY_PROJECTION;
     }
 
     protected final void setCreateInputMapper(InputMapper<CREATE_INPUT_TYPE, MANAGED_ENTITY_TYPE> createInputMapper) {
@@ -79,7 +96,7 @@ public abstract class CrudResource<
 
         Page<MANAGED_ENTITY_TYPE> entities = this.service.search(criteria);
         
-        return this.projectionService.project(normalizedProjection, entities, expand);
+        return this.projectionService.project(normalizedProjection, entities);
         
     }
     
@@ -114,7 +131,7 @@ public abstract class CrudResource<
 
         Page<MANAGED_ENTITY_TYPE> entities = this.service.search(criteria);
         
-        return this.projectionService.project(normalizedProjection, entities, expand);
+        return this.projectionService.project(normalizedProjection, entities);
         
     }
 
@@ -128,9 +145,12 @@ public abstract class CrudResource<
         String normalizedProjection = this.normalizeProjection(projection);
         List<String> normalizedExpand = this.normalizeExpand(normalizedProjection, expand);
         
-        MANAGED_ENTITY_TYPE entity = (MANAGED_ENTITY_TYPE) this.service.read(id, expand);
+        MANAGED_ENTITY_TYPE entity = (MANAGED_ENTITY_TYPE) this.service.read(id, normalizedExpand);
         
-        return this.projectionService.project(normalizedProjection, entity, normalizedExpand);
+        if (entity == null)
+            throw new HttpClientErrorException(HttpStatus.NOT_FOUND);
+        
+        return this.projectionService.project(normalizedProjection, entity);
         
     }
 
@@ -147,7 +167,7 @@ public abstract class CrudResource<
         
         String normalizedProjection = this.normalizeProjection(projection);
         
-        return this.projectionService.project(normalizedProjection, entity, List.of());
+        return this.projectionService.project(normalizedProjection, entity);
         
     }
 
@@ -163,7 +183,7 @@ public abstract class CrudResource<
         
         String normalizedProjection = this.normalizeProjection(projection);
         
-        return this.projectionService.project(normalizedProjection, entity, List.of());
+        return this.projectionService.project(normalizedProjection, entity);
         
     }
 
@@ -173,27 +193,38 @@ public abstract class CrudResource<
         this.service.delete(id);
     }
     
-    /**
-     * Override this method to change default projection
-     */
-    protected String defaultProjection() {
-        return ProjectionService.ENTITY_PROJECTION;
+    @GetMapping("/projections")
+    public Map<String, Map<String, Object>> getProjections() {
+        
+        return this.projectionService
+                .getProjectionsRepresentationsByEntityType(this.managedEntityClass);
+        
     }
     
     protected int normalizePage(int page) {
         return --page;
     }
     
-    protected String normalizeProjection(String projection) {
-        return Optional.ofNullable(projection).orElse(this.defaultProjection());
+    protected String normalizeProjection(String projectionName) {
+        if (projectionName != null && this.projectionService.projectionExists(projectionName))
+            return projectionName;
+        
+        return this.getDefaultProjection();
     }
     
     protected List<String> normalizeExpand(String projectionName, List<String> receivedExpand) {
         
-        if (projectionName.equals(ProjectionService.ENTITY_PROJECTION))
+        if (projectionName == null || projectionName.equals(ProjectionService.ENTITY_PROJECTION))
             return receivedExpand;
         
         return this.projectionService.getRequiredExpand(projectionName);
+        
+    }
+    
+    private final Class extractManagedEntityTypeClass() {
+        
+         return (Class) List.of(((ParameterizedType) this.getClass().getGenericSuperclass())
+                 .getActualTypeArguments()).get(0);
         
     }
 
