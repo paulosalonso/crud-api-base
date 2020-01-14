@@ -6,6 +6,7 @@ import com.alon.spring.crud.resource.projection.Projector;
 import com.alon.spring.crud.service.exception.ProjectionException;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -31,7 +32,7 @@ public class ProjectionService {
     
     private final Map<String, Projector> projections;
     
-    private final Map<Class, Map<String, Map<String, Object>>> representationsCache = new HashMap<>();
+    private final Map<Class, List<ProjectionRepresentation>> representationsCache = new HashMap<>();
     
     public ProjectionService(ApplicationContext applicationContext, RepresentationService representationService) {
         this.applicationContext = applicationContext;
@@ -101,24 +102,24 @@ public class ProjectionService {
 
     }
     
-    public Map<String, Map<String, Object>> getProjectionsRepresentationsByEntityType(Class<? extends BaseEntity> clazz) {
+    public List<ProjectionRepresentation> getRepresentationsByEntityType(Class<? extends BaseEntity> clazz) {
         
         if (this.representationsCache.containsKey(clazz))
             return this.representationsCache.get(clazz);
         
         Map<String, Projector> projections = this.getProjectionsByEntityType(clazz);
-        
-        Map<String, Map<String, Object>> response = new HashMap<>();
+
+        List<ProjectionRepresentation> representations = new ArrayList<>();
         
         projections.forEach((projectionName, projector) -> {
             Class projectionOuput = (Class) this.getProjectorOutputType(projector);
             Map<String, Object> representation = this.representationService.getRepresentationOf(projectionOuput);
-            response.put(projectionName, representation);
+            representations.add(new ProjectionRepresentation(projectionName, representation));
         });
         
-        this.representationsCache.put(clazz, response);
+        this.representationsCache.put(clazz, representations);
         
-        return response;
+        return representations;
         
     }
     
@@ -172,6 +173,36 @@ public class ProjectionService {
         
         return (ParameterizedType) projectorTypeOpt.get();
         
+    }
+
+    public class ProjectionRepresentation {
+
+        public String projectionName;
+        public Map<String, Object> representation;
+
+        public ProjectionRepresentation() {}
+
+        public ProjectionRepresentation(String projectionName, Map<String, Object> representation) {
+            this.projectionName = projectionName;
+            this.representation = representation;
+        }
+
+        public String getProjectionName() {
+            return projectionName;
+        }
+
+        public void setProjectionName(String projectionName) {
+            this.projectionName = projectionName;
+        }
+
+        public Map<String, Object> getRepresentation() {
+            return representation;
+        }
+
+        public void setRepresentation(Map<String, Object> representation) {
+            this.representation = representation;
+        }
+
     }
 
 }

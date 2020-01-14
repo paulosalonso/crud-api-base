@@ -194,10 +194,10 @@ public abstract class CrudResource<
     }
     
     @GetMapping("/projections")
-    public Map<String, Map<String, Object>> getProjections() {
+    public List<ProjectionService.ProjectionRepresentation> getProjections() {
         
         return this.projectionService
-                .getProjectionsRepresentationsByEntityType(this.managedEntityClass);
+                .getRepresentationsByEntityType(this.managedEntityClass);
         
     }
     
