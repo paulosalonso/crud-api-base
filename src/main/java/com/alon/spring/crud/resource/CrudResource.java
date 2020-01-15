@@ -14,17 +14,16 @@ import com.alon.spring.crud.service.exception.DeleteException;
 import com.alon.spring.crud.service.exception.ReadException;
 import com.alon.spring.crud.service.exception.UpdateException;
 import com.alon.spring.specification.ExpressionSpecification;
-import java.lang.reflect.Field;
+
 import java.lang.reflect.ParameterizedType;
-import java.util.HashMap;
+
 import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
-import java.util.stream.Collectors;
+
 import javax.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -197,7 +196,7 @@ public abstract class CrudResource<
     public List<ProjectionService.ProjectionRepresentation> getProjections() {
         
         return this.projectionService
-                .getRepresentationsByEntityType(this.managedEntityClass);
+                .getEntityRepresentations(this.managedEntityClass);
         
     }
     

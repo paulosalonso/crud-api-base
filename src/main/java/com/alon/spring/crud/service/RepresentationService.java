@@ -2,7 +2,6 @@ package com.alon.spring.crud.service;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.ParameterizedType;
-import java.lang.reflect.Type;
 import java.math.BigDecimal;
 import java.util.Calendar;
 import java.util.Collection;
@@ -10,12 +9,14 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
+
 import org.springframework.stereotype.Service;
 
 @Service
 public class RepresentationService {
     
-    private final List<Class> FINAL_TYPES = List.of(
+    private static final List<Class> FINAL_TYPES = List.of(
         Character.class, char.class,
         CharSequence.class,
         String.class,
@@ -32,46 +33,43 @@ public class RepresentationService {
     );
     
     public Map<String, Object> getRepresentationOf(Class clazz) {
-        
-        Map<String, Object> response = new HashMap<>();
-        
-        List.of(clazz.getDeclaredFields())
-                .forEach(field -> response.put(field.getName(), this.mapField(field)));
-        
-        return response;
+
+        List<Field> fields = List.of(clazz.getDeclaredFields());
+
+        return fields.stream()
+                .collect(Collectors.toMap(Field::getName, this::mapField));
         
     }
     
     private Object mapField(Field field) {
         
-        if (this.FINAL_TYPES.contains(field.getType()))
+        if (this.isFinalType(field))
             return field.getType().getSimpleName();
-        else if (Collection.class.isAssignableFrom(field.getType()))
-            return this.mapCollection(field.getGenericType());
-        
-        Map<String, Object> response = new HashMap<>();
+        else if (this.isCollection(field))
+            return this.mapCollection(field);
         
         List<Field> fields = List.of(field.getType().getDeclaredFields());
-        
-        fields.forEach(childField -> {
-            
-            if (Collection.class.isAssignableFrom(childField.getType()))
-                response.put(childField.getName(), this.mapCollection(childField.getGenericType()));
-            else
-                response.put(childField.getName(), this.mapField(childField));
-            
-        });
-        
-        return response;
-        
+
+        return fields.stream()
+                .collect(Collectors.toMap(Field::getName, this::mapField));
+
     }
-    
-    private Object mapCollection(Type type) {
-        
-        Class listItemsType = (Class) ((ParameterizedType) type).getActualTypeArguments()[0];
-        
+
+    private Object mapCollection(Field field) {
+
+        ParameterizedType type = (ParameterizedType) field.getGenericType();
+        Class listItemsType = (Class) type.getActualTypeArguments()[0];
+
         return getRepresentationOf(listItemsType);
-        
+
+    }
+
+    private boolean isFinalType(Field field) {
+        return FINAL_TYPES.contains(field.getType());
+    }
+
+    private boolean isCollection(Field field) {
+        return Collection.class.isAssignableFrom(field.getType());
     }
     
 }
