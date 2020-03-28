@@ -8,6 +8,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.function.Function;
 
+import javax.transaction.Transactional;
 import javax.validation.Valid;
 
 import org.springframework.data.domain.Page;
@@ -37,40 +38,32 @@ public interface CrudService<
     default Page<ENTITY_TYPE> search(SearchCriteria criteria) {
     	
         try {
-            Hidden.executeHook(this, criteria, LifeCycleHook.BEFORE_SEARCH);
-            Pageable pageable = Hidden.buildPageable(criteria);
-            Page<ENTITY_TYPE> result;
+            HookHelper.executeHook(this, criteria, LifeCycleHook.BEFORE_SEARCH);
+            
+            Pageable pageable = PageHelper.buildPageable(criteria);
+            
+            Page<ENTITY_TYPE> searchResult;
 
             switch (criteria.getSearchOption()) {
-                case FILTER:
-                case FILTER_ORDER: 
+                case FILTER:                    
+                    searchResult = this.getRepository().findAll(criteria.getFilter(), pageable); 
+                    break;
                     
-                    result = this.getRepository()
-                        .findAll(criteria.getFilter(), pageable); 
+                case EXPAND: 
+                    searchResult = this.getRepository().findAll(pageable, criteria.getExpand()); 
                     break;
                         
                 case FILTER_EXPAND:
-                case FILTER_ORDER_EXPAND: 
-                    
-                    result = this.getRepository()
-                            .findAll(criteria.getFilter(), pageable, criteria.getExpand()); 
-                    break;
-                        
-                case ORDER_EXPAND:
-                case EXPAND: 
-                    
-                    result = this.getRepository()
-                            .findAll(pageable, criteria.getExpand()); 
+            		searchResult = this.getRepository().findAll(criteria.getFilter(), pageable, criteria.getExpand()); 
                     break;
                     
-                case ORDER:
                 case NONE:
-                default: result = this.getRepository().findAll(pageable);
+                default: searchResult = this.getRepository().findAll(pageable);
             }
             
-            Hidden.executeHook(this, result, LifeCycleHook.AFTER_SEARCH);
+            HookHelper.executeHook(this, searchResult, LifeCycleHook.AFTER_SEARCH);
             
-            return result;
+            return searchResult;
         } catch (Throwable ex) {
             String message = String.format("Error searching entities: %s", ex.getMessage());
             throw new ReadException(message, ex);
@@ -78,11 +71,12 @@ public interface CrudService<
 
     }
 
+    @Transactional(rollbackOn = Throwable.class)
     default ENTITY_TYPE create(@Valid ENTITY_TYPE entity) {
         try {
-            entity = Hidden.executeHook(this, entity, LifeCycleHook.BEFORE_CREATE);
+            entity = HookHelper.executeHook(this, entity, LifeCycleHook.BEFORE_CREATE);
             entity = (ENTITY_TYPE) this.getRepository().save(entity);
-            return Hidden.executeHook(this, entity, LifeCycleHook.AFTER_CREATE);
+            return HookHelper.executeHook(this, entity, LifeCycleHook.AFTER_CREATE);
         } catch (Throwable ex) {
             throw new CreateException(ex.getMessage(), ex);
         }
@@ -94,7 +88,7 @@ public interface CrudService<
 
     default ENTITY_TYPE read(ENTITY_ID_TYPE id, List<String> expand) {
         try {
-            id = Hidden.executeHook(this, id, LifeCycleHook.BEFORE_READ);
+            id = HookHelper.executeHook(this, id, LifeCycleHook.BEFORE_READ);
             
             Optional<ENTITY_TYPE> opt;
             
@@ -106,7 +100,7 @@ public interface CrudService<
             if (opt.isEmpty())
                 throw new NotFoundException(String.format("ID not found -> %d", id));
 
-            id = Hidden.executeHook(this, id, LifeCycleHook.AFTER_READ);
+            id = HookHelper.executeHook(this, id, LifeCycleHook.AFTER_READ);
             
             return opt.get();
         } catch (Throwable ex) {
@@ -115,74 +109,66 @@ public interface CrudService<
         }
     }
 
+    @Transactional(rollbackOn = Throwable.class)
     default ENTITY_TYPE update(@Valid ENTITY_TYPE entity) {
         try {
-            entity = Hidden.executeHook(this, entity, LifeCycleHook.BEFORE_UPDATE);
+            entity = HookHelper.executeHook(this, entity, LifeCycleHook.BEFORE_UPDATE);
             entity = (ENTITY_TYPE) this.getRepository().save(entity);
-            return Hidden.executeHook(this, entity, LifeCycleHook.AFTER_UPDATE);
+            return HookHelper.executeHook(this, entity, LifeCycleHook.AFTER_UPDATE);
         } catch (Throwable ex) {
             throw new UpdateException(ex.getMessage(), ex);
         }
     }
 
+    @Transactional(rollbackOn = Throwable.class)
     default void delete(ENTITY_ID_TYPE id) {
         try {
-            Hidden.executeHook(this, id, LifeCycleHook.BEFORE_DELETE);
+        	HookHelper.executeHook(this, id, LifeCycleHook.BEFORE_DELETE);
             this.getRepository().deleteById(id);
-            Hidden.executeHook(this, id, LifeCycleHook.AFTER_DELETE);
+            HookHelper.executeHook(this, id, LifeCycleHook.AFTER_DELETE);
         } catch (Throwable ex) {
             throw new DeleteException(ex.getMessage(), ex);
         }
     }
     
-    default CrudService addBeforeSearchHook(Function<SearchCriteria, SearchCriteria> function) {
-    	Hidden.getServiceHooks(this).get(LifeCycleHook.BEFORE_SEARCH).add(function);
-    	return this;
+    default void addBeforeSearchHook(Function<SearchCriteria, SearchCriteria> function) {
+    	HookHelper.getServiceHooks(this).get(LifeCycleHook.BEFORE_SEARCH).add(function);
     }
     
-    default CrudService addAfterSearchHook(Function<Page<ENTITY_TYPE>, Page<ENTITY_TYPE>> function) {
-    	Hidden.getServiceHooks(this).get(LifeCycleHook.AFTER_SEARCH).add(function);    	
-    	return this;
+    default void addAfterSearchHook(Function<Page<ENTITY_TYPE>, Page<ENTITY_TYPE>> function) {
+    	HookHelper.getServiceHooks(this).get(LifeCycleHook.AFTER_SEARCH).add(function);
     }
     
-    default CrudService addBeforeReadHook(Function<ENTITY_ID_TYPE, ENTITY_ID_TYPE> function) {
-    	Hidden.getServiceHooks(this).get(LifeCycleHook.BEFORE_READ).add(function);
-    	return this;
+    default void addBeforeReadHook(Function<ENTITY_ID_TYPE, ENTITY_ID_TYPE> function) {
+    	HookHelper.getServiceHooks(this).get(LifeCycleHook.BEFORE_READ).add(function);
     }
     
-    default CrudService addAfterReadHook(Function<ENTITY_TYPE, ENTITY_TYPE> function) {
-    	Hidden.getServiceHooks(this).get(LifeCycleHook.AFTER_READ).add(function);    	
-    	return this;
+    default void addAfterReadHook(Function<ENTITY_TYPE, ENTITY_TYPE> function) {
+    	HookHelper.getServiceHooks(this).get(LifeCycleHook.AFTER_READ).add(function);
     }
     
-    default CrudService addBeforeCreateHook(Function<ENTITY_TYPE, ENTITY_TYPE> function) {
-    	Hidden.getServiceHooks(this).get(LifeCycleHook.BEFORE_CREATE).add(function);
-    	return this;
+    default void addBeforeCreateHook(Function<ENTITY_TYPE, ENTITY_TYPE> function) {
+    	HookHelper.getServiceHooks(this).get(LifeCycleHook.BEFORE_CREATE).add(function);
     }
     
-    default CrudService addAfterCreateHook(Function<ENTITY_TYPE, ENTITY_TYPE> function) {
-    	Hidden.getServiceHooks(this).get(LifeCycleHook.AFTER_CREATE).add(function);    	
-    	return this;
+    default void addAfterCreateHook(Function<ENTITY_TYPE, ENTITY_TYPE> function) {
+    	HookHelper.getServiceHooks(this).get(LifeCycleHook.AFTER_CREATE).add(function);
     }
     
-    default CrudService addBeforeUpdateHook(Function<ENTITY_TYPE, ENTITY_TYPE> function) {
-    	Hidden.getServiceHooks(this).get(LifeCycleHook.BEFORE_UPDATE).add(function);    	
-    	return this;
+    default void addBeforeUpdateHook(Function<ENTITY_TYPE, ENTITY_TYPE> function) {
+    	HookHelper.getServiceHooks(this).get(LifeCycleHook.BEFORE_UPDATE).add(function);
     }
     
-    default CrudService addAfterUpdateHook(Function<ENTITY_TYPE, ENTITY_TYPE> function) {
-    	Hidden.getServiceHooks(this).get(LifeCycleHook.AFTER_UPDATE).add(function);    	
-    	return this;
+    default void addAfterUpdateHook(Function<ENTITY_TYPE, ENTITY_TYPE> function) {
+    	HookHelper.getServiceHooks(this).get(LifeCycleHook.AFTER_UPDATE).add(function);
     }
     
-    default CrudService addBeforeDeleteHook(Function<ENTITY_ID_TYPE, ENTITY_ID_TYPE> function) {
-    	Hidden.getServiceHooks(this).get(LifeCycleHook.BEFORE_DELETE).add(function);    	
-    	return this;
+    default void addBeforeDeleteHook(Function<ENTITY_ID_TYPE, ENTITY_ID_TYPE> function) {
+    	HookHelper.getServiceHooks(this).get(LifeCycleHook.BEFORE_DELETE).add(function);
     }
     
-    default CrudService addAfterDeleteHook(Function<ENTITY_ID_TYPE, ENTITY_ID_TYPE> function) {
-    	Hidden.getServiceHooks(this).get(LifeCycleHook.AFTER_DELETE).add(function);    	
-    	return this;
+    default void addAfterDeleteHook(Function<ENTITY_ID_TYPE, ENTITY_ID_TYPE> function) {
+    	HookHelper.getServiceHooks(this).get(LifeCycleHook.AFTER_DELETE).add(function);
     }
         
     enum LifeCycleHook {
@@ -198,19 +184,15 @@ public interface CrudService<
     	AFTER_DELETE
     }
     
-    /**
-     * This class has the function of restricting methods, 
-     * because private methods are not allowed in interfaces.
-     */
-    class Hidden {
-        
-        private static Map<Class<? extends CrudService>, Map<LifeCycleHook, List<Function>>> GLOBAL_HOOKS = new HashMap<>();
+    static class PageHelper {
 
         private static Pageable buildPageable(SearchCriteria criteria) {
+        	
             if (criteria.getOrder() != null)
                 return PageRequest.of(criteria.getPage(), criteria.getPageSize(), buildSort(criteria.getOrder()));
             else
                 return PageRequest.of(criteria.getPage(), criteria.getPageSize());
+            
         }
 
         private static Sort buildSort(List<String> order) {
@@ -227,8 +209,14 @@ public interface CrudService<
             return Sort.by(orders);
             
         }
+        
+    }
     
-        private static <S extends CrudService, P> P executeHook(S service, P param, LifeCycleHook hookType) throws Throwable {
+    static class HookHelper {
+    	
+    	private static Map<Class<? extends CrudService>, Map<LifeCycleHook, List<Function>>> GLOBAL_HOOKS = new HashMap<>();
+    	
+    	private static <S extends CrudService, P> P executeHook(S service, P param, LifeCycleHook hookType) throws Throwable {
             
             List<Function> hooks = getHook(service, hookType);
 
@@ -266,6 +254,7 @@ public interface CrudService<
             return hooks;
             
         }
-        
+    	
     }
+    
 }
