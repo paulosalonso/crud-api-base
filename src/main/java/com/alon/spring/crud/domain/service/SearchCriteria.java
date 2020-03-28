@@ -42,9 +42,6 @@ public class SearchCriteria {
         if (this.filter != null)
             option += SearchType.FILTER.getOption();
 
-        if (this.order != null)
-            option += SearchType.ORDER.getOption();
-
         if (this.expand != null)
             option += SearchType.EXPAND.getOption();
 

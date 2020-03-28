@@ -6,11 +6,7 @@ public enum SearchType {
 
     NONE(""),
     FILTER("F"),
-    FILTER_ORDER("FO"),
     FILTER_EXPAND("FE"),
-    FILTER_ORDER_EXPAND("FOE"),
-    ORDER("O"),
-    ORDER_EXPAND("OE"),
     EXPAND("E");
 
     private static final List<SearchType> options = List.of(SearchType.values());
