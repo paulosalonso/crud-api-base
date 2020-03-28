@@ -1,6 +1,6 @@
 package com.alon.spring.crud.domain.service.exception;
 
-public class DeleteException extends RuntimeException {
+public class DeleteException extends CrudException {
 
     private static final long serialVersionUID = 1L;
 

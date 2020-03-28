@@ -1,6 +1,6 @@
 package com.alon.spring.crud.domain.service.exception;
 
-public class ReadException extends RuntimeException {
+public class ReadException extends CrudException {
 
     private static final long serialVersionUID = 1L;
 

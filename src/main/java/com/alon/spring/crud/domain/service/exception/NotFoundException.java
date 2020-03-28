@@ -1,6 +1,6 @@
 package com.alon.spring.crud.domain.service.exception;
 
-public class NotFoundException extends RuntimeException {
+public class NotFoundException extends CrudException {
 
 	private static final long serialVersionUID = 1L;
 

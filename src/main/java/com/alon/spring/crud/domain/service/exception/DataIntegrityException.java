@@ -1,6 +1,6 @@
 package com.alon.spring.crud.domain.service.exception;
 
-public class DataIntegrityException extends RuntimeException {
+public class DataIntegrityException extends CrudException {
 
 	private static final long serialVersionUID = 1L;
 
