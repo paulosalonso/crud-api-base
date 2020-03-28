@@ -2,13 +2,12 @@ package com.alon.spring.crud.api.controller;
 
 import java.lang.reflect.ParameterizedType;
 import java.util.List;
-import java.util.Optional;
 
 import javax.validation.Valid;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
-import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -22,6 +21,7 @@ import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.server.ResponseStatusException;
 
 import com.alon.spring.crud.api.controller.input.EntityInputMapper;
+import com.alon.spring.crud.api.controller.input.ExpressionSearchInput;
 import com.alon.spring.crud.api.controller.input.InputMapper;
 import com.alon.spring.crud.api.controller.input.SearchInput;
 import com.alon.spring.crud.api.controller.output.OutputPage;
@@ -33,7 +33,6 @@ import com.alon.spring.crud.domain.service.exception.CreateException;
 import com.alon.spring.crud.domain.service.exception.DeleteException;
 import com.alon.spring.crud.domain.service.exception.ReadException;
 import com.alon.spring.crud.domain.service.exception.UpdateException;
-import com.alon.spring.specification.ExpressionSpecification;
 
 public abstract class CrudController<
         MANAGED_ENTITY_TYPE extends BaseEntity, 
@@ -45,32 +44,33 @@ public abstract class CrudController<
 	
     protected final SERVICE_TYPE service;
     
+    @Autowired
     protected ProjectionService projectionService;
     
     private final Class<MANAGED_ENTITY_TYPE> managedEntityClass;
     
-    private InputMapper<CREATE_INPUT_TYPE, MANAGED_ENTITY_TYPE> createInputMapper = new EntityInputMapper();
-    private InputMapper<UPDATE_INPUT_TYPE, MANAGED_ENTITY_TYPE> updateInputMapper = new EntityInputMapper();
+    protected InputMapper<CREATE_INPUT_TYPE, MANAGED_ENTITY_TYPE> createInputMapper;
+    protected InputMapper<UPDATE_INPUT_TYPE, MANAGED_ENTITY_TYPE> updateInputMapper;
     
     @Value("${com.alon.spring.crud.search.filter.expression.enabled:false}") 
     protected boolean enableSearchByExpression;
     
-    public CrudController(SERVICE_TYPE service, ProjectionService projectionService) {
-        this.service = service;
-        this.projectionService = projectionService;
+    public CrudController(SERVICE_TYPE service) {
+        this(service, new EntityInputMapper(), new EntityInputMapper());
+    }
+    
+    protected CrudController(SERVICE_TYPE service, 
+    		InputMapper<CREATE_INPUT_TYPE, MANAGED_ENTITY_TYPE> createInputMapper,
+    		InputMapper<UPDATE_INPUT_TYPE, MANAGED_ENTITY_TYPE> updateInputMapper) {
+    	
+    	this.service = service;
+        this.createInputMapper = createInputMapper;
+        this.updateInputMapper = updateInputMapper;
         this.managedEntityClass = this.extractManagedEntityTypeClass();
     }
     
     protected String getDefaultProjection() {
         return ProjectionService.ENTITY_PROJECTION;
-    }
-
-    protected final void setCreateInputMapper(InputMapper<CREATE_INPUT_TYPE, MANAGED_ENTITY_TYPE> createInputMapper) {
-        this.createInputMapper = createInputMapper;
-    }
-
-    protected final void setUpdateInputMapper(InputMapper<UPDATE_INPUT_TYPE, MANAGED_ENTITY_TYPE> updateInputMapper) {
-        this.updateInputMapper = updateInputMapper;
     }
 
     @GetMapping("${com.alon.spring.crud.path.search:}")
@@ -102,7 +102,7 @@ public abstract class CrudController<
     
     @GetMapping("${com.alon.spring.crud.path.search:}/by-expression")
     public OutputPage search(
-            @RequestParam(required = false) Optional<String> filter,
+            @Valid ExpressionSearchInput search,
             @RequestParam(required = false) List<String> order,
             @RequestParam(required = false, defaultValue = "1") Integer page,
             @RequestParam(required = false, defaultValue = "100") Integer pageSize,
@@ -115,14 +115,9 @@ public abstract class CrudController<
         
         String normalizedProjection = this.normalizeProjection(projection);
         expand = this.normalizeExpand(normalizedProjection, expand);
-        
-        Specification specification = null;
-        
-        if (filter.isPresent())
-            specification = ExpressionSpecification.of(filter.get());
 
         SearchCriteria criteria = SearchCriteria.of()
-                .filter(specification)
+                .filter(search.toSpecification())
                 .order(order)
                 .page(this.normalizePage(page))
                 .pageSize(pageSize)
@@ -171,7 +166,7 @@ public abstract class CrudController<
         
     }
 
-    @PutMapping("${com.alon.spring.crud.path.update:}")
+    @PutMapping("${com.alon.spring.crud.path.update:/{id}}")
     public Object update(
             @RequestBody @Valid UPDATE_INPUT_TYPE input,
             @RequestParam(required = false) String projection
@@ -194,7 +189,7 @@ public abstract class CrudController<
     }
     
     @GetMapping("/projections")
-    public List<ProjectionService.ProjectionRepresentation> getProjections() {
+    public List<ProjectionService.ProjectionRepresentation> getRepresentations() {
         
         return this.projectionService
                 .getEntityRepresentations(this.managedEntityClass);
