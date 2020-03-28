@@ -7,6 +7,7 @@ import java.util.stream.Collectors;
 import org.springframework.beans.TypeMismatchException;
 import org.springframework.context.MessageSource;
 import org.springframework.context.i18n.LocaleContextHolder;
+import org.springframework.data.mapping.PropertyReferenceException;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -23,6 +24,8 @@ import org.springframework.web.servlet.NoHandlerFoundException;
 import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
 
 import com.alon.spring.crud.api.exception.BeanValidationException;
+import com.alon.spring.crud.api.exceptionhandler.Problem.Violation;
+import com.alon.spring.crud.domain.service.exception.CrudException;
 import com.alon.spring.crud.domain.service.exception.DataIntegrityException;
 import com.alon.spring.crud.domain.service.exception.NotFoundException;
 import com.fasterxml.jackson.databind.JsonMappingException.Reference;
@@ -39,34 +42,57 @@ public class ApiExceptionHandler extends ResponseEntityExceptionHandler {
 	}
 
 	@ExceptionHandler(Exception.class)
-	public ResponseEntity<Object> handleUncaught(Exception ex, WebRequest request) {
+	public ResponseEntity handleUncaught(Exception ex, WebRequest request) {
 		
 		HttpStatus status = HttpStatus.INTERNAL_SERVER_ERROR;
 		
-		String detail = "Ocorreu um erro inesperado no sistema. "
-				+ "Se o problema persistir, entre em contato com o administrador.";
+		String detail = "An internal server problem has occurred. If the problem persists, contact your administrator.";
 		
 		Problem problem = createProblemBuilder(status, ProblemType.INTERNAL_ERROR, detail)
 				.build();
 		
-		ex.printStackTrace();
-		
 		return handleExceptionInternal(ex, problem, new HttpHeaders(), status, request);
+	}
+	
+	@ExceptionHandler(CrudException.class)
+	public ResponseEntity handleCrudException(CrudException ex,
+			HttpHeaders headers, HttpStatus status, WebRequest request) {
+		
+		Throwable cause = ExceptionUtils.getRootCause(ex);
+		
+		if (cause instanceof PropertyReferenceException)
+			return handlePropertyReferenceException((PropertyReferenceException) cause, headers, request);
+		
+		return handleUncaught(ex, request);
+		
+	}
+	
+	@ExceptionHandler(PropertyReferenceException.class)
+	public ResponseEntity handlePropertyReferenceException(PropertyReferenceException ex, HttpHeaders headers, WebRequest request) {
+		
+		HttpStatus status = HttpStatus.BAD_REQUEST;
+		
+		String detail = String.format("Invalid property name %s", ex.getPropertyName());
+		
+		Problem problem = createProblemBuilder(status, ProblemType.UNRECOGNIZED_MESSAGE, detail)
+				.build();
+		
+		return handleExceptionInternal(ex, problem, headers, status, request);
+		
 	}
 
 	@Override
-	protected ResponseEntity<Object> handleHttpMessageNotReadable(HttpMessageNotReadableException ex,
+	protected ResponseEntity handleHttpMessageNotReadable(HttpMessageNotReadableException ex,
 			HttpHeaders headers, HttpStatus status, WebRequest request) {
 		
 		Throwable rootCause = ExceptionUtils.getRootCause(ex);
 		
-		if (rootCause instanceof InvalidFormatException) {
+		if (rootCause instanceof InvalidFormatException)
 			return handleInvalidFormatException((InvalidFormatException) rootCause, headers, status, request);
-		} else if (rootCause instanceof PropertyBindingException) {
+		else if (rootCause instanceof PropertyBindingException)
 			return handlePropertyBindingException((PropertyBindingException) rootCause, headers, status, request);
-		}
 		
-		String detail = "O corpo da requisição é inválido. Verifique erro de sintaxe.";
+		String detail = "Invalid request body.";
 		
 		Problem problem = createProblemBuilder(status, ProblemType.UNRECOGNIZED_MESSAGE, detail)
 				.build();
@@ -75,11 +101,10 @@ public class ApiExceptionHandler extends ResponseEntityExceptionHandler {
 	}
 	
 	@ExceptionHandler(InvalidFormatException.class)
-	public ResponseEntity<Object> handleInvalidFormatException(InvalidFormatException ex,
+	public ResponseEntity handleInvalidFormatException(InvalidFormatException ex,
 			HttpHeaders headers, HttpStatus status, WebRequest request) {
 		
-		String detail = "O valor '%' não é válido para a propriedade '%s'. "
-				+ "Informe um valor do tipo %s.";
+		String detail = "'%' is not a valid value for the '%s' property. The required type is %s.";
 		
 		String field = joinPath(ex.getPath());
 		
@@ -92,11 +117,11 @@ public class ApiExceptionHandler extends ResponseEntityExceptionHandler {
 	}
 	
 	@ExceptionHandler(PropertyBindingException.class)
-	public ResponseEntity<Object> handlePropertyBindingException(PropertyBindingException ex,
+	public ResponseEntity handlePropertyBindingException(PropertyBindingException ex,
 			HttpHeaders headers, HttpStatus status, WebRequest request) {
 		
 		String field = joinPath(ex.getPath());
-		String detail = String.format("A propriedade '%s' é inválida.", field);
+		String detail = String.format("Invalid property '%s'.", field);
 		
 		Problem problem = createProblemBuilder(status, ProblemType.UNRECOGNIZED_MESSAGE, detail)
 				.build();
@@ -105,7 +130,7 @@ public class ApiExceptionHandler extends ResponseEntityExceptionHandler {
 	}
 	
 	@Override
-	protected ResponseEntity<Object> handleTypeMismatch(TypeMismatchException ex, HttpHeaders headers,
+	protected ResponseEntity handleTypeMismatch(TypeMismatchException ex, HttpHeaders headers,
 			HttpStatus status, WebRequest request) {
 		
 		if (ex instanceof MethodArgumentTypeMismatchException) {
@@ -116,12 +141,12 @@ public class ApiExceptionHandler extends ResponseEntityExceptionHandler {
 		return super.handleTypeMismatch(ex, headers, status, request);
 	}
 	
-	public ResponseEntity<Object> handleMethodArgumentTypeMismatchException(MethodArgumentTypeMismatchException ex,
+	public ResponseEntity handleMethodArgumentTypeMismatchException(MethodArgumentTypeMismatchException ex,
 			HttpHeaders headers, HttpStatus status, WebRequest request) {
 		
-		String detail = "O parâmetro de URL '%s' recebeu o valor '%s' é inválido. Informe um valor do tipo %s.";
+		String detail = "'%s' is an invalid value for the '%s' URL parameter. Required type is '%s'.";
 		
-		detail = String.format(detail, ex.getName(), ex.getValue(), ex.getRequiredType().getSimpleName());
+		detail = String.format(detail, ex.getValue(), ex.getName(), ex.getRequiredType().getSimpleName());
 		
 		Problem problem = createProblemBuilder(status, ProblemType.INVALID_PARAMETER, detail)
 				.build();
@@ -130,23 +155,23 @@ public class ApiExceptionHandler extends ResponseEntityExceptionHandler {
 	}
 	
 	@Override
-	protected ResponseEntity<Object> handleBindException(BindException ex, HttpHeaders headers, HttpStatus status,
+	protected ResponseEntity handleBindException(BindException ex, HttpHeaders headers, HttpStatus status,
 			WebRequest request) {
 		
 		return handleValidationInternal(ex, headers, status, request, ex.getBindingResult());
 	}
 	
 	@Override
-	public ResponseEntity<Object> handleMethodArgumentNotValid(MethodArgumentNotValidException ex,
+	public ResponseEntity handleMethodArgumentNotValid(MethodArgumentNotValidException ex,
 			HttpHeaders headers, HttpStatus status, WebRequest request) {
 		
 		return handleValidationInternal(ex, headers, status, request, ex.getBindingResult());
 	}
 
-	private ResponseEntity<Object> handleValidationInternal(Exception ex, HttpHeaders headers,
-			HttpStatus status, WebRequest request, BindingResult bindingResult	) {
+	private ResponseEntity handleValidationInternal(Exception ex, HttpHeaders headers,
+			HttpStatus status, WebRequest request, BindingResult bindingResult) {
 		
-		String detail = "Existe(m) campo(s) inválido(s).";
+		String detail = "Invalid fields.";
 		
 		List<Problem.Violation> problemFields = this.createProblemFields(bindingResult);
 		
@@ -158,10 +183,10 @@ public class ApiExceptionHandler extends ResponseEntityExceptionHandler {
 	}
 
 	@Override
-	protected ResponseEntity<Object> handleNoHandlerFoundException(NoHandlerFoundException ex, HttpHeaders headers,
+	protected ResponseEntity handleNoHandlerFoundException(NoHandlerFoundException ex, HttpHeaders headers,
 			HttpStatus status, WebRequest request) {
 		
-		String detail = String.format("O recurso '%s' não existe.", ex.getRequestURL());
+		String detail = String.format("Resource not found: '%s'", ex.getRequestURL());
 		
 		Problem problem = createProblemBuilder(status, ProblemType.NOT_FOUND, detail)
 				.build();
@@ -170,10 +195,10 @@ public class ApiExceptionHandler extends ResponseEntityExceptionHandler {
 	}
 	
 	@ExceptionHandler(BeanValidationException.class)
-	public ResponseEntity<Object> handleBeanValidation(BeanValidationException ex, WebRequest request) {
+	public ResponseEntity handleBeanValidation(BeanValidationException ex, WebRequest request) {
 		
 		HttpStatus status = HttpStatus.BAD_REQUEST;
-		String detail = "Existe(m) campo(s) inválido(s).";
+		String detail = "Invalid fields present.";
 		
 		List<Problem.Violation> problemFields = this.createProblemFields(ex.getBindingResult());
 		
@@ -185,8 +210,7 @@ public class ApiExceptionHandler extends ResponseEntityExceptionHandler {
 	}
 
 	@ExceptionHandler(NotFoundException.class)
-	public ResponseEntity<?> handleEntidadeNaoEncontradaException(
-			NotFoundException ex, WebRequest request) {
+	public ResponseEntity handleNotFoundException(NotFoundException ex, WebRequest request) {
 		
 		HttpStatus status = HttpStatus.NOT_FOUND;
 		
@@ -197,8 +221,7 @@ public class ApiExceptionHandler extends ResponseEntityExceptionHandler {
 	}
 	
 	@ExceptionHandler(DataIntegrityException.class)
-	public ResponseEntity<?> handleEntidadeEmUsoException(
-			DataIntegrityException ex, WebRequest request) {
+	public ResponseEntity handleDataIntegrityException(DataIntegrityException ex, WebRequest request) {
 		
 		HttpStatus status = HttpStatus.NOT_FOUND;
 		
@@ -209,8 +232,27 @@ public class ApiExceptionHandler extends ResponseEntityExceptionHandler {
 				status, request);
 	}
 	
+	@ExceptionHandler(IllegalArgumentException.class)
+	public ResponseEntity handleIllegalArgumentException(IllegalArgumentException ex, WebRequest request) {
+		
+		HttpStatus status = HttpStatus.BAD_REQUEST;
+		
+		String detail = "There is a problem with the data sent.";
+		
+		Violation violation = Violation.of()
+				.context("Original error message")
+				.message(ex.getMessage())
+				.build();
+		
+		Problem problem = createProblemBuilder(status, ProblemType.INVALID_DATA, detail)
+				.violations(List.of(violation))
+				.build();
+		
+		return handleExceptionInternal(ex, problem, new HttpHeaders(), status, request);
+	}
+	
 	@Override
-	protected ResponseEntity<Object> handleExceptionInternal(Exception ex, Object body, HttpHeaders headers,
+	protected ResponseEntity handleExceptionInternal(Exception ex, Object body, HttpHeaders headers,
 			HttpStatus status, WebRequest request) {
 		
 		if (body == null) {
