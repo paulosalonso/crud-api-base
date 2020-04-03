@@ -1,7 +1,38 @@
 package com.alon.spring.crud.domain.model;
 
-import java.io.Serializable;
+import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
 
-public interface BaseEntity<T> extends Serializable {
-    public T id();
+import javax.persistence.MappedSuperclass;
+import java.time.OffsetDateTime;
+
+@MappedSuperclass
+public abstract class BaseEntity<ID> {
+
+    @CreationTimestamp
+    private OffsetDateTime creationTimestamp;
+
+    @UpdateTimestamp
+    private OffsetDateTime updateTimestamp;
+
+    public abstract ID getId();
+
+    public abstract void setId(ID id);
+
+    public OffsetDateTime getCreationTimestamp() {
+        return creationTimestamp;
+    }
+
+    public void setCreationTimestamp(OffsetDateTime creationTimestamp) {
+        this.creationTimestamp = creationTimestamp;
+    }
+
+    public OffsetDateTime getUpdateTimestamp() {
+        return updateTimestamp;
+    }
+
+    public void setUpdateTimestamp(OffsetDateTime updateTimestamp) {
+        this.updateTimestamp = updateTimestamp;
+    }
+    
 }

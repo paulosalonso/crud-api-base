@@ -20,6 +20,7 @@ import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.context.request.WebRequest;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
+import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.servlet.NoHandlerFoundException;
 import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
 
@@ -248,6 +249,16 @@ public class ApiExceptionHandler extends ResponseEntityExceptionHandler {
 				.violations(List.of(violation))
 				.build();
 		
+		return handleExceptionInternal(ex, problem, new HttpHeaders(), status, request);
+	}
+
+	@ExceptionHandler(ResponseStatusException.class)
+	public ResponseEntity handleResponseStatusException(ResponseStatusException ex, WebRequest request) {
+		HttpStatus status = ex.getStatus();
+		String detail = ex.getReason();
+
+		Problem problem = createProblemBuilder(status, ProblemType.LOCKED, detail).build();
+
 		return handleExceptionInternal(ex, problem, new HttpHeaders(), status, request);
 	}
 	

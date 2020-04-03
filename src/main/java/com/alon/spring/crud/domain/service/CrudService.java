@@ -112,6 +112,9 @@ public interface CrudService<
     @Transactional(rollbackOn = Throwable.class)
     default ENTITY_TYPE update(@Valid ENTITY_TYPE entity) {
         try {
+            if(!this.getRepository().existsById(entity.getId()))
+                throw new UpdateException("Entity to update not found");
+
             entity = HookHelper.executeHook(this, entity, LifeCycleHook.BEFORE_UPDATE);
             entity = (ENTITY_TYPE) this.getRepository().save(entity);
             return HookHelper.executeHook(this, entity, LifeCycleHook.AFTER_UPDATE);
