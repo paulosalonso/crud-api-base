@@ -1,13 +1,12 @@
 package com.alon.spring.crud.api.controller;
 
-import com.alon.spring.crud.api.controller.cache.DeepETagResolver;
-import com.alon.spring.crud.api.controller.cache.ETagPolicy;
-import com.alon.spring.crud.api.controller.input.EntityInputMapper;
+import com.alon.spring.crud.api.controller.cache.*;
 import com.alon.spring.crud.api.controller.input.InputMapper;
 import com.alon.spring.crud.api.controller.input.SearchInput;
 import com.alon.spring.crud.domain.model.BaseEntity;
 import com.alon.spring.crud.domain.service.CrudService;
 import com.alon.spring.crud.domain.service.exception.ReadException;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.CacheControl;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -17,9 +16,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.context.request.ServletWebRequest;
-import org.springframework.web.filter.ShallowEtagHeaderFilter;
 
-import javax.servlet.ServletRequest;
 import java.io.Serializable;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
@@ -37,19 +34,36 @@ public abstract class CachedCrudController<
 		CREATE_INPUT_TYPE,
 		UPDATE_INPUT_TYPE,
 		SEARCH_INPUT_TYPE,
-		SERVICE_TYPE
->  {
+		SERVICE_TYPE>  {
+
+	private final ETagPolicy eTagPolicy;
+
+	@Autowired
+	private DeepETagResolver deepETagResolver;
 
 	/**
-	 * View ShallowEtagHeaderFilter.STREAMING_ATTRIBUTE
+	 * Creates a CachedCrudController with disabled ETag feature
 	 */
-	private static final String STREAMING_ATTRIBUTE = ShallowEtagHeaderFilter.class.getName() + ".STREAMING";
-	
-	private final ETagPolicy eTagPolicy;
-	private final DeepETagResolver deepETagResolver;
+	protected CachedCrudController(SERVICE_TYPE service) {
+		super(service, false);
+		this.eTagPolicy = ETagPolicy.DISABLED;
+	}
 
-	public CachedCrudController(SERVICE_TYPE service, ETagPolicy eTagPolicy, DeepETagResolver deepETagResolver) {
-		super(service, new EntityInputMapper(), new EntityInputMapper());
+	/**
+	 * Creates a CachedCrudController with the provided ETag policy.
+	 * The DeepETagResolver instance is automatically injected and, if
+	 * there are not exists custom implementations of single and/or collection
+	 * DeepETagGenerator (annotated with @Primary), the default implementations
+	 * will be used to resolve ETags. These implementations are based on the
+	 * updateTimestamp property of the entity (provided by BaseEntity).
+	 */
+	protected CachedCrudController(SERVICE_TYPE service, ETagPolicy eTagPolicy) {
+		super(service, disableContentCachingInCrudController(eTagPolicy));
+		this.eTagPolicy = eTagPolicy;
+	}
+
+	protected CachedCrudController(SERVICE_TYPE service, ETagPolicy eTagPolicy, DeepETagResolver deepETagResolver) {
+		super(service, disableContentCachingInCrudController(eTagPolicy));
 		this.eTagPolicy = eTagPolicy;
 		this.deepETagResolver = deepETagResolver;
 	}
@@ -58,9 +72,13 @@ public abstract class CachedCrudController<
 		 	InputMapper<CREATE_INPUT_TYPE, MANAGED_ENTITY_TYPE> createInputMapper,
 		 	InputMapper<UPDATE_INPUT_TYPE, MANAGED_ENTITY_TYPE> updateInputMapper) {
 
-		super(service, createInputMapper, updateInputMapper);
+		super(service, createInputMapper, updateInputMapper, false);
 		this.eTagPolicy = eTagPolicy;
 		this.deepETagResolver = deepETagResolver;
+	}
+
+	private static boolean disableContentCachingInCrudController(ETagPolicy eTagPolicy) {
+		return !eTagPolicy.equals(ETagPolicy.SHALLOW);
 	}
 
     @Override
@@ -89,9 +107,6 @@ public abstract class CachedCrudController<
 				response = super.search(filter, order, page, pageSize, expand, projection, request);
 		}
 
-		if (eTagPolicy.equals(ETagPolicy.SHALLOW))
-			enableContentCaching(request.getRequest());
-
 		return response;
 	}
 
@@ -117,9 +132,6 @@ public abstract class CachedCrudController<
 				response = super.read(id, expand, projection, request);
 		}
 
-		if (eTagPolicy.equals(ETagPolicy.SHALLOW))
-			enableContentCaching(request.getRequest());
-
 		return response;
 	}
 
@@ -127,32 +139,7 @@ public abstract class CachedCrudController<
 	public BodyBuilder buildResponseEntity(HttpStatus status) {
 		return ResponseEntity
 				.status(status)
-				.cacheControl(CacheControl.maxAge(10, TimeUnit.SECONDS));
-		// TODO Configurar maxAge via properties
-	}
-
-	/**
-	 * View ShallowEtagHeaderFilter.disableContentCaching
-	 * and ShallowEtagHeaderFilter.isContentCachingDisabled
-	 */
-	private static void enableContentCaching(ServletRequest request) {
-		request.setAttribute(STREAMING_ATTRIBUTE, null);
-	}
-
-	private <ID> boolean callSuper(ID id, ServletWebRequest request) {
-		if (eTagPolicy.equals(ETagPolicy.DISABLED) || eTagPolicy.equals(ETagPolicy.SHALLOW))
-			return true;
-
-		String eTag = deepETagResolver.generateSingleResourceETag(getManagedEntityType(), id);
-		return !request.checkNotModified(eTag);
-	}
-
-	private boolean callSuper(SEARCH_INPUT_TYPE filter, ServletWebRequest request) {
-		if (eTagPolicy.equals(ETagPolicy.DISABLED) || eTagPolicy.equals(ETagPolicy.SHALLOW))
-			return true;
-
-		String eTag = deepETagResolver.generateCollectionResourceETag(getManagedEntityType(), filter);
-		return !request.checkNotModified(eTag);
+				.cacheControl(CacheControl.maxAge(properties.cacheControl.maxAge, TimeUnit.SECONDS));
 	}
 	
 }

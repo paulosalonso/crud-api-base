@@ -4,6 +4,7 @@ import com.alon.spring.crud.api.controller.input.EntityInputMapper;
 import com.alon.spring.crud.api.controller.input.InputMapper;
 import com.alon.spring.crud.api.controller.input.SearchInput;
 import com.alon.spring.crud.api.controller.output.OutputPage;
+import com.alon.spring.crud.core.properties.Properties;
 import com.alon.spring.crud.domain.model.BaseEntity;
 import com.alon.spring.crud.domain.service.CrudService;
 import com.alon.spring.crud.domain.service.ProjectionService;
@@ -44,17 +45,23 @@ public abstract class CrudController<
     
     @Autowired
     protected ProjectionService projectionService;
+
+    @Autowired
+    protected Properties properties;
     
     protected InputMapper<CREATE_INPUT_TYPE, MANAGED_ENTITY_TYPE> createInputMapper;
     protected InputMapper<UPDATE_INPUT_TYPE, MANAGED_ENTITY_TYPE> updateInputMapper;
-    
-    @Value("${com.alon.spring.crud.search.filter.expression.enabled:false}") 
-    protected boolean enableSearchByExpression;
+
+    protected boolean disableContentCaching = true;
 
     private Class<MANAGED_ENTITY_TYPE> managedEntityClass;
     
     public CrudController(SERVICE_TYPE service) {
         this(service, new EntityInputMapper(), new EntityInputMapper());
+    }
+
+    public CrudController(SERVICE_TYPE service, boolean disableContentCaching) {
+        this(service, new EntityInputMapper(), new EntityInputMapper(), disableContentCaching);
     }
     
     protected CrudController(SERVICE_TYPE service, 
@@ -64,6 +71,17 @@ public abstract class CrudController<
     	this.service = service;
         this.createInputMapper = createInputMapper;
         this.updateInputMapper = updateInputMapper;
+    }
+
+    protected CrudController(SERVICE_TYPE service,
+             InputMapper<CREATE_INPUT_TYPE, MANAGED_ENTITY_TYPE> createInputMapper,
+             InputMapper<UPDATE_INPUT_TYPE, MANAGED_ENTITY_TYPE> updateInputMapper,
+             boolean disableContentCaching) {
+
+        this.service = service;
+        this.createInputMapper = createInputMapper;
+        this.updateInputMapper = updateInputMapper;
+        this.disableContentCaching = disableContentCaching;
     }
 
     @GetMapping("${com.alon.spring.crud.path.search:}")
@@ -76,7 +94,8 @@ public abstract class CrudController<
             @RequestParam(required = false) String projection,
             ServletWebRequest request
     ) {
-        ShallowEtagHeaderFilter.disableContentCaching(request.getRequest());
+        if (disableContentCaching)
+            ShallowEtagHeaderFilter.disableContentCaching(request.getRequest());
         
         String normalizedProjection = this.normalizeProjection(projection);
         expand = this.normalizeExpand(normalizedProjection, expand);
@@ -105,12 +124,13 @@ public abstract class CrudController<
             @RequestParam(required = false) String projection,
             ServletWebRequest request
     ) throws ReadException {
-        ShallowEtagHeaderFilter.disableContentCaching(request.getRequest());
+        if (disableContentCaching)
+            ShallowEtagHeaderFilter.disableContentCaching(request.getRequest());
         
         String normalizedProjection = this.normalizeProjection(projection);
         List<String> normalizedExpand = this.normalizeExpand(normalizedProjection, expand);
         
-        MANAGED_ENTITY_TYPE entity = (MANAGED_ENTITY_TYPE) this.service.read(id, normalizedExpand);
+        MANAGED_ENTITY_TYPE entity = this.service.read(id, normalizedExpand);
         
         if (entity == null)
             throw new HttpClientErrorException(HttpStatus.NOT_FOUND);
@@ -128,9 +148,9 @@ public abstract class CrudController<
             @RequestParam(required = false) String projection
     ) throws CreateException {
         
-        MANAGED_ENTITY_TYPE entity = (MANAGED_ENTITY_TYPE) this.createInputMapper.map(input);
+        MANAGED_ENTITY_TYPE entity = this.createInputMapper.map(input);
         
-        entity = (MANAGED_ENTITY_TYPE) this.service.create(entity);
+        entity = this.service.create(entity);
         
         String normalizedProjection = this.normalizeProjection(projection);
         
@@ -149,10 +169,10 @@ public abstract class CrudController<
             @RequestParam(required = false) String projection
     ) throws UpdateException {
         
-        MANAGED_ENTITY_TYPE entity = (MANAGED_ENTITY_TYPE) this.updateInputMapper.map(input);
+        MANAGED_ENTITY_TYPE entity = this.updateInputMapper.map(input);
         entity.setId(id);
 
-        entity = (MANAGED_ENTITY_TYPE) this.service.update(entity);
+        entity = this.service.update(entity);
         
         String normalizedProjection = this.normalizeProjection(projection);
         
@@ -217,7 +237,7 @@ public abstract class CrudController<
     protected Specification resolveFilter(SEARCH_INPUT_TYPE filter) {
 
         if (filter.expressionPresent()) {
-            if (!enableSearchByExpression)
+            if (!properties.search.enableExpressionFilter)
                 throw new ResponseStatusException(HttpStatus.LOCKED,
                         "The filter by expression resource is not enabled.");
 

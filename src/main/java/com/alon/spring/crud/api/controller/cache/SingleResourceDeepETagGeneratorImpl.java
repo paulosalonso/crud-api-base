@@ -6,8 +6,10 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Component;
 
 import javax.persistence.EntityManager;
+import javax.persistence.NoResultException;
 import javax.persistence.criteria.CriteriaBuilder;
 import javax.persistence.criteria.CriteriaQuery;
+import javax.persistence.criteria.Predicate;
 import javax.persistence.criteria.Root;
 import java.time.OffsetDateTime;
 import java.util.Date;
@@ -26,11 +28,20 @@ public class SingleResourceDeepETagGeneratorImpl implements SingleResourceDeepET
 
         Specification specification = search.toSpecification();
 
-        if (specification != null)
-            query.where(specification.toPredicate(from, query, builder));
+        if (specification != null) {
+            Predicate predicate = specification.toPredicate(from, query, builder);
 
-        Object lastUpdate = entityManager.createQuery(query)
-                .getSingleResult();
+            if (predicate != null)
+                query.where(specification.toPredicate(from, query, builder));
+        }
+
+        Object lastUpdate;
+
+        try {
+            lastUpdate = entityManager.createQuery(query).getSingleResult();
+        } catch (NoResultException ex) {
+            lastUpdate = null;
+        }
         
         if (lastUpdate == null)
             lastUpdate = "NOT MODIFIED";
