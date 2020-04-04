@@ -3,6 +3,7 @@ package com.alon.spring.crud.api.controller;
 import com.alon.spring.crud.api.controller.cache.*;
 import com.alon.spring.crud.api.controller.input.InputMapper;
 import com.alon.spring.crud.api.controller.input.SearchInput;
+import com.alon.spring.crud.core.properties.Properties.CacheControlProperties;
 import com.alon.spring.crud.domain.model.BaseEntity;
 import com.alon.spring.crud.domain.service.CrudService;
 import com.alon.spring.crud.domain.service.exception.ReadException;
@@ -139,7 +140,26 @@ public abstract class CachedCrudController<
 	public BodyBuilder buildResponseEntity(HttpStatus status) {
 		return ResponseEntity
 				.status(status)
-				.cacheControl(CacheControl.maxAge(properties.cacheControl.maxAge, TimeUnit.SECONDS));
+				.cacheControl(buildCacheControl());
+	}
+
+	private CacheControl buildCacheControl() {
+		CacheControlProperties cacheControlProperties = properties.cacheControl;
+		CacheControl cacheControl;
+
+		if (cacheControlProperties.noCache)
+			cacheControl = CacheControl.noCache();
+		else if (cacheControlProperties.noStore)
+			cacheControl = CacheControl.noStore();
+		else
+			cacheControl = CacheControl.maxAge(cacheControlProperties.maxAge, TimeUnit.SECONDS);
+
+		if (cacheControlProperties.cachePublic)
+			cacheControl.cachePublic();
+		else if (cacheControlProperties.cachePrivate)
+			cacheControl.cachePrivate();
+
+		return cacheControl;
 	}
 	
 }

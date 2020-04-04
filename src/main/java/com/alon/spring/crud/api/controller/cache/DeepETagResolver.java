@@ -2,6 +2,7 @@ package com.alon.spring.crud.api.controller.cache;
 
 import com.alon.spring.crud.api.controller.input.SearchInput;
 import com.alon.spring.crud.domain.model.BaseEntity;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Component;
 
@@ -14,6 +15,16 @@ public class DeepETagResolver {
     private DeepETagGenerator singleResourceDeepETagGenerator;
     private DeepETagGenerator collectionResourceETagGenerator;
 
+    public DeepETagResolver(EntityManager entityManager,
+                            DeepETagGenerator singleResourceDeepETagGenerator,
+                            DeepETagGenerator collectionResourceETagGenerator) {
+
+        this.entityManager = entityManager;
+        this.singleResourceDeepETagGenerator = singleResourceDeepETagGenerator;
+        this.collectionResourceETagGenerator = collectionResourceETagGenerator;
+    }
+
+    @Autowired
     public DeepETagResolver(EntityManager entityManager,
                             SingleResourceDeepETagGenerator singleResourceDeepETagGenerator,
                             CollectionResourceDeepETagGenerator collectionResourceETagGenerator) {
