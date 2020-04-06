@@ -2,11 +2,11 @@ package com.alon.spring.crud.api.controller.input;
 
 /**
  * 
- * @param <I> Input to be converted
- * @param <R> Result of conversion
+ * @param <I> Input type
+ * @param <O> Output type
  */
-public interface InputMapper<I, R> {
+public interface InputMapper<I, O> {
     
-    public R map(I input);
+    public O map(I input);
     
 }

@@ -1,13 +1,16 @@
 package com.alon.spring.crud.api.controller;
 
-import com.alon.spring.crud.api.controller.cache.*;
+import com.alon.spring.crud.api.controller.cache.DeepETagResolver;
+import com.alon.spring.crud.api.controller.cache.ETagPolicy;
 import com.alon.spring.crud.api.controller.input.InputMapper;
+import com.alon.spring.crud.api.controller.input.Options;
 import com.alon.spring.crud.api.controller.input.SearchInput;
 import com.alon.spring.crud.core.properties.Properties.CacheControlProperties;
 import com.alon.spring.crud.domain.model.BaseEntity;
 import com.alon.spring.crud.domain.service.CrudService;
 import com.alon.spring.crud.domain.service.exception.ReadException;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.CacheControl;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -15,11 +18,9 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.http.ResponseEntity.BodyBuilder;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.context.request.ServletWebRequest;
 
 import java.io.Serializable;
-import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 public abstract class CachedCrudController<
@@ -82,30 +83,27 @@ public abstract class CachedCrudController<
 		return !eTagPolicy.equals(ETagPolicy.SHALLOW);
 	}
 
-    @Override
+	@Override
 	@GetMapping("${com.alon.spring.crud.path.search:}")
 	public ResponseEntity search(
 			SEARCH_INPUT_TYPE filter,
-			@RequestParam(required = false) List<String> order,
-			@RequestParam(required = false, defaultValue = "1") Integer page,
-			@RequestParam(required = false, defaultValue = "100") Integer pageSize,
-			@RequestParam(required = false) List<String> expand,
-			@RequestParam(required = false) String projection,
+			Pageable pageable,
+			Options options,
 			ServletWebRequest request
 	) {
 		ResponseEntity response;
 
 		if (eTagPolicy.equals(ETagPolicy.DISABLED) || eTagPolicy.equals(ETagPolicy.SHALLOW)) {
-			response = super.search(filter, order, page, pageSize, expand, projection, request);
+			response = super.search(filter, pageable, options, request);
 		} else {
-			String eTag = deepETagResolver.generateCollectionResourceETag(getManagedEntityType(), filter);
+			String eTag = deepETagResolver.generateCollectionResourceETag(managedEntityClass, filter);
 
 			if (request.checkNotModified(eTag))
 				response = buildResponseEntity(HttpStatus.NOT_MODIFIED)
 						.header(HttpHeaders.ETAG, eTag)
 						.build();
 			else
-				response = super.search(filter, order, page, pageSize, expand, projection, request);
+				response = super.search(filter, pageable, options, request);
 		}
 
 		return response;
@@ -114,23 +112,22 @@ public abstract class CachedCrudController<
 	@GetMapping("${com.alon.spring.crud.path.read:/{id}}")
 	public ResponseEntity read(
 			@PathVariable MANAGED_ENTITY_ID_TYPE id,
-			@RequestParam(required = false) List<String> expand,
-			@RequestParam(required = false) String projection,
+			Options options,
 			ServletWebRequest request
 	) throws ReadException {
 		ResponseEntity response;
 
 		if (eTagPolicy.equals(ETagPolicy.DISABLED) || eTagPolicy.equals(ETagPolicy.SHALLOW)) {
-			response = super.read(id, expand, projection, request);
+			response = super.read(id, options, request);
 		} else {
-			String eTag = deepETagResolver.generateSingleResourceETag(getManagedEntityType(), id);
+			String eTag = deepETagResolver.generateSingleResourceETag(managedEntityClass, id);
 
 			if (request.checkNotModified(eTag))
 				response = buildResponseEntity(HttpStatus.NOT_MODIFIED)
 						.header(HttpHeaders.ETAG, eTag)
 						.build();
 			else
-				response = super.read(id, expand, projection, request);
+				response = super.read(id, options, request);
 		}
 
 		return response;

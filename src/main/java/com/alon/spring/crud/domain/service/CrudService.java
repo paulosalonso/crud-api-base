@@ -1,31 +1,21 @@
 package com.alon.spring.crud.domain.service;
 
-import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.function.Function;
-
-import javax.transaction.Transactional;
-import javax.validation.Valid;
-
+import com.alon.spring.crud.domain.model.BaseEntity;
+import com.alon.spring.crud.domain.service.exception.*;
+import com.cosium.spring.data.jpa.entity.graph.domain.DynamicEntityGraph;
+import com.cosium.spring.data.jpa.entity.graph.repository.EntityGraphJpaRepository;
+import com.cosium.spring.data.jpa.entity.graph.repository.EntityGraphJpaSpecificationExecutor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.domain.Sort.Order;
 
-import com.alon.spring.crud.domain.model.BaseEntity;
-import com.alon.spring.crud.domain.service.exception.CreateException;
-import com.alon.spring.crud.domain.service.exception.DeleteException;
-import com.alon.spring.crud.domain.service.exception.NotFoundException;
-import com.alon.spring.crud.domain.service.exception.ReadException;
-import com.alon.spring.crud.domain.service.exception.UpdateException;
-import com.cosium.spring.data.jpa.entity.graph.domain.DynamicEntityGraph;
-import com.cosium.spring.data.jpa.entity.graph.repository.EntityGraphJpaRepository;
-import com.cosium.spring.data.jpa.entity.graph.repository.EntityGraphJpaSpecificationExecutor;
+import javax.transaction.Transactional;
+import javax.validation.Valid;
+import java.io.Serializable;
+import java.util.*;
+import java.util.function.Function;
 
 public interface CrudService<
         ENTITY_ID_TYPE extends Serializable, 
@@ -39,30 +29,33 @@ public interface CrudService<
     	
         try {
             HookHelper.executeHook(this, criteria, LifeCycleHook.BEFORE_SEARCH);
-            
-            Pageable pageable = PageHelper.buildPageable(criteria);
+
+            Pageable pageable = criteria.getPageable();
+
+            if (pageable == null)
+                pageable = PageHelper.buildPageable(criteria);
             
             Page<ENTITY_TYPE> searchResult;
 
             switch (criteria.getSearchOption()) {
-                case FILTER:                    
-                    searchResult = this.getRepository().findAll(criteria.getFilter(), pageable); 
+                case FILTER:
+                    searchResult = this.getRepository().findAll(criteria.getFilter(), pageable);
                     break;
-                    
-                case EXPAND: 
-                    searchResult = this.getRepository().findAll(pageable, criteria.getExpand()); 
+
+                case EXPAND:
+                    searchResult = this.getRepository().findAll(pageable, criteria.getExpand());
                     break;
-                        
+
                 case FILTER_EXPAND:
-            		searchResult = this.getRepository().findAll(criteria.getFilter(), pageable, criteria.getExpand()); 
+            		searchResult = this.getRepository().findAll(criteria.getFilter(), pageable, criteria.getExpand());
                     break;
-                    
+
                 case NONE:
                 default: searchResult = this.getRepository().findAll(pageable);
             }
-            
+
             HookHelper.executeHook(this, searchResult, LifeCycleHook.AFTER_SEARCH);
-            
+
             return searchResult;
         } catch (Throwable ex) {
             String message = String.format("Error searching entities: %s", ex.getMessage());

@@ -1,7 +1,8 @@
 package com.alon.spring.crud.api.controller;
 
-import com.alon.spring.crud.api.controller.input.EntityInputMapper;
 import com.alon.spring.crud.api.controller.input.InputMapper;
+import com.alon.spring.crud.api.controller.input.ModelMapperInputMapper;
+import com.alon.spring.crud.api.controller.input.Options;
 import com.alon.spring.crud.api.controller.input.SearchInput;
 import com.alon.spring.crud.api.controller.output.OutputPage;
 import com.alon.spring.crud.core.properties.Properties;
@@ -15,8 +16,8 @@ import com.alon.spring.crud.domain.service.exception.ReadException;
 import com.alon.spring.crud.domain.service.exception.UpdateException;
 import com.alon.spring.specification.ExpressionSpecification;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -54,14 +55,17 @@ public abstract class CrudController<
 
     protected boolean disableContentCaching = true;
 
-    private Class<MANAGED_ENTITY_TYPE> managedEntityClass;
+    protected Class<MANAGED_ENTITY_TYPE> managedEntityClass = extractManagedEntityType();
     
     public CrudController(SERVICE_TYPE service) {
-        this(service, new EntityInputMapper(), new EntityInputMapper());
+        this.service = service;
+        this.createInputMapper = new ModelMapperInputMapper<>(managedEntityClass);
+        this.updateInputMapper = new ModelMapperInputMapper<>(managedEntityClass);
     }
 
     public CrudController(SERVICE_TYPE service, boolean disableContentCaching) {
-        this(service, new EntityInputMapper(), new EntityInputMapper(), disableContentCaching);
+        this(service);
+        this.disableContentCaching = disableContentCaching;
     }
     
     protected CrudController(SERVICE_TYPE service, 
@@ -78,68 +82,56 @@ public abstract class CrudController<
              InputMapper<UPDATE_INPUT_TYPE, MANAGED_ENTITY_TYPE> updateInputMapper,
              boolean disableContentCaching) {
 
-        this.service = service;
-        this.createInputMapper = createInputMapper;
-        this.updateInputMapper = updateInputMapper;
+        this(service, createInputMapper, updateInputMapper);
         this.disableContentCaching = disableContentCaching;
     }
 
     @GetMapping("${com.alon.spring.crud.path.search:}")
     public ResponseEntity search(
             SEARCH_INPUT_TYPE filter,
-            @RequestParam(required = false) List<String> order,
-            @RequestParam(required = false, defaultValue = "1") Integer page,
-            @RequestParam(required = false, defaultValue = "100") Integer pageSize,
-            @RequestParam(required = false) List<String> expand,
-            @RequestParam(required = false) String projection,
+            Pageable pageable,
+            Options options,
             ServletWebRequest request
     ) {
         if (disableContentCaching)
             ShallowEtagHeaderFilter.disableContentCaching(request.getRequest());
-        
-        String normalizedProjection = this.normalizeProjection(projection);
-        expand = this.normalizeExpand(normalizedProjection, expand);
+
+        normalizeCollectionOptions(options);
 
         SearchCriteria criteria = SearchCriteria.of()
                 .filter(resolveFilter(filter))
-                .order(order)
-                .page(this.normalizePage(page))
-                .pageSize(pageSize)
-                .expand(expand)
+                .pageable(pageable)
+                .expand(options.getExpand())
                 .build();
 
-        Page<MANAGED_ENTITY_TYPE> entities = this.service.search(criteria);
-        
-        OutputPage response = this.projectionService.project(normalizedProjection, entities);
+        Page<MANAGED_ENTITY_TYPE> entities = service.search(criteria);
+
+        OutputPage response = projectionService.project(options.getProjection(), entities);
 
         return buildResponseEntity(HttpStatus.OK)
                 .body(response);
-        
     }
 
     @GetMapping("${com.alon.spring.crud.path.read:/{id}}")
     public ResponseEntity read(
             @PathVariable MANAGED_ENTITY_ID_TYPE id,
-            @RequestParam(required = false) List<String> expand,
-            @RequestParam(required = false) String projection,
+            Options options,
             ServletWebRequest request
     ) throws ReadException {
         if (disableContentCaching)
             ShallowEtagHeaderFilter.disableContentCaching(request.getRequest());
-        
-        String normalizedProjection = this.normalizeProjection(projection);
-        List<String> normalizedExpand = this.normalizeExpand(normalizedProjection, expand);
-        
-        MANAGED_ENTITY_TYPE entity = this.service.read(id, normalizedExpand);
-        
+
+        normalizeSingleOptions(options);
+
+        MANAGED_ENTITY_TYPE entity = service.read(id, options.getExpand());
+
         if (entity == null)
             throw new HttpClientErrorException(HttpStatus.NOT_FOUND);
-        
-        Object response = this.projectionService.project(normalizedProjection, entity);
+
+        Object response = projectionService.project(options.getProjection(), entity);
 
         return buildResponseEntity(HttpStatus.OK)
                 .body(response);
-        
     }
 
     @PostMapping("${com.alon.spring.crud.path.create:}")
@@ -148,13 +140,13 @@ public abstract class CrudController<
             @RequestParam(required = false) String projection
     ) throws CreateException {
         
-        MANAGED_ENTITY_TYPE entity = this.createInputMapper.map(input);
+        MANAGED_ENTITY_TYPE entity = createInputMapper.map(input);
         
-        entity = this.service.create(entity);
+        entity = service.create(entity);
         
-        String normalizedProjection = this.normalizeProjection(projection);
+        projection = normalizeSingleProjection(projection);
         
-        Object response = this.projectionService.project(normalizedProjection, entity);
+        Object response = projectionService.project(projection, entity);
 
         return ResponseEntity
                 .status(HttpStatus.CREATED)
@@ -169,14 +161,14 @@ public abstract class CrudController<
             @RequestParam(required = false) String projection
     ) throws UpdateException {
         
-        MANAGED_ENTITY_TYPE entity = this.updateInputMapper.map(input);
+        MANAGED_ENTITY_TYPE entity = updateInputMapper.map(input);
         entity.setId(id);
 
-        entity = this.service.update(entity);
+        entity = service.update(entity);
         
-        String normalizedProjection = this.normalizeProjection(projection);
+        projection = normalizeSingleProjection(projection);
         
-        Object response = this.projectionService.project(normalizedProjection, entity);
+        Object response = projectionService.project(projection, entity);
 
         return ResponseEntity
                 .status(HttpStatus.OK)
@@ -187,55 +179,60 @@ public abstract class CrudController<
     @DeleteMapping("${com.alon.spring.crud.path.delete:/{id}}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void delete(@PathVariable MANAGED_ENTITY_ID_TYPE id) throws DeleteException {
-        this.service.delete(id);
+        service.delete(id);
     }
     
     @GetMapping("/projections")
     public List<ProjectionService.ProjectionRepresentation> getRepresentations() {
-        
-        return this.projectionService
-                .getEntityRepresentations(getManagedEntityType());
-        
+        return projectionService.getEntityRepresentations(extractManagedEntityType());
     }
 
     public BodyBuilder buildResponseEntity(HttpStatus status) {
         return ResponseEntity.status(status);
     }
 
-    public final Class getManagedEntityType() {
-        if (managedEntityClass == null)
-            managedEntityClass = (Class) List.of(((ParameterizedType) this.getClass().getGenericSuperclass())
-                    .getActualTypeArguments()).get(1);
-
-        return managedEntityClass;
-    }
-
-    protected String getDefaultProjection() {
+    protected String getSingleDefaultProjection() {
         return ProjectionService.ENTITY_PROJECTION;
     }
-    
-    protected int normalizePage(int page) {
-        return --page;
+
+    protected String getCollectionDefaultProjection() {
+        return ProjectionService.ENTITY_PROJECTION;
     }
-    
-    protected String normalizeProjection(String projectionName) {
-        if (projectionName != null && this.projectionService.projectionExists(projectionName))
+
+    protected void normalizeSingleOptions(Options options) {
+        options.setProjection(normalizeSingleProjection(options.getProjection()));
+        options.setExpand(normalizeExpand(options.getProjection(), options.getExpand()));
+    }
+
+    protected void normalizeCollectionOptions(Options options) {
+        options.setProjection(normalizeCollectionProjection(options.getProjection()));
+        options.setExpand(normalizeExpand(options.getProjection(), options.getExpand()));
+    }
+
+    protected String normalizeSingleProjection(String projectionName) {
+        if (projectionName != null && projectionService.projectionExists(projectionName))
             return projectionName;
-        
-        return this.getDefaultProjection();
+
+        return getSingleDefaultProjection();
     }
-    
+
+    protected String normalizeCollectionProjection(String projectionName) {
+        if (projectionName != null && projectionService.projectionExists(projectionName))
+            return projectionName;
+
+        return getCollectionDefaultProjection();
+    }
+
     protected List<String> normalizeExpand(String projectionName, List<String> receivedExpand) {
-        
-        if (projectionName == null || projectionName.equals(ProjectionService.ENTITY_PROJECTION))
+
+        if (projectionName.equals(ProjectionService.ENTITY_PROJECTION))
             return receivedExpand;
-        
+
         return this.projectionService.getRequiredExpand(projectionName);
-        
+
     }
 
     protected Specification resolveFilter(SEARCH_INPUT_TYPE filter) {
-
         if (filter.expressionPresent()) {
             if (!properties.search.enableExpressionFilter)
                 throw new ResponseStatusException(HttpStatus.LOCKED,
@@ -245,7 +242,11 @@ public abstract class CrudController<
         }
 
         return filter.toSpecification();
+    }
 
+    private final Class extractManagedEntityType() {
+        return (Class) List.of(((ParameterizedType) this.getClass().getGenericSuperclass())
+                .getActualTypeArguments()).get(1);
     }
 
 }

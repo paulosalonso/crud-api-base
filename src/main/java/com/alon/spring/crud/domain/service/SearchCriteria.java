@@ -3,6 +3,7 @@ package com.alon.spring.crud.domain.service;
 import com.alon.spring.specification.ExpressionSpecification;
 import com.cosium.spring.data.jpa.entity.graph.domain.DynamicEntityGraph;
 import com.cosium.spring.data.jpa.entity.graph.domain.EntityGraph;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 
 import java.util.List;
@@ -10,31 +11,20 @@ import java.util.List;
 public class SearchCriteria {
 
     private Specification filter;
-    private List<String> order;
+    private Pageable pageable;
     private EntityGraph expand;
-    private int page = 1;
-    private int pageSize = 100;
 
     public Specification getFilter() {
         return filter;
     }
 
-    public List<String> getOrder() {
-        return order;
+    public Pageable getPageable() {
+        return pageable;
     }
 
     public EntityGraph getExpand() {
         return expand;
     }
-
-    public int getPage() {
-        return page;
-    }
-
-    public int getPageSize() {
-        return pageSize;
-    }
-
     public SearchType getSearchOption() {
 
         String option = "";
@@ -71,8 +61,8 @@ public class SearchCriteria {
             return this;
         }
 
-        public SearchCriteriaBuilder order(List<String> order) {
-            this.searchCriteria.order = order;
+        public SearchCriteriaBuilder pageable(Pageable pageable) {
+            this.searchCriteria.pageable = pageable;
             return this;
         }
 
@@ -82,17 +72,6 @@ public class SearchCriteria {
 
             return this;
         }
-
-        public SearchCriteriaBuilder page(int page) {
-            this.searchCriteria.page = page;
-            return this;
-        }
-
-        public SearchCriteriaBuilder pageSize(int pageSize) {
-            this.searchCriteria.pageSize = pageSize;
-            return this;
-        }
-
         public SearchCriteria build() {
             return this.searchCriteria;
         }
