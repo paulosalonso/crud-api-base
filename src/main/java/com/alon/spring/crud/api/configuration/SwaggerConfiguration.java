@@ -25,7 +25,7 @@ public class SwaggerConfiguration implements WebMvcConfigurer {
     private SwaggerCustomization swaggerCustomization;
 
     @Bean
-    public Docket api() {
+    public Docket docket() {
         Docket docket = new Docket(DocumentationType.SWAGGER_2)
         		.ignoredParameterTypes(ServletWebRequest.class)
 				.select()
