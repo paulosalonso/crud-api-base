@@ -1,4 +1,4 @@
-package com.alon.spring.crud.domain.service;
+package com.alon.spring.crud.api.projection;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.ParameterizedType;

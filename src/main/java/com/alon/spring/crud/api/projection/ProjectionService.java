@@ -1,24 +1,19 @@
-package com.alon.spring.crud.domain.service;
+package com.alon.spring.crud.api.projection;
 
-import java.lang.reflect.ParameterizedType;
-import java.lang.reflect.Type;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.stream.Collectors;
-
+import com.alon.spring.crud.api.controller.output.OutputPage;
+import com.alon.spring.crud.api.controller.projection.Projector;
+import com.alon.spring.crud.domain.model.BaseEntity;
+import com.alon.spring.crud.domain.service.exception.ProjectionException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.ApplicationContext;
 import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
 
-import com.alon.spring.crud.api.controller.output.OutputPage;
-import com.alon.spring.crud.api.controller.projection.Projector;
-import com.alon.spring.crud.domain.model.BaseEntity;
-import com.alon.spring.crud.domain.service.exception.ProjectionException;
+import java.lang.reflect.ParameterizedType;
+import java.lang.reflect.Type;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 public class ProjectionService {
@@ -47,7 +42,7 @@ public class ProjectionService {
             return (O) input;
         
         try {
-            Projector projector = this.getProjector(projectionName);
+            Projector projector = getProjector(projectionName);
             
             return (O) projector.project(input);
         } catch (Exception e) {
@@ -65,7 +60,7 @@ public class ProjectionService {
     public <I extends BaseEntity> OutputPage project(String projectionName, Page<I> input) {
 
         try {
-            Projector projector = this.getProjector(projectionName);
+            Projector projector = getProjector(projectionName);
             return OutputPage.of(input, projector);
         } catch (Exception e) {
             String message = String.format(
@@ -81,7 +76,7 @@ public class ProjectionService {
     
     public List<String> getRequiredExpand(String projectionName) {
         
-        Projector projector = this.projections.get(projectionName);
+        Projector projector = projections.get(projectionName);
         
         if (projector == null)
             return Collections.emptyList();
@@ -91,15 +86,15 @@ public class ProjectionService {
     }
     
     public boolean projectionExists(String projectionName) {
-        return this.projections.containsKey(projectionName);
+        return projections.containsKey(projectionName);
     }
 
     private Projector getProjector(String projectionName) {
 
-        Projector projector = this.projections.get(projectionName);
+        Projector projector = projections.get(projectionName);
 
         return Optional.ofNullable(projector)
-                       .orElse(this.projections.get(ENTITY_PROJECTION));
+                       .orElse(projections.get(ENTITY_PROJECTION));
 
     }
 
@@ -107,38 +102,38 @@ public class ProjectionService {
 
         return this.projections
                 .keySet().stream()
-                .filter(key -> this.projectorInputTypeIsTheExpected(key, entityType))
-                .collect(Collectors.toMap(projectionName -> projectionName, this.projections::get));
+                .filter(key -> projectorInputTypeIsTheExpected(key, entityType))
+                .collect(Collectors.toMap(projectionName -> projectionName, projections::get));
 
     }
     
     public List<ProjectionRepresentation> getEntityRepresentations(Class<? extends BaseEntity> clazz) {
         
-        if (this.representationsCache.containsKey(clazz))
-            return this.representationsCache.get(clazz);
+        if (representationsCache.containsKey(clazz))
+            return representationsCache.get(clazz);
         
-        Map<String, Projector> projections = this.getEntityProjections(clazz);
+        Map<String, Projector> projections = getEntityProjections(clazz);
 
         List<ProjectionRepresentation> representations = projections.entrySet().stream()
                 .map(this::getProjectionRepresentation)
                 .collect(Collectors.toList());
         
-        this.representationsCache.put(clazz, representations);
+        representationsCache.put(clazz, representations);
         
         return representations;
 
     }
 
     private ProjectionRepresentation getProjectionRepresentation(Map.Entry<String, Projector> entry) {
-        Class projectionOutput = this.getProjectorOutputType(entry.getValue());
-        Map<String, Object> representation = this.representationService.getRepresentationOf(projectionOutput);
+        Class projectionOutput = getProjectorOutputType(entry.getValue());
+        Map<String, Object> representation = representationService.getRepresentationOf(projectionOutput);
         return new ProjectionRepresentation(entry.getKey(), representation);
     }
 
     private boolean projectorInputTypeIsTheExpected(String projectionName, Class<? extends BaseEntity> expectedInputType) {
         
-        Projector projector = this.projections.get(projectionName);
-        Type inputType = this.getProjectorInputType(projector);
+        Projector projector = projections.get(projectionName);
+        Type inputType = getProjectorInputType(projector);
         
         if (!(inputType instanceof Class)) // A classe pode usar generics e aqui seria um TypeVariableImpl ao invés de Class
             return false;
@@ -148,12 +143,12 @@ public class ProjectionService {
     }
     
     private Type getProjectorInputType(Projector projector) {
-        ParameterizedType projectorType = this.getProjectorParameterizedType(projector);        
+        ParameterizedType projectorType = getProjectorParameterizedType(projector);
         return projectorType.getActualTypeArguments()[0];
     }
     
     private Class getProjectorOutputType(Projector projector) {
-        ParameterizedType projectorType = this.getProjectorParameterizedType(projector);
+        ParameterizedType projectorType = getProjectorParameterizedType(projector);
         return (Class) projectorType.getActualTypeArguments()[1];
     }
     

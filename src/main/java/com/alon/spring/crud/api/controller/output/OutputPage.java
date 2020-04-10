@@ -43,7 +43,7 @@ public class OutputPage {
     public static <T extends BaseEntity, O> OutputPage of(Page<T> page) {
         
         return new OutputPageBuilder()
-                .page(page.getNumber() + 1)
+                .page(page.getNumber())
                 .pageSize(page.getNumberOfElements())
                 .totalPages(page.getTotalPages())
                 .totalSize(Long.valueOf(page.getTotalElements()).intValue())
@@ -55,7 +55,7 @@ public class OutputPage {
     public static <T extends BaseEntity, O> OutputPage of(Page<T> page, Projector<T, O> projector) {
         
         return new OutputPageBuilder()
-                .page(page.getNumber() + 1)
+                .page(page.getNumber())
                 .pageSize(page.getNumberOfElements())
                 .totalPages(page.getTotalPages())
                 .totalSize(Long.valueOf(page.getTotalElements()).intValue())

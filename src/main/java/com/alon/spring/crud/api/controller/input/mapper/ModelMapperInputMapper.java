@@ -1,8 +1,9 @@
-package com.alon.spring.crud.api.controller.input;
+package com.alon.spring.crud.api.controller.input.mapper;
 
+import com.alon.spring.crud.domain.model.BaseEntity;
 import org.modelmapper.ModelMapper;
 
-public class ModelMapperInputMapper<I, O> implements InputMapper<I, O> {
+public class ModelMapperInputMapper<I, O extends BaseEntity<?>> implements InputMapper<I, O> {
 
     private final ModelMapper modelMapper;
     private final Class<O> outputType;
@@ -23,6 +24,9 @@ public class ModelMapperInputMapper<I, O> implements InputMapper<I, O> {
 
     @Override
     public O map(I input) {
+        if (outputType.isAssignableFrom(input.getClass()))
+            return (O) input;
+
         return modelMapper.map(input, outputType);
     }
 

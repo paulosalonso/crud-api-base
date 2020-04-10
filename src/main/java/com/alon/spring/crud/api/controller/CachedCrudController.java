@@ -2,7 +2,7 @@ package com.alon.spring.crud.api.controller;
 
 import com.alon.spring.crud.api.controller.cache.DeepETagResolver;
 import com.alon.spring.crud.api.controller.cache.ETagPolicy;
-import com.alon.spring.crud.api.controller.input.InputMapper;
+import com.alon.spring.crud.api.controller.input.mapper.InputMapper;
 import com.alon.spring.crud.api.controller.input.Options;
 import com.alon.spring.crud.api.controller.input.SearchInput;
 import com.alon.spring.crud.core.properties.Properties.CacheControlProperties;

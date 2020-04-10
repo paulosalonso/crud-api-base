@@ -4,10 +4,11 @@ import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
 import javax.persistence.MappedSuperclass;
+import java.io.Serializable;
 import java.time.OffsetDateTime;
 
 @MappedSuperclass
-public abstract class BaseEntity<ID> {
+public abstract class BaseEntity<ID> implements Serializable {
 
     @CreationTimestamp
     private OffsetDateTime creationTimestamp;

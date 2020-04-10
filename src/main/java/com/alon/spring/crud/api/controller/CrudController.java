@@ -1,14 +1,14 @@
 package com.alon.spring.crud.api.controller;
 
-import com.alon.spring.crud.api.controller.input.InputMapper;
-import com.alon.spring.crud.api.controller.input.ModelMapperInputMapper;
+import com.alon.spring.crud.api.controller.input.mapper.InputMapper;
+import com.alon.spring.crud.api.controller.input.mapper.ModelMapperInputMapper;
 import com.alon.spring.crud.api.controller.input.Options;
 import com.alon.spring.crud.api.controller.input.SearchInput;
 import com.alon.spring.crud.api.controller.output.OutputPage;
 import com.alon.spring.crud.core.properties.Properties;
 import com.alon.spring.crud.domain.model.BaseEntity;
 import com.alon.spring.crud.domain.service.CrudService;
-import com.alon.spring.crud.domain.service.ProjectionService;
+import com.alon.spring.crud.api.projection.ProjectionService;
 import com.alon.spring.crud.domain.service.SearchCriteria;
 import com.alon.spring.crud.domain.service.exception.CreateException;
 import com.alon.spring.crud.domain.service.exception.DeleteException;
@@ -53,7 +53,7 @@ public abstract class CrudController<
     protected InputMapper<CREATE_INPUT_TYPE, MANAGED_ENTITY_TYPE> createInputMapper;
     protected InputMapper<UPDATE_INPUT_TYPE, MANAGED_ENTITY_TYPE> updateInputMapper;
 
-    protected boolean disableContentCaching = true;
+    protected final boolean disableContentCaching;
 
     protected Class<MANAGED_ENTITY_TYPE> managedEntityClass = extractManagedEntityType();
     
@@ -61,10 +61,13 @@ public abstract class CrudController<
         this.service = service;
         this.createInputMapper = new ModelMapperInputMapper<>(managedEntityClass);
         this.updateInputMapper = new ModelMapperInputMapper<>(managedEntityClass);
+        this.disableContentCaching = true;
     }
 
     public CrudController(SERVICE_TYPE service, boolean disableContentCaching) {
-        this(service);
+        this.service = service;
+        this.createInputMapper = new ModelMapperInputMapper<>(managedEntityClass);
+        this.updateInputMapper = new ModelMapperInputMapper<>(managedEntityClass);
         this.disableContentCaching = disableContentCaching;
     }
     
@@ -75,6 +78,7 @@ public abstract class CrudController<
     	this.service = service;
         this.createInputMapper = createInputMapper;
         this.updateInputMapper = updateInputMapper;
+        this.disableContentCaching = true;
     }
 
     protected CrudController(SERVICE_TYPE service,
@@ -82,7 +86,9 @@ public abstract class CrudController<
              InputMapper<UPDATE_INPUT_TYPE, MANAGED_ENTITY_TYPE> updateInputMapper,
              boolean disableContentCaching) {
 
-        this(service, createInputMapper, updateInputMapper);
+        this.service = service;
+        this.createInputMapper = createInputMapper;
+        this.updateInputMapper = updateInputMapper;
         this.disableContentCaching = disableContentCaching;
     }
 
@@ -228,7 +234,7 @@ public abstract class CrudController<
         if (projectionName.equals(ProjectionService.ENTITY_PROJECTION))
             return receivedExpand;
 
-        return this.projectionService.getRequiredExpand(projectionName);
+        return projectionService.getRequiredExpand(projectionName);
 
     }
 
@@ -236,7 +242,7 @@ public abstract class CrudController<
         if (filter.expressionPresent()) {
             if (!properties.search.enableExpressionFilter)
                 throw new ResponseStatusException(HttpStatus.LOCKED,
-                        "The filter by expression resource is not enabled.");
+                        "The filter by expression feature is not enabled.");
 
             return ExpressionSpecification.of(filter.getExpression());
         }
@@ -244,9 +250,9 @@ public abstract class CrudController<
         return filter.toSpecification();
     }
 
-    private final Class extractManagedEntityType() {
-        return (Class) List.of(((ParameterizedType) this.getClass().getGenericSuperclass())
-                .getActualTypeArguments()).get(1);
+    private final <T extends BaseEntity<MANAGED_ENTITY_ID_TYPE>> Class<T> extractManagedEntityType() {
+        ParameterizedType classType = (ParameterizedType) getClass().getGenericSuperclass();
+        return (Class<T>) classType.getActualTypeArguments()[1];
     }
 
 }

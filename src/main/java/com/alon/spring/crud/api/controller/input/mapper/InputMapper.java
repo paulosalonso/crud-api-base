@@ -1,4 +1,4 @@
-package com.alon.spring.crud.api.controller.input;
+package com.alon.spring.crud.api.controller.input.mapper;
 
 /**
  * 

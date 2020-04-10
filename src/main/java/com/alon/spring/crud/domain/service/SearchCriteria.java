@@ -25,6 +25,7 @@ public class SearchCriteria {
     public EntityGraph getExpand() {
         return expand;
     }
+
     public SearchType getSearchOption() {
 
         String option = "";
