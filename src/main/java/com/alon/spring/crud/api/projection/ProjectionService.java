@@ -1,7 +1,6 @@
 package com.alon.spring.crud.api.projection;
 
 import com.alon.spring.crud.api.controller.output.OutputPage;
-import com.alon.spring.crud.api.controller.projection.Projector;
 import com.alon.spring.crud.domain.model.BaseEntity;
 import com.alon.spring.crud.domain.service.exception.ProjectionException;
 import org.slf4j.Logger;

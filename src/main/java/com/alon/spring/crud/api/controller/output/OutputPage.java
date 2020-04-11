@@ -5,7 +5,7 @@ import java.util.stream.Collectors;
 
 import org.springframework.data.domain.Page;
 
-import com.alon.spring.crud.api.controller.projection.Projector;
+import com.alon.spring.crud.api.projection.Projector;
 import com.alon.spring.crud.domain.model.BaseEntity;
 
 public class OutputPage {

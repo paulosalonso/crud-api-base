@@ -1,4 +1,4 @@
-package com.alon.spring.crud.api.controller.projection;
+package com.alon.spring.crud.api.projection;
 
 import java.util.Collections;
 import java.util.List;
