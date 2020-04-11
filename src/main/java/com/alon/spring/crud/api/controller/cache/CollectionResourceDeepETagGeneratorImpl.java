@@ -30,7 +30,7 @@ public class CollectionResourceDeepETagGeneratorImpl implements CollectionResour
             Predicate predicate = specification.toPredicate(from, query, builder);
 
             if (predicate != null)
-                query.where(specification.toPredicate(from, query, builder));
+                query.where(predicate);
         }
 
         Object lastUpdate;
