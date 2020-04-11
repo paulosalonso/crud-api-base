@@ -19,7 +19,7 @@ public class ProjectionService {
     
     private static final Logger LOGGER = LoggerFactory.getLogger(ProjectionService.class);
     
-    public static final String ENTITY_PROJECTION = "entity-projection";
+    public static final String NOP_PROJECTION = "no-operation-projection";
     
     private ApplicationContext applicationContext;
     
@@ -37,7 +37,7 @@ public class ProjectionService {
 
     public <I extends BaseEntity, O> O project(String projectionName, I input) {
         
-        if (projectionName.equals(ENTITY_PROJECTION))
+        if (projectionName.equals(NOP_PROJECTION))
             return (O) input;
         
         try {
@@ -93,7 +93,7 @@ public class ProjectionService {
         Projector projector = projections.get(projectionName);
 
         return Optional.ofNullable(projector)
-                       .orElse(projections.get(ENTITY_PROJECTION));
+                       .orElse(projections.get(NOP_PROJECTION));
 
     }
 
@@ -161,36 +161,6 @@ public class ProjectionService {
         
         return (ParameterizedType) projectorTypeOpt.get();
         
-    }
-
-    public class ProjectionRepresentation {
-
-        public String projectionName;
-        public Map<String, Object> representation;
-
-        public ProjectionRepresentation() {}
-
-        public ProjectionRepresentation(String projectionName, Map<String, Object> representation) {
-            this.projectionName = projectionName;
-            this.representation = representation;
-        }
-
-        public String getProjectionName() {
-            return projectionName;
-        }
-
-        public void setProjectionName(String projectionName) {
-            this.projectionName = projectionName;
-        }
-
-        public Map<String, Object> getRepresentation() {
-            return representation;
-        }
-
-        public void setRepresentation(Map<String, Object> representation) {
-            this.representation = representation;
-        }
-
     }
 
 }

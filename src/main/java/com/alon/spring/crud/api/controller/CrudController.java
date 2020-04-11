@@ -5,6 +5,7 @@ import com.alon.spring.crud.api.controller.input.mapper.ModelMapperInputMapper;
 import com.alon.spring.crud.api.controller.input.Options;
 import com.alon.spring.crud.api.controller.input.SearchInput;
 import com.alon.spring.crud.api.controller.output.OutputPage;
+import com.alon.spring.crud.api.projection.ProjectionRepresentation;
 import com.alon.spring.crud.core.properties.Properties;
 import com.alon.spring.crud.domain.model.BaseEntity;
 import com.alon.spring.crud.domain.service.CrudService;
@@ -189,7 +190,7 @@ public abstract class CrudController<
     }
     
     @GetMapping("/projections")
-    public List<ProjectionService.ProjectionRepresentation> getRepresentations() {
+    public List<ProjectionRepresentation> getRepresentations() {
         return projectionService.getEntityRepresentations(extractManagedEntityType());
     }
 
@@ -198,11 +199,11 @@ public abstract class CrudController<
     }
 
     protected String getSingleDefaultProjection() {
-        return ProjectionService.ENTITY_PROJECTION;
+        return ProjectionService.NOP_PROJECTION;
     }
 
     protected String getCollectionDefaultProjection() {
-        return ProjectionService.ENTITY_PROJECTION;
+        return ProjectionService.NOP_PROJECTION;
     }
 
     protected void normalizeSingleOptions(Options options) {
@@ -231,7 +232,7 @@ public abstract class CrudController<
 
     protected List<String> normalizeExpand(String projectionName, List<String> receivedExpand) {
 
-        if (projectionName.equals(ProjectionService.ENTITY_PROJECTION))
+        if (projectionName.equals(ProjectionService.NOP_PROJECTION))
             return receivedExpand;
 
         return projectionService.getRequiredExpand(projectionName);
