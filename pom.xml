@@ -49,12 +49,13 @@
         <jacoco-maven-plugin.version>0.8.5</jacoco-maven-plugin.version>
         <pitest-maven.version>1.5.1</pitest-maven.version>
 
-        <!--    TESTS CONFIGURATIONS    -->
-        <skip.unit.tests>true</skip.unit.tests>
-        <skip.it.tests>true</skip.it.tests>
-        <skip.mutation>true</skip.mutation>
-        <covered.line>0</covered.line>
-        <covered.branch>0</covered.branch>
+        <!--    CONFIGURATIONS    -->
+        <skip.unit.tests>false</skip.unit.tests>
+        <skip.it.tests>false</skip.it.tests>
+        <skip.mutation>false</skip.mutation>
+        <skip.signature>true</skip.signature>
+        <covered.line>0.90</covered.line>
+        <covered.branch>0.90</covered.branch>
     </properties>    
     <distributionManagement>
         <snapshotRepository>
@@ -189,6 +190,9 @@
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-gpg-plugin</artifactId>
                 <version>${maven-gpg-plugin.version}</version>
+                <configuration>
+                    <skip>${skip.signature}</skip>
+                </configuration>
                 <executions>
                     <execution>
                         <id>sign-artifacts</id>
