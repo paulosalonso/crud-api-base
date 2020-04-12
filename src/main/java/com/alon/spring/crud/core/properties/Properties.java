@@ -27,6 +27,14 @@ public class Properties {
         this.search = search;
     }
 
+    public ProjectionProperties getProjection() {
+        return projection;
+    }
+
+    public void setProjection(ProjectionProperties projection) {
+        this.projection = projection;
+    }
+
     public class CacheControlProperties {
         public long maxAge = 600;
         public boolean cachePrivate;
