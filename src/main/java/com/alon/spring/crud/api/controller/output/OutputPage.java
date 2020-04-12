@@ -36,13 +36,13 @@ public class OutputPage {
         return totalSize;
     }
     
-    public static OutputPageBuilder of() {
-        return new OutputPageBuilder();
+    public static Builder of() {
+        return new Builder();
     }
     
     public static <T extends BaseEntity, O> OutputPage of(Page<T> page) {
         
-        return new OutputPageBuilder()
+        return new Builder()
                 .page(page.getNumber())
                 .pageSize(page.getNumberOfElements())
                 .totalPages(page.getTotalPages())
@@ -54,7 +54,7 @@ public class OutputPage {
     
     public static <T extends BaseEntity, O> OutputPage of(Page<T> page, Projector<T, O> projector) {
         
-        return new OutputPageBuilder()
+        return new Builder()
                 .page(page.getNumber())
                 .pageSize(page.getNumberOfElements())
                 .totalPages(page.getTotalPages())
@@ -67,39 +67,35 @@ public class OutputPage {
         
     }
     
-    public static final class OutputPageBuilder {
+    public static final class Builder {
         
         private OutputPage output;
         
-        private OutputPageBuilder() {
-            try {
-                this.output = new OutputPage();
-            } catch (Exception ex) {
-                throw new InternalError(ex);
-            }
+        private Builder() {
+            this.output = new OutputPage();
         }
         
-        public <C> OutputPageBuilder content(List<C> content) {
+        public <C> Builder content(List<C> content) {
             this.output.content = content;
             return this;
         }
         
-        public OutputPageBuilder page(int page) {
+        public Builder page(int page) {
             this.output.page = page;
             return this;
         }
         
-        public OutputPageBuilder pageSize(int pageSize) {
+        public Builder pageSize(int pageSize) {
             this.output.pageSize = pageSize;
             return this;
         }
         
-        public OutputPageBuilder totalPages(int totalPages) {
+        public Builder totalPages(int totalPages) {
             this.output.totalPages = totalPages;
             return this;
         }
         
-        public OutputPageBuilder totalSize(int totalSize) {
+        public Builder totalSize(int totalSize) {
             this.output.totalSize = totalSize;
             return this;
         }
