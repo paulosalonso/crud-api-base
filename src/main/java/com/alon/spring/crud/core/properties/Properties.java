@@ -8,7 +8,8 @@ import org.springframework.context.annotation.Configuration;
 public class Properties {
 
     public CacheControlProperties cacheControl = new CacheControlProperties();
-    public Search search = new Search();
+    public SearchProperties search = new SearchProperties();
+    public ProjectionProperties projection = new ProjectionProperties();
 
     public CacheControlProperties getCacheControl() {
         return cacheControl;
@@ -18,11 +19,11 @@ public class Properties {
         this.cacheControl = cacheControl;
     }
 
-    public Search getSearch() {
+    public SearchProperties getSearch() {
         return search;
     }
 
-    public void setSearch(Search search) {
+    public void setSearch(SearchProperties search) {
         this.search = search;
     }
 
@@ -102,7 +103,7 @@ public class Properties {
 
     }
 
-    public class Search {
+    public class SearchProperties {
         public boolean enableExpressionFilter = false;
 
         public boolean isEnableExpressionFilter() {
@@ -111,6 +112,18 @@ public class Properties {
 
         public void setEnableExpressionFilter(boolean enableExpressionFilter) {
             this.enableExpressionFilter = enableExpressionFilter;
+        }
+    }
+
+    public class ProjectionProperties {
+        public boolean useDefaultIfError = true;
+
+        public boolean isUseDefaultIfError() {
+            return useDefaultIfError;
+        }
+
+        public void setUseDefaultIfError(boolean useDefaultIfError) {
+            this.useDefaultIfError = useDefaultIfError;
         }
     }
 }

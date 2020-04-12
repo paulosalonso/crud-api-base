@@ -1,18 +1,25 @@
 package com.alon.spring.crud.api.projection;
 
-import com.alon.spring.crud.api.controller.output.OutputPage;
-import com.alon.spring.crud.domain.model.BaseEntity;
-import com.alon.spring.crud.domain.service.exception.ProjectionException;
+import java.lang.reflect.ParameterizedType;
+import java.lang.reflect.Type;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.stream.Collectors;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
 import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
 
-import java.lang.reflect.ParameterizedType;
-import java.lang.reflect.Type;
-import java.util.*;
-import java.util.stream.Collectors;
+import com.alon.spring.crud.api.controller.output.OutputPage;
+import com.alon.spring.crud.core.properties.Properties;
+import com.alon.spring.crud.domain.model.BaseEntity;
+import com.alon.spring.crud.domain.service.exception.ProjectionException;
 
 @Service
 public class ProjectionService {
@@ -20,6 +27,9 @@ public class ProjectionService {
     private static final Logger LOGGER = LoggerFactory.getLogger(ProjectionService.class);
     
     public static final String NOP_PROJECTION = "no-operation-projection";
+
+    @Autowired
+    private Properties properties;
     
     private ApplicationContext applicationContext;
     
@@ -45,6 +55,9 @@ public class ProjectionService {
             
             return (O) projector.project(input);
         } catch (Exception e) {
+            if (properties.projection.useDefaultIfError)
+                return project(NOP_PROJECTION, input);
+
             String message = String.format(
                     "Error projecting entity %s with projector '%s'", 
                     input.getClass().getSimpleName(), 
@@ -62,6 +75,9 @@ public class ProjectionService {
             Projector projector = getProjector(projectionName);
             return OutputPage.of(input, projector);
         } catch (Exception e) {
+            if (properties.projection.useDefaultIfError)
+                return project(NOP_PROJECTION, input);
+
             String message = String.format(
                     "Error projecting entity %s with projector '%s'", 
                     input.getClass().getSimpleName(), 
@@ -87,24 +103,6 @@ public class ProjectionService {
     public boolean projectionExists(String projectionName) {
         return projections.containsKey(projectionName);
     }
-
-    private Projector getProjector(String projectionName) {
-
-        Projector projector = projections.get(projectionName);
-
-        return Optional.ofNullable(projector)
-                       .orElse(projections.get(NOP_PROJECTION));
-
-    }
-
-    private Map<String, Projector> getEntityProjections(Class<? extends BaseEntity> entityType) {
-
-        return this.projections
-                .keySet().stream()
-                .filter(key -> projectorInputTypeIsTheExpected(key, entityType))
-                .collect(Collectors.toMap(projectionName -> projectionName, projections::get));
-
-    }
     
     public List<ProjectionRepresentation> getEntityRepresentations(Class<? extends BaseEntity> clazz) {
         
@@ -120,6 +118,24 @@ public class ProjectionService {
         representationsCache.put(clazz, representations);
         
         return representations;
+
+    }
+
+    private Projector getProjector(String projectionName) {
+
+        Projector projector = projections.get(projectionName);
+
+        return Optional.ofNullable(projector)
+                .orElse(projections.get(NOP_PROJECTION));
+
+    }
+
+    private Map<String, Projector> getEntityProjections(Class<? extends BaseEntity> entityType) {
+
+        return this.projections
+                .keySet().stream()
+                .filter(key -> projectorInputTypeIsTheExpected(key, entityType))
+                .collect(Collectors.toMap(projectionName -> projectionName, projections::get));
 
     }
 

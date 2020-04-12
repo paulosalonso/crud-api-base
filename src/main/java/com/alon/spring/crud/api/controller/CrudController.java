@@ -1,21 +1,11 @@
 package com.alon.spring.crud.api.controller;
 
-import com.alon.spring.crud.api.controller.input.mapper.InputMapper;
-import com.alon.spring.crud.api.controller.input.mapper.ModelMapperInputMapper;
-import com.alon.spring.crud.api.controller.input.Options;
-import com.alon.spring.crud.api.controller.input.SearchInput;
-import com.alon.spring.crud.api.controller.output.OutputPage;
-import com.alon.spring.crud.api.projection.ProjectionRepresentation;
-import com.alon.spring.crud.core.properties.Properties;
-import com.alon.spring.crud.domain.model.BaseEntity;
-import com.alon.spring.crud.domain.service.CrudService;
-import com.alon.spring.crud.api.projection.ProjectionService;
-import com.alon.spring.crud.domain.service.SearchCriteria;
-import com.alon.spring.crud.domain.service.exception.CreateException;
-import com.alon.spring.crud.domain.service.exception.DeleteException;
-import com.alon.spring.crud.domain.service.exception.ReadException;
-import com.alon.spring.crud.domain.service.exception.UpdateException;
-import com.alon.spring.specification.ExpressionSpecification;
+import java.io.Serializable;
+import java.lang.reflect.ParameterizedType;
+import java.util.List;
+
+import javax.validation.Valid;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -23,16 +13,35 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.ResponseEntity.BodyBuilder;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.context.request.ServletWebRequest;
 import org.springframework.web.filter.ShallowEtagHeaderFilter;
 import org.springframework.web.server.ResponseStatusException;
 
-import javax.validation.Valid;
-import java.io.Serializable;
-import java.lang.reflect.ParameterizedType;
-import java.util.List;
+import com.alon.spring.crud.api.controller.input.Options;
+import com.alon.spring.crud.api.controller.input.SearchInput;
+import com.alon.spring.crud.api.controller.input.mapper.InputMapper;
+import com.alon.spring.crud.api.controller.input.mapper.ModelMapperInputMapper;
+import com.alon.spring.crud.api.controller.output.OutputPage;
+import com.alon.spring.crud.api.projection.ProjectionRepresentation;
+import com.alon.spring.crud.api.projection.ProjectionService;
+import com.alon.spring.crud.core.properties.Properties;
+import com.alon.spring.crud.domain.model.BaseEntity;
+import com.alon.spring.crud.domain.service.CrudService;
+import com.alon.spring.crud.domain.service.SearchCriteria;
+import com.alon.spring.crud.domain.service.exception.CreateException;
+import com.alon.spring.crud.domain.service.exception.DeleteException;
+import com.alon.spring.crud.domain.service.exception.ReadException;
+import com.alon.spring.crud.domain.service.exception.UpdateException;
+import com.alon.spring.specification.ExpressionSpecification;
 
 public abstract class CrudController<
         MANAGED_ENTITY_ID_TYPE extends Serializable,
