@@ -39,6 +39,7 @@ import com.alon.spring.crud.domain.service.CrudService;
 import com.alon.spring.crud.domain.service.SearchCriteria;
 import com.alon.spring.crud.domain.service.exception.CreateException;
 import com.alon.spring.crud.domain.service.exception.DeleteException;
+import com.alon.spring.crud.domain.service.exception.ProjectionException;
 import com.alon.spring.crud.domain.service.exception.ReadException;
 import com.alon.spring.crud.domain.service.exception.UpdateException;
 import com.alon.spring.specification.ExpressionSpecification;
@@ -120,9 +121,18 @@ public abstract class CrudController<
                 .expand(options.getExpand())
                 .build();
 
-        Page<MANAGED_ENTITY_TYPE> entities = service.search(criteria);
+        Page<MANAGED_ENTITY_TYPE> page = service.search(criteria);
 
-        OutputPage response = projectionService.project(options.getProjection(), entities);
+        OutputPage response;
+
+        try {
+            response = projectionService.project(options.getProjection(), page);
+        } catch (ProjectionException e) {
+            if (projectDefaultOnError(options.getProjection()))
+                response = projectionService.project(getCollectionDefaultProjection(), page);
+            else
+                throw e;
+        }
 
         return buildResponseEntity(HttpStatus.OK)
                 .body(response);
@@ -144,7 +154,16 @@ public abstract class CrudController<
         if (entity == null)
             throw new HttpClientErrorException(HttpStatus.NOT_FOUND);
 
-        Object response = projectionService.project(options.getProjection(), entity);
+        Object response;
+
+        try {
+            response = projectionService.project(options.getProjection(), entity);
+        } catch (ProjectionException e) {
+            if (projectDefaultOnError(options.getProjection()))
+                return projectionService.project(getSingleDefaultProjection(), entity);
+            else
+                throw e;
+        }
 
         return buildResponseEntity(HttpStatus.OK)
                 .body(response);
@@ -162,7 +181,16 @@ public abstract class CrudController<
         
         projection = normalizeSingleProjection(projection);
         
-        Object response = projectionService.project(projection, entity);
+        Object response;
+
+        try {
+            response = projectionService.project(projection, entity);
+        } catch (ProjectionException e) {
+            if (projectDefaultOnError(projection))
+                response = projectionService.project(getSingleDefaultProjection(), entity);
+            else
+                throw e;
+        }
 
         return ResponseEntity
                 .status(HttpStatus.CREATED)
@@ -183,8 +211,17 @@ public abstract class CrudController<
         entity = service.update(entity);
         
         projection = normalizeSingleProjection(projection);
-        
-        Object response = projectionService.project(projection, entity);
+
+        Object response;
+
+        try {
+            response = projectionService.project(projection, entity);
+        } catch (ProjectionException e) {
+            if (projectDefaultOnError(projection))
+                response = projectionService.project(getSingleDefaultProjection(), entity);
+            else
+                throw e;
+        }
 
         return ResponseEntity
                 .status(HttpStatus.OK)
@@ -263,6 +300,11 @@ public abstract class CrudController<
     private final <T extends BaseEntity<MANAGED_ENTITY_ID_TYPE>> Class<T> extractManagedEntityType() {
         ParameterizedType classType = (ParameterizedType) getClass().getGenericSuperclass();
         return (Class<T>) classType.getActualTypeArguments()[1];
+    }
+
+    private boolean projectDefaultOnError(String projection) {
+        return properties.projection.useDefaultIfError
+                && !projection.equals(getCollectionDefaultProjection());
     }
 
 }

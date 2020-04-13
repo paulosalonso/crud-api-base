@@ -27,9 +27,6 @@ public class ProjectionService {
     private static final Logger LOGGER = LoggerFactory.getLogger(ProjectionService.class);
     
     public static final String NOP_PROJECTION = "no-operation-projection";
-
-    @Autowired
-    private Properties properties;
     
     private ApplicationContext applicationContext;
     
@@ -55,9 +52,6 @@ public class ProjectionService {
             
             return (O) projector.project(input);
         } catch (Exception e) {
-            if (properties.projection.useDefaultIfError)
-                return project(NOP_PROJECTION, input);
-
             String message = String.format(
                     "Error projecting entity %s with projector '%s'", 
                     input.getClass().getSimpleName(), 
@@ -75,9 +69,6 @@ public class ProjectionService {
             Projector projector = getProjector(projectionName);
             return OutputPage.of(input, projector);
         } catch (Exception e) {
-            if (properties.projection.useDefaultIfError)
-                return project(NOP_PROJECTION, input);
-
             String message = String.format(
                     "Error projecting entity %s with projector '%s'", 
                     input.getClass().getSimpleName(), 
