@@ -8,15 +8,15 @@ import org.springframework.data.domain.Page;
 import com.alon.spring.crud.api.projection.Projector;
 import com.alon.spring.crud.domain.model.BaseEntity;
 
-public class OutputPage {
+public class OutputPage<O> {
     
-    protected List content;
+    protected List<O> content;
     protected int page;
     protected int pageSize;
     protected int totalPages;
     protected int totalSize;
 
-    public List getContent() {
+    public List<O> getContent() {
         return content;
     }
 
@@ -40,34 +40,7 @@ public class OutputPage {
         return new Builder();
     }
     
-    public static <T extends BaseEntity, O> OutputPage of(Page<T> page) {
-        
-        return new Builder()
-                .page(page.getNumber())
-                .pageSize(page.getNumberOfElements())
-                .totalPages(page.getTotalPages())
-                .totalSize(Long.valueOf(page.getTotalElements()).intValue())
-                .content(page.getContent())
-                .build();
-        
-    }
-    
-    public static <T extends BaseEntity, O> OutputPage of(Page<T> page, Projector<T, O> projector) {
-        
-        return new Builder()
-                .page(page.getNumber())
-                .pageSize(page.getNumberOfElements())
-                .totalPages(page.getTotalPages())
-                .totalSize(Long.valueOf(page.getTotalElements()).intValue())
-                .content(page.getContent()
-                             .stream()
-                             .map(projector::project)
-                             .collect(Collectors.toList()))
-                .build();
-        
-    }
-    
-    public static final class Builder {
+    public static final class Builder<O> {
         
         private OutputPage output;
         
@@ -75,7 +48,7 @@ public class OutputPage {
             this.output = new OutputPage();
         }
         
-        public <C> Builder content(List<C> content) {
+        public Builder content(List<O> content) {
             this.output.content = content;
             return this;
         }
