@@ -43,14 +43,14 @@ public class ProjectionService {
     }
 
     public <I extends BaseEntity, O> O project(String projectionName, I input) {
-        
         if (projectionName.equals(NOP_PROJECTION))
             return (O) input;
-        
+
         try {
             Projector projector = getProjector(projectionName);
-            
             return (O) projector.project(input);
+        } catch (ProjectionException e) {
+            throw e;
         } catch (Exception e) {
             String message = String.format(
                     "Error projecting entity %s with projector '%s'", 
@@ -60,35 +60,44 @@ public class ProjectionService {
             LOGGER.error(message, e);
             throw new ProjectionException(message, e);
         }
-        
     }
 
-    public <I extends BaseEntity> OutputPage project(String projectionName, Page<I> input) {
-
+    public <I extends BaseEntity, O> OutputPage<O> project(String projectionName, Page<I> input) {
         try {
-            Projector projector = getProjector(projectionName);
-            return OutputPage.of(input, projector);
+            List content = input.getContent();
+
+            if (projectionName.equals(NOP_PROJECTION)) {
+                content = input.getContent();
+            } else {
+                Projector<I, O> projector = getProjector(projectionName);
+
+                content = input.getContent().stream()
+                        .map(projector::project)
+                        .collect(Collectors.toList());
+            }
+
+            return OutputPage.of()
+                    .page(input.getNumber())
+                    .pageSize(input.getNumberOfElements())
+                    .totalPages(input.getTotalPages())
+                    .totalSize(Long.valueOf(input.getTotalElements()).intValue())
+                    .content(content)
+                    .build();
+        } catch (ProjectionException e) {
+            throw e;
         } catch (Exception e) {
             String message = String.format(
-                    "Error projecting entity %s with projector '%s'", 
-                    input.getClass().getSimpleName(), 
+                    "Error projecting page with projector '%s'",
                     projectionName);
             
             LOGGER.error(message, e);
-            throw new ProjectionException(e);
+            throw new ProjectionException(message, e);
         }
-
     }
     
     public List<String> getRequiredExpand(String projectionName) {
-        
-        Projector projector = projections.get(projectionName);
-        
-        if (projector == null)
-            return Collections.emptyList();
-        
+        Projector projector = getProjector(projectionName);
         return projector.requiredExpand();
-        
     }
     
     public boolean projectionExists(String projectionName) {
@@ -96,7 +105,6 @@ public class ProjectionService {
     }
     
     public List<ProjectionRepresentation> getEntityRepresentations(Class<? extends BaseEntity> clazz) {
-        
         if (representationsCache.containsKey(clazz))
             return representationsCache.get(clazz);
         
@@ -109,25 +117,22 @@ public class ProjectionService {
         representationsCache.put(clazz, representations);
         
         return representations;
-
     }
 
     private Projector getProjector(String projectionName) {
-
         Projector projector = projections.get(projectionName);
 
-        return Optional.ofNullable(projector)
-                .orElse(projections.get(NOP_PROJECTION));
+        if (projector == null)
+            throw new ProjectionException(String.format(
+                    "Projection '%s' not found", projectionName));
 
+        return projector;
     }
 
     private Map<String, Projector> getEntityProjections(Class<? extends BaseEntity> entityType) {
-
-        return this.projections
-                .keySet().stream()
+        return projections.keySet().stream()
                 .filter(key -> projectorInputTypeIsTheExpected(key, entityType))
                 .collect(Collectors.toMap(projectionName -> projectionName, projections::get));
-
     }
 
     private ProjectionRepresentation getProjectionRepresentation(Map.Entry<String, Projector> entry) {
@@ -137,7 +142,6 @@ public class ProjectionService {
     }
 
     private boolean projectorInputTypeIsTheExpected(String projectionName, Class<? extends BaseEntity> expectedInputType) {
-        
         Projector projector = projections.get(projectionName);
         Type inputType = getProjectorInputType(projector);
         
@@ -145,7 +149,6 @@ public class ProjectionService {
             return false;
         
         return ((Class) inputType).isAssignableFrom(expectedInputType);
-        
     }
     
     private Type getProjectorInputType(Projector projector) {
@@ -159,7 +162,6 @@ public class ProjectionService {
     }
     
     private ParameterizedType getProjectorParameterizedType(Projector projector) {
-        
         Optional<Type> projectorTypeOpt = List.of(projector.getClass().getGenericInterfaces())
                 .stream()
                 .filter(type -> type instanceof ParameterizedType)
@@ -167,7 +169,6 @@ public class ProjectionService {
                 .findFirst();
         
         return (ParameterizedType) projectorTypeOpt.get();
-        
     }
 
 }
