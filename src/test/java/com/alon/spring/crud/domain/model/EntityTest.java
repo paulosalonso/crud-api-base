@@ -1,12 +1,9 @@
 package com.alon.spring.crud.domain.model;
 
-import com.alon.spring.crud.domain.model.BaseEntity;
-
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
 import javax.validation.constraints.NotBlank;
-import java.util.Objects;
 
 @Entity
 public class EntityTest extends BaseEntity<Long> {
@@ -17,6 +14,10 @@ public class EntityTest extends BaseEntity<Long> {
 
     @NotBlank
     private String stringProperty;
+
+    public static Builder of() {
+        return new Builder();
+    }
 
     @Override
     public Long getId() {
@@ -34,5 +35,28 @@ public class EntityTest extends BaseEntity<Long> {
 
     public void setStringProperty(String stringProperty) {
         this.stringProperty = stringProperty;
+    }
+
+    public static final class Builder {
+
+        private EntityTest entityTest;
+
+        public Builder() {
+            entityTest = new EntityTest();
+        }
+
+        public Builder id(Long id) {
+            entityTest.setId(id);
+            return this;
+        }
+
+        public Builder stringProperty(String stringProperty) {
+            entityTest.setStringProperty(stringProperty);
+            return this;
+        }
+
+        public EntityTest build() {
+            return entityTest;
+        }
     }
 }
