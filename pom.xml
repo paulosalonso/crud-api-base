@@ -50,10 +50,10 @@
         <pitest-maven.version>1.5.1</pitest-maven.version>
 
         <!--    CONFIGURATIONS    -->
-        <skip.unit.tests>false</skip.unit.tests>
-        <skip.it.tests>false</skip.it.tests>
-        <skip.mutation>false</skip.mutation>
-        <skip.signature>true</skip.signature>
+        <skip.unit.tests>true</skip.unit.tests>
+        <skip.it.tests>true</skip.it.tests>
+        <skip.mutation>true</skip.mutation>
+        <skip.signature>false</skip.signature>
         <covered.line>0.90</covered.line>
         <covered.branch>0.90</covered.branch>
     </properties>    
@@ -69,9 +69,9 @@
         </repository>
     </distributionManagement>    
     <scm>        
-        <url>https://github.com/paulosalonso/spring-crud-base.git</url>
-        <connection>scm:git:https://github.com/paulosalonso/spring-crud-base.git</connection>
-        <developerConnection>scm:git:https://github.com/paulosalonso/spring-crud-base.git</developerConnection>
+        <url>https://github.com/paulosalonso/crud-api-base.git</url>
+        <connection>scm:git:https://github.com/paulosalonso/crud-api-base.git</connection>
+        <developerConnection>scm:git:https://github.com/paulosalonso/crud-api-base.git</developerConnection>
         <tag>HEAD</tag>
     </scm>
     <dependencies>
