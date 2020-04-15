@@ -226,7 +226,7 @@ public class ProjectionServiceTest {
                     assertThat(representation.getRepresentation())
                             .hasSize(2)
                             .containsOnlyKeys("id", "property")
-                            .containsValues("Long", "String");
+                            .containsValues("long", "string");
                 });
     }
 
