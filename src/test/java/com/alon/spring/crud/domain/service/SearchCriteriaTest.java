@@ -4,6 +4,7 @@ import org.assertj.core.api.Assertions;
 import org.junit.Test;
 import org.springframework.data.domain.PageRequest;
 
+import java.util.Collections;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -47,6 +48,21 @@ public class SearchCriteriaTest {
                 .build();
 
         assertThat(searchCriteria.getSearchOption()).isEqualTo(SearchType.NONE);
+    }
+
+    @Test
+    public void whenBuildWithNullOrEmptyExpandListThenReturnNullExpand() {
+        SearchCriteria searchCriteria = SearchCriteria.of()
+                .expand(null)
+                .build();
+
+        assertThat(searchCriteria.getExpand()).isNull();
+
+        searchCriteria = SearchCriteria.of()
+                .expand(Collections.emptyList())
+                .build();
+
+        assertThat(searchCriteria.getExpand()).isNull();
     }
 
     @Test
