@@ -32,39 +32,62 @@ public class RepresentationService {
     );
     
     public Map<String, Object> getRepresentationOf(Class clazz) {
-
         List<Field> fields = List.of(clazz.getDeclaredFields());
 
         return fields.stream()
-                .collect(Collectors.toMap(Field::getName, this::mapField));
+                .collect(Collectors.toMap(this::getFieldName, this::mapField));
         
+    }
+
+    private String getFieldName(Field field) {
+        if (field.getType().isArray() || isCollection(field))
+            return String.format("%s[]", field.getName());
+
+        return field.getName();
     }
     
     private Object mapField(Field field) {
         
-        if (this.isFinalType(field))
-            return field.getType().getSimpleName();
-        else if (this.isCollection(field))
-            return this.mapCollection(field);
-        
-        List<Field> fields = List.of(field.getType().getDeclaredFields());
+        if (isFinalType(field)) {
+            if (field.getType().isArray())
+                return field.getType().getComponentType().getSimpleName().toLowerCase();
+
+            return field.getType().getSimpleName().toLowerCase();
+        } else if (isCollection(field)) {
+            return mapCollection(field);
+        }
+
+        List<Field> fields;
+
+        if (field.getType().isArray())
+            fields = List.of(field.getType().getComponentType().getDeclaredFields());
+        else
+            fields = List.of(field.getType().getDeclaredFields());
 
         return fields.stream()
-                .collect(Collectors.toMap(Field::getName, this::mapField));
+                .collect(Collectors.toMap(this::getFieldName, this::mapField));
 
     }
 
     private Object mapCollection(Field field) {
-
         ParameterizedType type = (ParameterizedType) field.getGenericType();
         Class listItemsType = (Class) type.getActualTypeArguments()[0];
 
-        return getRepresentationOf(listItemsType);
+        if (isFinalType(listItemsType))
+            return listItemsType.getSimpleName().toLowerCase();
 
+        return getRepresentationOf(listItemsType);
     }
 
     private boolean isFinalType(Field field) {
-        return FINAL_TYPES.contains(field.getType());
+        return isFinalType(field.getType());
+    }
+
+    private boolean isFinalType(Class clazz) {
+        if (clazz.isArray())
+            return FINAL_TYPES.contains(clazz.getComponentType());
+
+        return FINAL_TYPES.contains(clazz);
     }
 
     private boolean isCollection(Field field) {
