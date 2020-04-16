@@ -217,6 +217,18 @@ public class ProjectionServiceTest {
         verify(representationsCache).get(EntityTest.class);
     }
 
+    @Test
+    @DirtiesContext(methodMode = AFTER_METHOD)
+    public void whenProjectorGenericsNotDefinedInClassDeclarationThenDoNotReturnIt() {
+        ReflectionTestUtils.setField(projectionService,
+                "projections", Map.of("projector", new GenericProjectorExample<EntityTest, EntityTest>()));
+
+        List<ProjectionRepresentation> representations =
+                projectionService.getEntityRepresentations(EntityTest.class);
+
+        assertThat(representations).isNullOrEmpty();
+    }
+
     private void assertRepresentations(List<ProjectionRepresentation> representations) {
         assertThat(representations)
                 .hasSize(1)
