@@ -13,6 +13,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Function;
@@ -62,6 +63,21 @@ public class CrudServiceReadTest {
         assertThat(result.getStringProperty()).isEqualTo("string");
 
         verify(repository).findById(1L);
+    }
+
+    @Test
+    public void whenReadWithEmptyExpandListThenFindById() {
+        EntityTest entity = buildEntity();
+
+        when(repository.findById(1L)).thenReturn(Optional.of(entity));
+
+        EntityTest result = service.read(1L, Collections.emptyList());
+
+        assertThat(result.getId()).isEqualTo(1L);
+        assertThat(result.getStringProperty()).isEqualTo("string");
+
+        verify(repository).findById(1L);
+        verify(repository, never()).findById(eq(1L), any());
     }
 
     @Test

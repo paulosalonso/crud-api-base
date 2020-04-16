@@ -179,6 +179,8 @@ public interface CrudService<
     }
 
     static class HookHelper {
+
+        private HookHelper() {}
     	
     	private static Map<CrudService, Map<LifeCycleHook, List<Function>>> GLOBAL_HOOKS = new HashMap<>();
     	
