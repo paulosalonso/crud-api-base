@@ -29,9 +29,7 @@ public class DeepETagResolver {
         SearchInput search = new SearchInput() {
             @Override
             public Specification toSpecification() {
-                return (root, query, builder) -> {
-                    return builder.equal(root.get("id"), id);
-                };
+                return (root, query, builder) -> builder.equal(root.get("id"), id);
             }
         };
 
