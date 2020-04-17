@@ -94,7 +94,7 @@ public class ProjectionServiceTest {
 
         assertThatThrownBy(() -> projectionService.project("brokenProjection", example))
                 .isExactlyInstanceOf(ProjectionException.class)
-                .hasMessage("Error projecting entity EntityTest with projector 'brokenProjection'")
+                .hasMessage("Error projecting entity Example with projector 'brokenProjection'")
                 .hasCauseExactlyInstanceOf(RuntimeException.class)
                 .hasStackTraceContaining("Mocked exception");
     }
