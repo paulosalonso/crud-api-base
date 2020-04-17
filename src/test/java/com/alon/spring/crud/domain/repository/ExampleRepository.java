@@ -1,8 +1,8 @@
 package com.alon.spring.crud.domain.repository;
 
-import com.alon.spring.crud.domain.model.EntityTest;
+import com.alon.spring.crud.domain.model.Example;
 import com.cosium.spring.data.jpa.entity.graph.repository.EntityGraphJpaRepository;
 import com.cosium.spring.data.jpa.entity.graph.repository.EntityGraphJpaSpecificationExecutor;
 
-public interface EntityTestRepository
-    extends EntityGraphJpaRepository<EntityTest, Long>, EntityGraphJpaSpecificationExecutor<EntityTest> {}
+public interface ExampleRepository
+    extends EntityGraphJpaRepository<Example, Long>, EntityGraphJpaSpecificationExecutor<Example> {}

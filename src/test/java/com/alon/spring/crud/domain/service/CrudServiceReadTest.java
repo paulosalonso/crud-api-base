@@ -1,7 +1,7 @@
 package com.alon.spring.crud.domain.service;
 
-import com.alon.spring.crud.domain.model.EntityTest;
-import com.alon.spring.crud.domain.repository.EntityTestRepository;
+import com.alon.spring.crud.domain.model.Example;
+import com.alon.spring.crud.domain.repository.ExampleRepository;
 import com.alon.spring.crud.domain.service.exception.NotFoundException;
 import com.alon.spring.crud.domain.service.exception.ReadException;
 import com.cosium.spring.data.jpa.entity.graph.domain.DynamicEntityGraph;
@@ -31,7 +31,7 @@ public class CrudServiceReadTest {
     private CrudTestService service;
 
     @Mock
-    private EntityTestRepository repository;
+    private ExampleRepository repository;
     
     @Mock
     private Function<Long, Long> beforeReadHookA;
@@ -40,10 +40,10 @@ public class CrudServiceReadTest {
     private Function<Long, Long> beforeReadHookB;
 
     @Mock
-    private Function<EntityTest, EntityTest> afterReadHookA;
+    private Function<Example, Example> afterReadHookA;
 
     @Mock
-    private Function<EntityTest, EntityTest> afterReadHookB;
+    private Function<Example, Example> afterReadHookB;
 
     @Before
     public void init() {
@@ -54,10 +54,10 @@ public class CrudServiceReadTest {
 
     @Test
     public void whenSimpleReadThenFindById() {
-        EntityTest entity = buildEntity();
+        Example entity = buildEntity();
         when(repository.findById(1L)).thenReturn(Optional.of(entity));
 
-        EntityTest result = service.read(1L);
+        Example result = service.read(1L);
 
         assertThat(result.getId()).isEqualTo(1L);
         assertThat(result.getStringProperty()).isEqualTo("string");
@@ -67,11 +67,11 @@ public class CrudServiceReadTest {
 
     @Test
     public void whenReadWithEmptyExpandListThenFindById() {
-        EntityTest entity = buildEntity();
+        Example entity = buildEntity();
 
         when(repository.findById(1L)).thenReturn(Optional.of(entity));
 
-        EntityTest result = service.read(1L, Collections.emptyList());
+        Example result = service.read(1L, Collections.emptyList());
 
         assertThat(result.getId()).isEqualTo(1L);
         assertThat(result.getStringProperty()).isEqualTo("string");
@@ -82,13 +82,13 @@ public class CrudServiceReadTest {
 
     @Test
     public void whenReadWithExpandThenFindById() {
-        EntityTest entity = buildEntity();
+        Example entity = buildEntity();
         List<String> expand = List.of("property");
         EntityGraph entityGraph = new DynamicEntityGraph(expand);
 
         when(repository.findById(1L, entityGraph)).thenReturn(Optional.of(entity));
 
-        EntityTest result = service.read(1L, expand);
+        Example result = service.read(1L, expand);
 
         assertThat(result.getId()).isEqualTo(1L);
         assertThat(result.getStringProperty()).isEqualTo("string");
@@ -111,7 +111,7 @@ public class CrudServiceReadTest {
     public void whenReadWithHooksThenExecuteHooks() {
         addHooks();
 
-        EntityTest entity = buildEntity();
+        Example entity = buildEntity();
 
         when(repository.findById(1L)).thenReturn(Optional.of(entity));
         when(beforeReadHookA.apply(1L)).thenReturn(1L);
@@ -119,7 +119,7 @@ public class CrudServiceReadTest {
         when(afterReadHookA.apply(entity)).thenReturn(entity);
         when(afterReadHookB.apply(entity)).thenReturn(entity);
 
-        EntityTest result = service.read(1L);
+        Example result = service.read(1L);
 
         verify(repository).findById(1L);
 
@@ -152,7 +152,7 @@ public class CrudServiceReadTest {
     public void whenAfterReadHookThrowsExceptionThenThrowReadException() {
         addHooks();
 
-        EntityTest entity = buildEntity();
+        Example entity = buildEntity();
 
         when(repository.findById(1L)).thenReturn(Optional.of(entity));
         when(beforeReadHookA.apply(1L)).thenReturn(1L);
@@ -169,8 +169,8 @@ public class CrudServiceReadTest {
         verify(repository).findById(1L);
     }
 
-    private EntityTest buildEntity() {
-        EntityTest entity = new EntityTest();
+    private Example buildEntity() {
+        Example entity = new Example();
         entity.setId(1L);
         entity.setStringProperty("string");
         return entity;

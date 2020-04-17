@@ -6,20 +6,20 @@ import org.junit.Test;
 import org.modelmapper.ModelMapper;
 import org.modelmapper.convention.MatchingStrategies;
 
-import com.alon.spring.crud.domain.model.EntityTest;
+import com.alon.spring.crud.domain.model.Example;
 
 public class ModelMapperInputMapperTest {
 
     @Test
     public void whenMapThenReturn() {
-        ModelMapperInputMapper<EntityTestInput, EntityTest> mapper =
-                new ModelMapperInputMapper<>(EntityTest.class);
+        ModelMapperInputMapper<EntityTestInput, Example> mapper =
+                new ModelMapperInputMapper<>(Example.class);
 
         EntityTestInput input = new EntityTestInput();
         input.setId(1L);
         input.setProperty("string-property");
 
-        EntityTest output = mapper.map(input);
+        Example output = mapper.map(input);
 
         assertThat(output).isNotNull();
         assertThat(output.getId()).isEqualTo(1L);
@@ -28,14 +28,14 @@ public class ModelMapperInputMapperTest {
 
     @Test
     public void whenInputAndOutputAreEqualsThenReturn() {
-        ModelMapperInputMapper<EntityTest, EntityTest> mapper =
-                new ModelMapperInputMapper<>(EntityTest.class);
+        ModelMapperInputMapper<Example, Example> mapper =
+                new ModelMapperInputMapper<>(Example.class);
 
-        EntityTest input = new EntityTest();
+        Example input = new Example();
         input.setId(1L);
         input.setStringProperty("string-property");
 
-        EntityTest output = mapper.map(input);
+        Example output = mapper.map(input);
 
         assertThat(output)
                 .isNotNull()
@@ -44,8 +44,8 @@ public class ModelMapperInputMapperTest {
 
     @Test
     public void whenGetAndConfigureModelMapperThenSuccess() {
-        ModelMapperInputMapper<EntityTestInput, EntityTest> mapper =
-                new ModelMapperInputMapper<>(EntityTest.class);
+        ModelMapperInputMapper<EntityTestInput, Example> mapper =
+                new ModelMapperInputMapper<>(Example.class);
 
         mapper.getModelMapper()
                 .getConfiguration()
@@ -55,7 +55,7 @@ public class ModelMapperInputMapperTest {
         input.setId(1L);
         input.setProperty("property");
 
-        EntityTest output = mapper.map(input);
+        Example output = mapper.map(input);
 
         assertThat(output).isNotNull();
         assertThat(output.getId()).isEqualTo(1L);
@@ -68,14 +68,14 @@ public class ModelMapperInputMapperTest {
         modelMapper.getConfiguration()
                 .setMatchingStrategy(MatchingStrategies.STRICT);
 
-        ModelMapperInputMapper<EntityTestInput, EntityTest> mapper =
-                new ModelMapperInputMapper<>(EntityTest.class, modelMapper);
+        ModelMapperInputMapper<EntityTestInput, Example> mapper =
+                new ModelMapperInputMapper<>(Example.class, modelMapper);
 
         EntityTestInput input = new EntityTestInput();
         input.setId(1L);
         input.setProperty("property");
 
-        EntityTest output = mapper.map(input);
+        Example output = mapper.map(input);
 
         assertThat(output).isNotNull();
         assertThat(output.getId()).isEqualTo(1L);

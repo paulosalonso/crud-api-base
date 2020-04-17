@@ -1,7 +1,7 @@
 package com.alon.spring.crud.domain.service;
 
-import com.alon.spring.crud.domain.model.EntityTest;
-import com.alon.spring.crud.domain.repository.EntityTestRepository;
+import com.alon.spring.crud.domain.model.Example;
+import com.alon.spring.crud.domain.repository.ExampleRepository;
 import com.alon.spring.crud.domain.service.exception.DeleteException;
 import com.alon.spring.crud.domain.service.exception.NotFoundException;
 import org.junit.Before;
@@ -26,7 +26,7 @@ public class CrudServiceDeleteTest {
     private CrudTestService service;
 
     @Mock
-    private EntityTestRepository repository;
+    private ExampleRepository repository;
     
     @Mock
     private Function<Long, Long> beforeDeleteHookA;
@@ -148,8 +148,8 @@ public class CrudServiceDeleteTest {
         verifyZeroInteractions(afterDeleteHookB);
     }
 
-    private EntityTest buildEntityWithId(Long id) {
-        EntityTest entity = new EntityTest();
+    private Example buildEntityWithId(Long id) {
+        Example entity = new Example();
         entity.setId(id);
         entity.setStringProperty("string");
         return entity;

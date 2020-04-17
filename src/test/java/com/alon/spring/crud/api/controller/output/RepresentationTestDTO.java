@@ -2,13 +2,11 @@ package com.alon.spring.crud.api.controller.output;
 
 import java.util.List;
 
-import com.alon.spring.crud.api.controller.output.EntityTestDTO;
-
 public class RepresentationTestDTO {
     private Long id;
-    private EntityTestDTO dto;
-    private List<EntityTestDTO> objectList;
-    private EntityTestDTO[] objectArray;
+    private ExampleDTO dto;
+    private List<ExampleDTO> objectList;
+    private ExampleDTO[] objectArray;
     private List<String> stringList;
     private String[] stringArray;
 
@@ -20,27 +18,27 @@ public class RepresentationTestDTO {
         this.id = id;
     }
 
-    public EntityTestDTO getDto() {
+    public ExampleDTO getDto() {
         return dto;
     }
 
-    public List<EntityTestDTO> getObjectList() {
+    public List<ExampleDTO> getObjectList() {
         return objectList;
     }
 
-    public void setObjectList(List<EntityTestDTO> objectList) {
+    public void setObjectList(List<ExampleDTO> objectList) {
         this.objectList = objectList;
     }
 
-    public EntityTestDTO[] getObjectArray() {
+    public ExampleDTO[] getObjectArray() {
         return objectArray;
     }
 
-    public void setObjectArray(EntityTestDTO[] objectArray) {
+    public void setObjectArray(ExampleDTO[] objectArray) {
         this.objectArray = objectArray;
     }
 
-    public void setDto(EntityTestDTO dto) {
+    public void setDto(ExampleDTO dto) {
         this.dto = dto;
     }
 

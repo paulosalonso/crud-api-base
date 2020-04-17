@@ -1,7 +1,7 @@
 package com.alon.spring.crud.domain.service;
 
-import com.alon.spring.crud.domain.model.EntityTest;
-import com.alon.spring.crud.domain.repository.EntityTestRepository;
+import com.alon.spring.crud.domain.model.Example;
+import com.alon.spring.crud.domain.repository.ExampleRepository;
 import com.alon.spring.crud.domain.service.exception.NotFoundException;
 import com.alon.spring.crud.domain.service.exception.UpdateException;
 import org.junit.Before;
@@ -26,19 +26,19 @@ public class CrudServiceUpdateTest {
     private CrudTestService service;
 
     @Mock
-    private EntityTestRepository repository;
+    private ExampleRepository repository;
     
     @Mock
-    private Function<EntityTest, EntityTest> beforeUpdateHookA;
+    private Function<Example, Example> beforeUpdateHookA;
 
     @Mock
-    private Function<EntityTest, EntityTest> beforeUpdateHookB;
+    private Function<Example, Example> beforeUpdateHookB;
 
     @Mock
-    private Function<EntityTest, EntityTest> afterUpdateHookA;
+    private Function<Example, Example> afterUpdateHookA;
 
     @Mock
-    private Function<EntityTest, EntityTest> afterUpdateHookB;
+    private Function<Example, Example> afterUpdateHookB;
 
     @Before
     public void init() {
@@ -49,12 +49,12 @@ public class CrudServiceUpdateTest {
 
     @Test
     public void whenSimpleUpdateThenReturnUpdated() {
-        EntityTest toUpdate = buildEntityWithId(1L);
+        Example toUpdate = buildEntityWithId(1L);
 
         when(repository.existsById(1L)).thenReturn(true);
         when(repository.save(toUpdate)).thenReturn(toUpdate);
 
-        EntityTest result = service.update(toUpdate);
+        Example result = service.update(toUpdate);
 
         assertThat(result.getId()).isEqualTo(1L);
         assertThat(result.getStringProperty()).isEqualTo("string");
@@ -65,7 +65,7 @@ public class CrudServiceUpdateTest {
 
     @Test
     public void whenUpdateNonExistentEntityThenThrowsNotFountException() {
-        EntityTest toUpdate = buildEntityWithId(1L);
+        Example toUpdate = buildEntityWithId(1L);
 
         when(repository.existsById(1L)).thenReturn(false);
 
@@ -80,7 +80,7 @@ public class CrudServiceUpdateTest {
 
     @Test
     public void whenRepositoryThrowsExceptionThenThrowUpdateException() {
-        EntityTest toUpdate = buildEntityWithId(1L);
+        Example toUpdate = buildEntityWithId(1L);
 
         when(repository.existsById(1L)).thenReturn(true);
         when(repository.save(toUpdate)).thenThrow(new RuntimeException("Error updating"));
@@ -98,7 +98,7 @@ public class CrudServiceUpdateTest {
     public void whenCreateWithHooksThenExecuteHooks() {
         addHooks();
 
-        EntityTest toUpdate = buildEntityWithId(1L);
+        Example toUpdate = buildEntityWithId(1L);
 
         when(repository.existsById(1L)).thenReturn(true);
         when(repository.save(toUpdate)).thenReturn(toUpdate);
@@ -123,7 +123,7 @@ public class CrudServiceUpdateTest {
     public void whenBeforeUpdateHookThrowsExceptionThenThrowUpdateException() {
         addHooks();
 
-        EntityTest toUpdate = buildEntityWithId(1L);
+        Example toUpdate = buildEntityWithId(1L);
 
         when(repository.existsById(1L)).thenReturn(true);
         when(beforeUpdateHookA.apply(toUpdate)).thenThrow(new RuntimeException("Before update error"));
@@ -145,7 +145,7 @@ public class CrudServiceUpdateTest {
     public void whenAfterCreateHookThrowsExceptionThenThrowCreateException() {
         addHooks();
 
-        EntityTest toUpdate = buildEntityWithId(1L);
+        Example toUpdate = buildEntityWithId(1L);
 
         when(repository.existsById(1L)).thenReturn(true);
         when(repository.save(toUpdate)).thenReturn(toUpdate);
@@ -166,8 +166,8 @@ public class CrudServiceUpdateTest {
         verifyZeroInteractions(afterUpdateHookB);
     }
 
-    private EntityTest buildEntityWithId(Long id) {
-        EntityTest entity = new EntityTest();
+    private Example buildEntityWithId(Long id) {
+        Example entity = new Example();
         entity.setId(id);
         entity.setStringProperty("string");
         return entity;

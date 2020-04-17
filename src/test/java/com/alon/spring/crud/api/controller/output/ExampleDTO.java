@@ -1,6 +1,6 @@
 package com.alon.spring.crud.api.controller.output;
 
-public class EntityTestDTO {
+public class ExampleDTO {
     private Long id;
     private String property;
 
@@ -26,24 +26,24 @@ public class EntityTestDTO {
 
     public static final class Builder {
 
-        private EntityTestDTO entityTestDTO;
+        private ExampleDTO exampleDTO;
 
         public Builder() {
-            entityTestDTO = new EntityTestDTO();
+            exampleDTO = new ExampleDTO();
         }
 
         public Builder id(Long id) {
-            entityTestDTO.setId(id);
+            exampleDTO.setId(id);
             return this;
         }
 
         public Builder property(String property) {
-            entityTestDTO.setProperty(property);
+            exampleDTO.setProperty(property);
             return this;
         }
 
-        public EntityTestDTO build() {
-            return entityTestDTO;
+        public ExampleDTO build() {
+            return exampleDTO;
         }
     }
 }

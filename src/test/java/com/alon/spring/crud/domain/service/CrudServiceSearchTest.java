@@ -1,9 +1,9 @@
 package com.alon.spring.crud.domain.service;
 
-import com.alon.spring.crud.api.controller.input.EntityTestSearchInput;
+import com.alon.spring.crud.api.controller.input.ExampleSearchInput;
 import com.alon.spring.crud.api.controller.input.SearchInput;
-import com.alon.spring.crud.domain.model.EntityTest;
-import com.alon.spring.crud.domain.repository.EntityTestRepository;
+import com.alon.spring.crud.domain.model.Example;
+import com.alon.spring.crud.domain.repository.ExampleRepository;
 import com.alon.spring.crud.domain.service.exception.ReadException;
 import org.junit.Before;
 import org.junit.Test;
@@ -27,7 +27,7 @@ public class CrudServiceSearchTest {
     private CrudTestService service;
 
     @Mock
-    private EntityTestRepository repository;
+    private ExampleRepository repository;
 
     @Mock
     private Function<SearchCriteria, SearchCriteria> beforeSearchHookA;
@@ -36,10 +36,10 @@ public class CrudServiceSearchTest {
     private Function<SearchCriteria, SearchCriteria> beforeSearchHookB;
 
     @Mock
-    private Function<Page<EntityTest>, Page<EntityTest>> afterSearchHookA;
+    private Function<Page<Example>, Page<Example>> afterSearchHookA;
 
     @Mock
-    private Function<Page<EntityTest>, Page<EntityTest>> afterSearchHookB;
+    private Function<Page<Example>, Page<Example>> afterSearchHookB;
 
     @Before
     public void init() {
@@ -187,7 +187,7 @@ public class CrudServiceSearchTest {
     }
 
     private SearchInput buildSearchInput() {
-        EntityTestSearchInput searchInput = new EntityTestSearchInput();
+        ExampleSearchInput searchInput = new ExampleSearchInput();
         searchInput.setStringProperty("test");
         return searchInput;
     }

@@ -1,7 +1,7 @@
 package com.alon.spring.crud.domain.service;
 
-import com.alon.spring.crud.domain.model.EntityTest;
-import com.alon.spring.crud.domain.repository.EntityTestRepository;
+import com.alon.spring.crud.domain.model.Example;
+import com.alon.spring.crud.domain.repository.ExampleRepository;
 import com.alon.spring.crud.domain.service.exception.CreateException;
 import org.junit.Before;
 import org.junit.Test;
@@ -25,19 +25,19 @@ public class CrudServiceCreateTest {
     private CrudTestService service;
 
     @Mock
-    private EntityTestRepository repository;
+    private ExampleRepository repository;
     
     @Mock
-    private Function<EntityTest, EntityTest> beforeCreateHookA;
+    private Function<Example, Example> beforeCreateHookA;
 
     @Mock
-    private Function<EntityTest, EntityTest> beforeCreateHookB;
+    private Function<Example, Example> beforeCreateHookB;
 
     @Mock
-    private Function<EntityTest, EntityTest> afterCreateHookA;
+    private Function<Example, Example> afterCreateHookA;
 
     @Mock
-    private Function<EntityTest, EntityTest> afterCreateHookB;
+    private Function<Example, Example> afterCreateHookB;
 
     @Before
     public void init() {
@@ -48,12 +48,12 @@ public class CrudServiceCreateTest {
 
     @Test
     public void whenSimpleCreateThenReturnCreated() {
-        EntityTest toCreate = buildEntityWithId(null);
-        EntityTest created = buildEntityWithId(1L);
+        Example toCreate = buildEntityWithId(null);
+        Example created = buildEntityWithId(1L);
 
         when(repository.save(toCreate)).thenReturn(created);
 
-        EntityTest result = service.create(toCreate);
+        Example result = service.create(toCreate);
 
         assertThat(result.getId()).isEqualTo(1L);
         assertThat(result.getStringProperty()).isEqualTo("string");
@@ -63,7 +63,7 @@ public class CrudServiceCreateTest {
 
     @Test
     public void whenRepositoryThrowsExceptionThenThrowCreateException() {
-        EntityTest toCreate = buildEntityWithId(null);
+        Example toCreate = buildEntityWithId(null);
 
         when(repository.save(toCreate)).thenThrow(new RuntimeException("Error saving"));
 
@@ -79,8 +79,8 @@ public class CrudServiceCreateTest {
     public void whenCreateWithHooksThenExecuteHooks() {
         addHooks();
 
-        EntityTest toCreate = buildEntityWithId(null);
-        EntityTest created = buildEntityWithId(1L);
+        Example toCreate = buildEntityWithId(null);
+        Example created = buildEntityWithId(1L);
 
         when(repository.save(toCreate)).thenReturn(created);
         when(beforeCreateHookA.apply(toCreate)).thenReturn(toCreate);
@@ -103,7 +103,7 @@ public class CrudServiceCreateTest {
     public void whenBeforeCreateHookThrowsExceptionThenThrowReadException() {
         addHooks();
 
-        EntityTest toCreate = buildEntityWithId(null);
+        Example toCreate = buildEntityWithId(null);
 
         when(beforeCreateHookA.apply(toCreate)).thenThrow(new RuntimeException("Before create error"));
 
@@ -123,8 +123,8 @@ public class CrudServiceCreateTest {
     public void whenAfterCreateHookThrowsExceptionThenThrowCreateException() {
         addHooks();
 
-        EntityTest toCreate = buildEntityWithId(null);
-        EntityTest created = buildEntityWithId(1L);
+        Example toCreate = buildEntityWithId(null);
+        Example created = buildEntityWithId(1L);
 
         when(repository.save(toCreate)).thenReturn(created);
         when(beforeCreateHookA.apply(toCreate)).thenReturn(toCreate);
@@ -143,8 +143,8 @@ public class CrudServiceCreateTest {
         verifyZeroInteractions(afterCreateHookB);
     }
 
-    private EntityTest buildEntityWithId(Long id) {
-        EntityTest entity = new EntityTest();
+    private Example buildEntityWithId(Long id) {
+        Example entity = new Example();
         entity.setId(id);
         entity.setStringProperty("string");
         return entity;

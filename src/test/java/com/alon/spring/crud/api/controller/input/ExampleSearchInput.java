@@ -4,7 +4,7 @@ import org.springframework.data.jpa.domain.Specification;
 
 import javax.persistence.criteria.Predicate;
 
-public class EntityTestSearchInput extends SearchInput {
+public class ExampleSearchInput extends SearchInput {
 
     private String stringProperty;
 

@@ -1,7 +1,7 @@
 package com.alon.spring.crud.domain.service;
 
-import com.alon.spring.crud.domain.model.EntityTest;
-import com.alon.spring.crud.domain.repository.EntityTestRepository;
+import com.alon.spring.crud.domain.model.Example;
+import com.alon.spring.crud.domain.repository.ExampleRepository;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.InjectMocks;
@@ -22,31 +22,31 @@ public class CrudServiceHookTest {
     private CrudTestService service;
 
     @Mock
-    private EntityTestRepository repository;
+    private ExampleRepository repository;
 
     @Mock
     private Function<SearchCriteria, SearchCriteria> beforeSearch;
 
     @Mock
-    private Function<Page<EntityTest>, Page<EntityTest>> afterSearch;
+    private Function<Page<Example>, Page<Example>> afterSearch;
 
     @Mock
     private Function<Long, Long> beforeRead;
 
     @Mock
-    private Function<EntityTest, EntityTest> afterRead;
+    private Function<Example, Example> afterRead;
 
     @Mock
-    private Function<EntityTest, EntityTest> beforeCreate;
+    private Function<Example, Example> beforeCreate;
 
     @Mock
-    private Function<EntityTest, EntityTest> afterCreate;
+    private Function<Example, Example> afterCreate;
 
     @Mock
-    private Function<EntityTest, EntityTest> beforeUpdate;
+    private Function<Example, Example> beforeUpdate;
 
     @Mock
-    private Function<EntityTest, EntityTest> afterUpdate;
+    private Function<Example, Example> afterUpdate;
 
     @Mock
     private Function<Long, Long> beforeDelete;
@@ -77,7 +77,7 @@ public class CrudServiceHookTest {
         service.addAfterReadHook(afterRead);
         service.clearHooks(BEFORE_READ, AFTER_READ);
 
-        when(repository.findById(1L)).thenReturn(Optional.of(new EntityTest()));
+        when(repository.findById(1L)).thenReturn(Optional.of(new Example()));
 
         service.read(1L);
 
@@ -92,9 +92,9 @@ public class CrudServiceHookTest {
         service.addAfterCreateHook(afterCreate);
         service.clearHooks(BEFORE_CREATE, AFTER_CREATE);
 
-        when(repository.save(any())).thenReturn(new EntityTest());
+        when(repository.save(any())).thenReturn(new Example());
 
-        service.create(new EntityTest());
+        service.create(new Example());
 
         verify(repository).save(any());
         verifyZeroInteractions(beforeCreate);
@@ -108,9 +108,9 @@ public class CrudServiceHookTest {
         service.clearHooks(BEFORE_UPDATE, AFTER_UPDATE);
 
         when(repository.existsById(any())).thenReturn(true);
-        when(repository.save(any())).thenReturn(new EntityTest());
+        when(repository.save(any())).thenReturn(new Example());
 
-        service.update(new EntityTest());
+        service.update(new Example());
 
         verify(repository).save(any());
         verifyZeroInteractions(beforeCreate);
@@ -124,7 +124,7 @@ public class CrudServiceHookTest {
         service.clearHooks(BEFORE_DELETE, AFTER_DELETE);
 
         when(repository.existsById(1L)).thenReturn(true);
-        when(repository.save(any())).thenReturn(new EntityTest());
+        when(repository.save(any())).thenReturn(new Example());
 
         service.delete(1L);
 

@@ -1,20 +1,20 @@
 package com.alon.spring.crud.domain.service;
 
-import com.alon.spring.crud.domain.model.EntityTest;
-import com.alon.spring.crud.domain.repository.EntityTestRepository;
+import com.alon.spring.crud.domain.model.Example;
+import com.alon.spring.crud.domain.repository.ExampleRepository;
 import org.springframework.stereotype.Service;
 
 @Service
-public class CrudTestService implements CrudService<Long, EntityTest, EntityTestRepository> {
+public class CrudTestService implements CrudService<Long, Example, ExampleRepository> {
 
-    private EntityTestRepository repository;
+    private ExampleRepository repository;
 
-    public CrudTestService(EntityTestRepository repository) {
+    public CrudTestService(ExampleRepository repository) {
         this.repository = repository;
     }
 
     @Override
-    public EntityTestRepository getRepository() {
+    public ExampleRepository getRepository() {
         return repository;
     }
 }

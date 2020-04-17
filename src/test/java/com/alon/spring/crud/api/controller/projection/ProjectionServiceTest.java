@@ -26,12 +26,12 @@ import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.util.ReflectionTestUtils;
 
-import com.alon.spring.crud.api.controller.output.EntityTestDTO;
+import com.alon.spring.crud.api.controller.output.ExampleDTO;
 import com.alon.spring.crud.api.controller.output.OutputPage;
 import com.alon.spring.crud.api.projection.ProjectionRepresentation;
 import com.alon.spring.crud.api.projection.ProjectionService;
 import com.alon.spring.crud.api.projection.Projector;
-import com.alon.spring.crud.domain.model.EntityTest;
+import com.alon.spring.crud.domain.model.Example;
 import com.alon.spring.crud.domain.service.exception.ProjectionException;
 
 @RunWith(SpringRunner.class)
@@ -43,38 +43,38 @@ public class ProjectionServiceTest {
 
     @Test
     public void whenProjectNOPProjectionThenReturnSameObject() {
-        EntityTest entityTest = EntityTest.of()
+        Example example = Example.of()
                 .id(1L)
                 .stringProperty("property")
                 .build();
 
-        EntityTest projected = projectionService.project(NOP_PROJECTION, entityTest);
+        Example projected = projectionService.project(NOP_PROJECTION, example);
 
-        assertThat(projected).isSameAs(entityTest);
+        assertThat(projected).isSameAs(example);
     }
 
     @Test
     public void whenProjectWithExistentProjectionThenReturnProjectedObject() {
-        EntityTest entityTest = EntityTest.of()
+        Example example = Example.of()
                 .id(1L)
                 .stringProperty("property")
                 .build();
 
-        EntityTestDTO projected = projectionService.project("entityTestProjection", entityTest);
+        ExampleDTO projected = projectionService.project("exampleProjection", example);
 
         assertThat(projected).isNotNull();
-        assertThat(projected.getId()).isEqualTo(entityTest.getId());
-        assertThat(projected.getProperty()).isEqualTo(entityTest.getStringProperty());
+        assertThat(projected.getId()).isEqualTo(example.getId());
+        assertThat(projected.getProperty()).isEqualTo(example.getStringProperty());
     }
 
     @Test
     public void whenProjectWithNonExistentProjectionThenThrowsProjectionException() {
-        EntityTest entityTest = EntityTest.of()
+        Example example = Example.of()
                 .id(1L)
                 .stringProperty("property")
                 .build();
 
-        assertThatThrownBy(() -> projectionService.project("nonExistentProjection", entityTest))
+        assertThatThrownBy(() -> projectionService.project("nonExistentProjection", example))
                 .isExactlyInstanceOf(ProjectionException.class)
                 .hasMessage("Projection 'nonExistentProjection' not found")
                 .hasNoCause();
@@ -87,12 +87,12 @@ public class ProjectionServiceTest {
         ReflectionTestUtils.setField(projectionService,
                 "projections", Map.of("brokenProjection", brokerProjector));
 
-        EntityTest entityTest = EntityTest.of()
+        Example example = Example.of()
                 .id(1L)
                 .stringProperty("property")
                 .build();
 
-        assertThatThrownBy(() -> projectionService.project("brokenProjection", entityTest))
+        assertThatThrownBy(() -> projectionService.project("brokenProjection", example))
                 .isExactlyInstanceOf(ProjectionException.class)
                 .hasMessage("Error projecting entity EntityTest with projector 'brokenProjection'")
                 .hasCauseExactlyInstanceOf(RuntimeException.class)
@@ -101,7 +101,7 @@ public class ProjectionServiceTest {
 
     @Test
     public void whenProjectPageWithNOPProjectionThenReturnOutputPageWithSameObjects() {
-        OutputPage<EntityTest> outputPage = projectionService.project(NOP_PROJECTION, mockPage());
+        OutputPage<Example> outputPage = projectionService.project(NOP_PROJECTION, mockPage());
 
         assertThat(outputPage).isNotNull();
         assertThat(outputPage.getPage()).isEqualTo(1);
@@ -124,8 +124,8 @@ public class ProjectionServiceTest {
 
     @Test
     public void whenProjectPageWithExistentProjectionThenReturnOutputPageWithProjectedObjects() {
-        OutputPage<EntityTestDTO> outputPage =
-                projectionService.project("entityTestProjection", mockPage());
+        OutputPage<ExampleDTO> outputPage =
+                projectionService.project("exampleProjection", mockPage());
 
         assertThat(outputPage).isNotNull();
         assertThat(outputPage.getPage()).isEqualTo(1);
@@ -171,7 +171,7 @@ public class ProjectionServiceTest {
     @Test
     public void whenGetRequiredExpandFromExistentProjectionThenReturn() {
         List<String> requiredExpand = projectionService
-                .getRequiredExpand("entityTestProjection");
+                .getRequiredExpand("exampleProjection");
 
         assertThat(requiredExpand)
                 .hasSize(1)
@@ -189,7 +189,7 @@ public class ProjectionServiceTest {
 
     @Test
     public void whenCheckIfProjectionExistsThenReturnTrue() {
-        assertTrue(projectionService.projectionExists("entityTestProjection"));
+        assertTrue(projectionService.projectionExists("exampleProjection"));
     }
 
     @Test
@@ -203,28 +203,28 @@ public class ProjectionServiceTest {
         ReflectionTestUtils.setField(projectionService, "representationsCache", representationsCache);
 
         List<ProjectionRepresentation> representations =
-                projectionService.getEntityRepresentations(EntityTest.class);
+                projectionService.getEntityRepresentations(Example.class);
 
         assertRepresentations(representations);
 
-        verify(representationsCache, never()).get(EntityTest.class);
-        verify(representationsCache).put(EntityTest.class, representations);
+        verify(representationsCache, never()).get(Example.class);
+        verify(representationsCache).put(Example.class, representations);
 
-        representations = projectionService.getEntityRepresentations(EntityTest.class);
+        representations = projectionService.getEntityRepresentations(Example.class);
 
         assertRepresentations(representations);
 
-        verify(representationsCache).get(EntityTest.class);
+        verify(representationsCache).get(Example.class);
     }
 
     @Test
     @DirtiesContext(methodMode = AFTER_METHOD)
     public void whenProjectorGenericsNotDefinedInClassDeclarationThenDoNotReturnIt() {
         ReflectionTestUtils.setField(projectionService,
-                "projections", Map.of("projector", new GenericProjectorExample<EntityTest, EntityTest>()));
+                "projections", Map.of("projector", new GenericProjectorExample<Example, Example>()));
 
         List<ProjectionRepresentation> representations =
-                projectionService.getEntityRepresentations(EntityTest.class);
+                projectionService.getEntityRepresentations(Example.class);
 
         assertThat(representations).isNullOrEmpty();
     }
@@ -234,7 +234,7 @@ public class ProjectionServiceTest {
                 .hasSize(1)
                 .first()
                 .satisfies(representation -> {
-                    assertThat(representation.getProjectionName()).isEqualTo("entityTestProjection");
+                    assertThat(representation.getProjectionName()).isEqualTo("exampleProjection");
                     assertThat(representation.getRepresentation())
                             .hasSize(2)
                             .containsOnlyKeys("id", "property")
@@ -255,11 +255,11 @@ public class ProjectionServiceTest {
         when(page.getTotalPages()).thenReturn(1);
         when(page.getTotalElements()).thenReturn(2L);
         when(page.getContent()).thenReturn(List.of(
-                EntityTest.of()
+                Example.of()
                         .id(1L)
                         .stringProperty("property 1")
                         .build(),
-                EntityTest.of()
+                Example.of()
                         .id(2L)
                         .stringProperty("property 2")
                         .build()));

@@ -6,7 +6,7 @@ import javax.persistence.Id;
 import javax.validation.constraints.NotBlank;
 
 @Entity
-public class EntityTest extends BaseEntity<Long> {
+public class Example extends BaseEntity<Long> {
 
     @Id
     @GeneratedValue
@@ -39,24 +39,24 @@ public class EntityTest extends BaseEntity<Long> {
 
     public static final class Builder {
 
-        private EntityTest entityTest;
+        private Example example;
 
         public Builder() {
-            entityTest = new EntityTest();
+            example = new Example();
         }
 
         public Builder id(Long id) {
-            entityTest.setId(id);
+            example.setId(id);
             return this;
         }
 
         public Builder stringProperty(String stringProperty) {
-            entityTest.setStringProperty(stringProperty);
+            example.setStringProperty(stringProperty);
             return this;
         }
 
-        public EntityTest build() {
-            return entityTest;
+        public Example build() {
+            return example;
         }
     }
 }

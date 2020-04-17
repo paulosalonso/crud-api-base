@@ -24,7 +24,7 @@ import org.mockito.Mock;
 import org.springframework.data.jpa.domain.Specification;
 
 import com.alon.spring.crud.api.controller.input.SearchInput;
-import com.alon.spring.crud.domain.model.EntityTest;
+import com.alon.spring.crud.domain.model.Example;
 
 public class SingleResourceDeepETagGeneratorTest {
 
@@ -85,7 +85,7 @@ public class SingleResourceDeepETagGeneratorTest {
         when(query.getSingleResult()).thenReturn(lastUpdate);
         when(specification.toPredicate(from, criteriaQuery, builder)).thenReturn(predicate);
 
-        String eTag = eTagGenerator.generate(EntityTest.class, entityManager, searchInput);
+        String eTag = eTagGenerator.generate(Example.class, entityManager, searchInput);
 
         assertThat(eTag).isEqualTo(String.valueOf(lastUpdate.hashCode()));
 
@@ -100,7 +100,7 @@ public class SingleResourceDeepETagGeneratorTest {
 
         when(specification.toPredicate(from, criteriaQuery, builder)).thenReturn(predicate);
 
-        String eTag = eTagGenerator.generate(EntityTest.class, entityManager, searchInput);
+        String eTag = eTagGenerator.generate(Example.class, entityManager, searchInput);
 
         assertThat(eTag).isEqualTo(NOT_MODIFIED_ETAG);
 
@@ -116,7 +116,7 @@ public class SingleResourceDeepETagGeneratorTest {
         when(query.getSingleResult()).thenReturn(lastUpdate);
         when(specification.toPredicate(from, criteriaQuery, builder)).thenReturn(null);
 
-        String eTag = eTagGenerator.generate(EntityTest.class, entityManager, searchInput);
+        String eTag = eTagGenerator.generate(Example.class, entityManager, searchInput);
 
         assertThat(eTag).isEqualTo(String.valueOf(lastUpdate.hashCode()));
 
@@ -138,7 +138,7 @@ public class SingleResourceDeepETagGeneratorTest {
             }
         };
 
-        String eTag = eTagGenerator.generate(EntityTest.class, entityManager, input);
+        String eTag = eTagGenerator.generate(Example.class, entityManager, input);
 
         assertThat(eTag).isEqualTo(String.valueOf(lastUpdate.hashCode()));
 

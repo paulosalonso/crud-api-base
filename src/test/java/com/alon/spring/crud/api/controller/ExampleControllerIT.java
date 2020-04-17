@@ -1,7 +1,7 @@
 package com.alon.spring.crud.api.controller;
 
 import com.alon.spring.crud.cleaner.DatabaseCleaner;
-import com.alon.spring.crud.domain.model.EntityTest;
+import com.alon.spring.crud.domain.model.Example;
 import io.restassured.RestAssured;
 import io.restassured.http.ContentType;
 import org.junit.After;
@@ -22,7 +22,7 @@ import static org.hamcrest.Matchers.*;
 @RunWith(SpringRunner.class)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @TestPropertySource("classpath:application-test.properties")
-public class EntityTestControllerIT {
+public class ExampleControllerIT {
 
     @LocalServerPort
     private int port;
@@ -42,7 +42,7 @@ public class EntityTestControllerIT {
 
     @Test
     public void whenCreateEntityThenSuccess() {
-        EntityTest entity = new EntityTest();
+        Example entity = new Example();
         entity.setStringProperty("string-property");
 
         given()

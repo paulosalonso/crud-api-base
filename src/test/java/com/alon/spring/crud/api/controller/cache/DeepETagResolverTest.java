@@ -17,7 +17,7 @@ import org.mockito.MockitoAnnotations;
 import org.springframework.data.jpa.domain.Specification;
 
 import com.alon.spring.crud.api.controller.input.SearchInput;
-import com.alon.spring.crud.domain.model.EntityTest;
+import com.alon.spring.crud.domain.model.Example;
 
 public class DeepETagResolverTest {
 
@@ -40,17 +40,17 @@ public class DeepETagResolverTest {
 
     @Test
     public void whenGetSingleResourceETagThenCallGenerator() {
-        when(singleResourceDeepETagGenerator.generate(eq(EntityTest.class),
+        when(singleResourceDeepETagGenerator.generate(eq(Example.class),
                 eq(entityManager), any(SearchInput.class))).thenReturn("abc");
 
-        String eTag = deepETagResolver.generateSingleResourceETag(EntityTest.class, 1L);
+        String eTag = deepETagResolver.generateSingleResourceETag(Example.class, 1L);
 
         assertThat(eTag).isEqualTo("abc");
 
         ArgumentCaptor<SearchInput> searchInputCaptor = ArgumentCaptor.forClass(SearchInput.class);
 
         verify(singleResourceDeepETagGenerator)
-                .generate(eq(EntityTest.class), eq(entityManager), searchInputCaptor.capture());
+                .generate(eq(Example.class), eq(entityManager), searchInputCaptor.capture());
 
         SearchInput searchInput = searchInputCaptor.getValue();
 
@@ -59,7 +59,7 @@ public class DeepETagResolverTest {
 
     @Test
     public void whenGetCollectionResourceETagThenCallGenerator() {
-        when(collectionResourceDeepETagGenerator.generate(eq(EntityTest.class),
+        when(collectionResourceDeepETagGenerator.generate(eq(Example.class),
                 eq(entityManager), any(SearchInput.class))).thenReturn("abc");
 
         SearchInput searchInput = new SearchInput() {
@@ -69,12 +69,12 @@ public class DeepETagResolverTest {
             }
         };
 
-        String eTag = deepETagResolver.generateCollectionResourceETag(EntityTest.class, searchInput);
+        String eTag = deepETagResolver.generateCollectionResourceETag(Example.class, searchInput);
 
         assertThat(eTag).isEqualTo("abc");
 
         verify(collectionResourceDeepETagGenerator)
-                .generate(EntityTest.class, entityManager, searchInput);
+                .generate(Example.class, entityManager, searchInput);
     }
 
 }
