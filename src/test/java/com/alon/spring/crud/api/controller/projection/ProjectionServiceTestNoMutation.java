@@ -36,7 +36,7 @@ import com.alon.spring.crud.domain.service.exception.ProjectionException;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest
-public class ProjectionServiceTest {
+public class ProjectionServiceTestNoMutation {
 
     @Autowired
     private ProjectionService projectionService;

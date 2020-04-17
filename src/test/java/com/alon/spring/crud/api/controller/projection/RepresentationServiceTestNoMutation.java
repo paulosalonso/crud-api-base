@@ -9,7 +9,7 @@ import org.junit.Test;
 import com.alon.spring.crud.api.controller.output.RepresentationTestDTO;
 import com.alon.spring.crud.api.projection.RepresentationService;
 
-public class RepresentationServiceTest {
+public class RepresentationServiceTestNoMutation {
 
     private RepresentationService representationService = new RepresentationService();
 
