@@ -49,7 +49,7 @@ public class ExampleControllerIT {
                 .contentType(ContentType.JSON)
                 .body(entity)
         .when()
-                .post("/entity-test")
+                .post("/example")
         .then()
                 .statusCode(HttpStatus.CREATED.value())
                 .body("id", allOf(notNullValue(), equalTo(1)))
@@ -58,7 +58,7 @@ public class ExampleControllerIT {
 
     @Test
     public void whenGetAllThenReturn() {
-        get("/entity-test").then()
+        get("/example").then()
                 .statusCode(HttpStatus.OK.value())
                 .body("content", hasSize(0));
     }
