@@ -21,33 +21,33 @@ public class CustomPropertiesTest {
     public void whenThereArePropertiesDeclaredThenLoadThem() {
         assertThat(properties).isNotNull();
 
-        assertThat(properties.cacheControl)
+        assertThat(properties.getCacheControl())
                 .isNotNull()
                 .satisfies(this::assertCacheControl);
 
-        assertThat(properties.projection)
+        assertThat(properties.getProjection())
                 .isNotNull()
                 .satisfies(this::assertProjection);
 
-        assertThat(properties.search)
+        assertThat(properties.getSearch())
                 .isNotNull()
                 .satisfies(this::assertSearch);
     }
 
     private void assertCacheControl(Properties.CacheControlProperties cacheControl) {
-        assertThat(cacheControl.noStore).isFalse();
-        assertThat(cacheControl.cachePrivate).isTrue();
-        assertThat(cacheControl.cachePublic).isFalse();
-        assertThat(cacheControl.noCache).isTrue();
-        assertThat(cacheControl.maxAge).isEqualTo(500);
+        assertThat(cacheControl.isNoStore()).isFalse();
+        assertThat(cacheControl.isCachePrivate()).isTrue();
+        assertThat(cacheControl.isCachePublic()).isFalse();
+        assertThat(cacheControl.isNoCache()).isTrue();
+        assertThat(cacheControl.getMaxAge()).isEqualTo(500);
     }
 
     private void assertProjection(Properties.ProjectionProperties projection) {
-        assertThat(projection.useDefaultIfError).isFalse();
+        assertThat(projection.isUseDefaultIfError()).isFalse();
     }
 
     private void assertSearch(Properties.SearchProperties properties) {
-        assertThat(properties.enableExpressionFilter).isTrue();
+        assertThat(properties.isEnableExpressionFilter()).isTrue();
     }
 
 }
