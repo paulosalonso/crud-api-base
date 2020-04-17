@@ -49,13 +49,14 @@
         <jacoco-maven-plugin.version>0.8.5</jacoco-maven-plugin.version>
         <pitest-maven.version>1.5.1</pitest-maven.version>
 
-        <!--    CONFIGURATIONS    -->
-        <skip.unit.tests>true</skip.unit.tests>
-        <skip.it.tests>true</skip.it.tests>
-        <skip.mutation>true</skip.mutation>
-        <skip.signature>false</skip.signature>
-        <covered.line>0.90</covered.line>
-        <covered.branch>0.90</covered.branch>
+        <!--    TEST CONFIGURATIONS    -->
+        <skip.unit.tests>false</skip.unit.tests>
+        <skip.it.tests>false</skip.it.tests>
+        <skip.mutation>false</skip.mutation>
+        <skip.signature>true</skip.signature>
+        <covered.line>0.95</covered.line>
+        <covered.branch>0.95</covered.branch>
+        <mutation.threshold>95</mutation.threshold>
     </properties>    
     <distributionManagement>
         <snapshotRepository>
@@ -289,9 +290,13 @@
                 </executions>
                 <configuration>
                     <excludes>
-                        <exclude>**/configuration.*</exclude>
-                        <exclude>**/core.properties.*</exclude>
-                        <exclude>**/exception*.*</exclude>
+                        <exclude>**/configuration/**</exclude>
+                        <exclude>**/*Exception.*</exclude>
+                        <exclude>**/exceptionhandler/**</exclude>
+                        <exclude>**/controller/*Controller.*</exclude>
+                        <exclude>**/api/documentation/**</exclude>
+                        <exclude>**/domain/model/**</exclude>
+                        <exclude>**/api/projection/ProjectionRepresentation.*</exclude>
                     </excludes>
                     <destFile>${project.build.directory}/jacoco.exec</destFile>
                     <fileSets>
@@ -319,12 +324,12 @@
                 </executions>
                 <configuration>
                     <skip>${skip.mutation}</skip>
-                    <mutationThreshold>90</mutationThreshold>
+                    <mutationThreshold>${mutation.threshold}</mutationThreshold>
                     <targetClasses>
-                        <param>com.alon.spring.crud.domain*</param>
+                        <param>com.alon.spring.crud.*</param>
                     </targetClasses>
                     <targetTests>
-                        <param>com.alon.spring.crud.domain*</param>
+                        <param>com.alon.spring.crud.*</param>
                     </targetTests>
                     <excludedTestClasses>
                         <param>*IT</param>
