@@ -15,15 +15,6 @@ public class DeepETagResolver {
     private DeepETagGenerator singleResourceDeepETagGenerator;
     private DeepETagGenerator collectionResourceETagGenerator;
 
-    public DeepETagResolver(EntityManager entityManager,
-                            DeepETagGenerator singleResourceDeepETagGenerator,
-                            DeepETagGenerator collectionResourceETagGenerator) {
-
-        this.entityManager = entityManager;
-        this.singleResourceDeepETagGenerator = singleResourceDeepETagGenerator;
-        this.collectionResourceETagGenerator = collectionResourceETagGenerator;
-    }
-
     @Autowired
     public DeepETagResolver(EntityManager entityManager,
                             SingleResourceDeepETagGenerator singleResourceDeepETagGenerator,
