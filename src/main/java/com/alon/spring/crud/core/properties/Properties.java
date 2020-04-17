@@ -55,9 +55,9 @@ public class Properties {
         }
 
         public void setCachePrivate(boolean cachePrivate) {
-            validateCacheScope(cachePublic, cachePrivate);
-            validateNoStore(noStore);
             this.cachePrivate = cachePrivate;
+            validateCacheScope();
+            validateNoStore();
         }
 
         public boolean isCachePublic() {
@@ -65,9 +65,9 @@ public class Properties {
         }
 
         public void setCachePublic(boolean cachePublic) {
-            validateCacheScope(cachePublic, cachePrivate);
-            validateNoStore(noStore);
             this.cachePublic = cachePublic;
+            validateCacheScope();
+            validateNoStore();
         }
 
         public boolean isNoCache() {
@@ -75,8 +75,8 @@ public class Properties {
         }
 
         public void setNoCache(boolean noCache) {
-            validateNoStore(noStore);
             this.noCache = noCache;
+            validateNoStore();
         }
 
         public boolean isNoStore() {
@@ -84,17 +84,17 @@ public class Properties {
         }
 
         public void setNoStore(boolean noStore) {
-            validateNoStore(noStore);
             this.noStore = noStore;
+            validateNoStore();
         }
 
-        private void validateCacheScope(boolean cachePublic, boolean cachePrivate) {
+        private void validateCacheScope() {
             if (cachePublic && cachePrivate)
                 throw new CacheControlInvalidConfigurationException(
                         "Only one of the http cache scopes must be activated: public or private");
         }
 
-        private void validateNoStore(boolean noStore) {
+        private void validateNoStore() {
             if (noStore) {
                 String message = "It is not possible to enable the '%s' directive when the 'noStore' directive is enabled.";
 
