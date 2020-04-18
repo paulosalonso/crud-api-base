@@ -26,7 +26,6 @@ public interface CrudService<
     
     REPOSITORY getRepository();
 
-    @Transactional(propagation = Propagation.SUPPORTS)
     default Page<ENTITY_TYPE> search(SearchCriteria criteria) {
     	
         try {
@@ -63,7 +62,6 @@ public interface CrudService<
 
     }
 
-    @Transactional(rollbackFor = Throwable.class)
     default ENTITY_TYPE create(@Valid ENTITY_TYPE entity) {
         try {
             entity = HookHelper.executeHook(this, entity, BEFORE_CREATE);
@@ -78,7 +76,6 @@ public interface CrudService<
         return this.read(id, null);
     }
 
-    @Transactional(propagation = Propagation.SUPPORTS)
     default ENTITY_TYPE read(ENTITY_ID_TYPE id, List<String> expand) {
         try {
             id = HookHelper.executeHook(this, id, BEFORE_READ);
@@ -106,7 +103,6 @@ public interface CrudService<
         }
     }
 
-    @Transactional(rollbackFor = Throwable.class)
     default ENTITY_TYPE update(@Valid ENTITY_TYPE entity) {
         if (!getRepository().existsById(entity.getId()))
             throw new NotFoundException("Entity to update not found");
@@ -120,7 +116,6 @@ public interface CrudService<
         }
     }
 
-    @Transactional(rollbackFor = Throwable.class)
     default void delete(ENTITY_ID_TYPE id) {
         if (!getRepository().existsById(id))
             throw new NotFoundException("Entity to delete not found");
@@ -233,7 +228,7 @@ public interface CrudService<
             }
         }
 
-        static enum LifeCycleHook {
+        public static enum LifeCycleHook {
             BEFORE_SEARCH,
             AFTER_SEARCH,
             BEFORE_READ,
