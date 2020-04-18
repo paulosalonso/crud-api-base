@@ -21,10 +21,10 @@ import static com.alon.spring.crud.domain.service.CrudService.HookHelper.LifeCyc
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.*;
 
-public class CrudServiceSearchTest {
+public class ExampleServiceSearchTest {
 
     @InjectMocks
-    private CrudTestService service;
+    private ExampleService service;
 
     @Mock
     private ExampleRepository repository;

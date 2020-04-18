@@ -20,10 +20,10 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.*;
 
 
-public class CrudServiceUpdateTest {
+public class ExampleServiceUpdateTest {
 
     @InjectMocks
-    private CrudTestService service;
+    private ExampleService service;
 
     @Mock
     private ExampleRepository repository;

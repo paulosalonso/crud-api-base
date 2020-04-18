@@ -16,10 +16,10 @@ import static com.alon.spring.crud.domain.service.CrudService.HookHelper.LifeCyc
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
-public class CrudServiceHookTest {
+public class ExampleServiceHookTest {
 
     @InjectMocks
-    private CrudTestService service;
+    private ExampleService service;
 
     @Mock
     private ExampleRepository repository;
