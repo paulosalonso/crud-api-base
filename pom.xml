@@ -54,8 +54,8 @@
         <skip.it.tests>false</skip.it.tests>
         <skip.mutation>false</skip.mutation>
         <skip.signature>true</skip.signature>
-        <covered.line>0.95</covered.line>
-        <covered.branch>0.95</covered.branch>
+        <covered.line>0.30</covered.line>
+        <covered.branch>0.30</covered.branch>
         <mutation.threshold>30</mutation.threshold>
     </properties>    
     <distributionManagement>
@@ -292,8 +292,6 @@
                     <excludes>
                         <exclude>**/configuration/**</exclude>
                         <exclude>**/*Exception.*</exclude>
-                        <exclude>**/exceptionhandler/**</exclude>
-<!--                        <exclude>**/controller/*Controller.*</exclude>-->
                         <exclude>**/api/documentation/**</exclude>
                         <exclude>**/domain/model/**</exclude>
                         <exclude>**/api/projection/ProjectionRepresentation.*</exclude>
