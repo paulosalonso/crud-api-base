@@ -29,6 +29,7 @@ import com.alon.spring.crud.api.exceptionhandler.Problem.Violation;
 import com.alon.spring.crud.domain.service.exception.CrudException;
 import com.alon.spring.crud.domain.service.exception.DataIntegrityException;
 import com.alon.spring.crud.domain.service.exception.NotFoundException;
+import com.alon.spring.crud.domain.service.exception.ProjectionException;
 import com.fasterxml.jackson.databind.JsonMappingException.Reference;
 import com.fasterxml.jackson.databind.exc.InvalidFormatException;
 import com.fasterxml.jackson.databind.exc.PropertyBindingException;
@@ -57,7 +58,7 @@ public class ApiExceptionHandler extends ResponseEntityExceptionHandler {
 	
 	@ExceptionHandler(CrudException.class)
 	public ResponseEntity handleCrudException(CrudException ex,
-			HttpHeaders headers, HttpStatus status, WebRequest request) {
+			HttpHeaders headers, WebRequest request) {
 		
 		Throwable cause = ExceptionUtils.getRootCause(ex);
 		
@@ -67,6 +68,18 @@ public class ApiExceptionHandler extends ResponseEntityExceptionHandler {
 		return handleUncaught(ex, request);
 		
 	}
+
+	@ExceptionHandler(ProjectionException.class)
+	public ResponseEntity handleProjectionException(ProjectionException ex, WebRequest request) {
+
+		HttpStatus status = HttpStatus.BAD_REQUEST;
+
+		Problem problem = createProblemBuilder(status, ProblemType.INVALID_PARAMETER, ex.getMessage())
+				.build();
+
+		return handleExceptionInternal(ex, problem, new HttpHeaders(), status, request);
+	}
+
 	
 	@ExceptionHandler(PropertyReferenceException.class)
 	public ResponseEntity handlePropertyReferenceException(PropertyReferenceException ex, HttpHeaders headers, WebRequest request) {
