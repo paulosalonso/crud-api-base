@@ -113,12 +113,10 @@ public abstract class CrudController<
         if (disableContentCaching)
             ShallowEtagHeaderFilter.disableContentCaching(request.getRequest());
 
-        normalizeCollectionOptions(options);
-
         SearchCriteria criteria = SearchCriteria.of()
                 .filter(resolveFilter(filter))
                 .pageable(pageable)
-                .expand(options.getExpand())
+                .expand(normalizeExpand(options))
                 .build();
 
         Page<MANAGED_ENTITY_TYPE> page = service.search(criteria);
@@ -147,9 +145,7 @@ public abstract class CrudController<
         if (disableContentCaching)
             ShallowEtagHeaderFilter.disableContentCaching(request.getRequest());
 
-        normalizeSingleOptions(options);
-
-        MANAGED_ENTITY_TYPE entity = service.read(id, options.getExpand());
+        MANAGED_ENTITY_TYPE entity = service.read(id, normalizeExpand(options));
 
         if (entity == null)
             throw new HttpClientErrorException(HttpStatus.NOT_FOUND);
@@ -179,8 +175,6 @@ public abstract class CrudController<
         
         entity = service.create(entity);
         
-        projection = normalizeSingleProjection(projection);
-        
         Object response;
 
         try {
@@ -209,8 +203,6 @@ public abstract class CrudController<
         entity.setId(id);
 
         entity = service.update(entity);
-        
-        projection = normalizeSingleProjection(projection);
 
         Object response;
 
@@ -252,37 +244,17 @@ public abstract class CrudController<
         return ProjectionService.NOP_PROJECTION;
     }
 
-    protected void normalizeSingleOptions(Options options) {
-        options.setProjection(normalizeSingleProjection(options.getProjection()));
-        options.setExpand(normalizeExpand(options.getProjection(), options.getExpand()));
-    }
+    protected List<String> normalizeExpand(Options options) {
+        String projection = options.getProjection();
 
-    protected void normalizeCollectionOptions(Options options) {
-        options.setProjection(normalizeCollectionProjection(options.getProjection()));
-        options.setExpand(normalizeExpand(options.getProjection(), options.getExpand()));
-    }
+        if (projection == null || projection.equals(ProjectionService.NOP_PROJECTION))
+            return options.getExpand();
 
-    protected String normalizeSingleProjection(String projectionName) {
-        if (projectionName != null && projectionService.projectionExists(projectionName))
-            return projectionName;
-
-        return getSingleDefaultProjection();
-    }
-
-    protected String normalizeCollectionProjection(String projectionName) {
-        if (projectionName != null && projectionService.projectionExists(projectionName))
-            return projectionName;
-
-        return getCollectionDefaultProjection();
-    }
-
-    protected List<String> normalizeExpand(String projectionName, List<String> receivedExpand) {
-
-        if (projectionName.equals(ProjectionService.NOP_PROJECTION))
-            return receivedExpand;
-
-        return projectionService.getRequiredExpand(projectionName);
-
+        try {
+            return projectionService.getRequiredExpand(options.getProjection());
+        } catch (ProjectionException e) {
+            return options.getExpand();
+        }
     }
 
     protected Specification resolveFilter(SEARCH_INPUT_TYPE filter) {
