@@ -43,7 +43,7 @@ public class ProjectionService {
     }
 
     public <I extends BaseEntity, O> O project(String projectionName, I input) {
-        if (projectionName.equals(NOP_PROJECTION))
+        if (projectionName == null || projectionName.equals(NOP_PROJECTION))
             return (O) input;
 
         try {
@@ -66,7 +66,7 @@ public class ProjectionService {
         try {
             List content = input.getContent();
 
-            if (projectionName.equals(NOP_PROJECTION)) {
+            if (projectionName == null || projectionName.equals(NOP_PROJECTION)) {
                 content = input.getContent();
             } else {
                 Projector<I, O> projector = getProjector(projectionName);
