@@ -32,7 +32,7 @@ import io.restassured.response.Response;
 @RunWith(SpringRunner.class)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @TestPropertySource("classpath:application-test.properties")
-public class ExampleControllerCreateIT {
+public class ExampleControllerIT {
 
     @LocalServerPort
     private int port;
@@ -54,6 +54,13 @@ public class ExampleControllerCreateIT {
     }
 
     @Test
+    public void whenGetAllThenReturn() {
+        get("/example").then()
+                .statusCode(HttpStatus.OK.value())
+                .body("content", hasSize(0));
+    }
+
+    @Test
     public void whenCreateThenSuccess() {
         Example example = Example.of()
                 .stringProperty("string-property")
@@ -65,6 +72,41 @@ public class ExampleControllerCreateIT {
         .when()
                 .post("/example")
         .then()
+                .statusCode(HttpStatus.CREATED.value())
+                .body("id", notNullValue())
+                .body("stringProperty", equalTo(example.getStringProperty()));
+    }
+    @Test
+    public void whenCreateWithProjectionThenSuccess() {
+        Example example = Example.of()
+                .stringProperty("string-property")
+                .build();
+
+        given()
+                .contentType(ContentType.JSON)
+                .queryParam("projection", "exampleProjection")
+                .body(example)
+                .when()
+                .post("/example")
+                .then()
+                .statusCode(HttpStatus.CREATED.value())
+                .body("id", notNullValue())
+                .body("property", equalTo(example.getStringProperty()));
+    }
+
+    @Test
+    public void whenCreateWithNonExistentProjectionThenUseDefaultProjection() {
+        Example example = Example.of()
+                .stringProperty("string-property")
+                .build();
+
+        given()
+                .contentType(ContentType.JSON)
+                .queryParam("projection", "nonExistentProjection")
+                .body(example)
+                .when()
+                .post("/example")
+                .then()
                 .statusCode(HttpStatus.CREATED.value())
                 .body("id", notNullValue())
                 .body("stringProperty", equalTo(example.getStringProperty()));
@@ -130,10 +172,45 @@ public class ExampleControllerCreateIT {
     }
 
     @Test
-    public void whenGetAllThenReturn() {
-        get("/example").then()
-                .statusCode(HttpStatus.OK.value())
-                .body("content", hasSize(0));
+    public void whenCreateWithInvalidRequestBodyThenReturnBadRequest() {
+        given()
+                .contentType("application/json")
+                .body("{\"stringProperty:\"property value\"")
+                .post("/example")
+                .then()
+                .statusCode(HttpStatus.BAD_REQUEST.value())
+                .body("status", equalTo(400))
+                .body("title", equalTo("Unrecognized message"))
+                .body("detail", equalTo("Invalid request body."));
+    }
+
+    @Test
+    public void whenCreateWithInvalidPropertyNameThenReturnBadRequest() {
+        given()
+                .contentType("application/json")
+                .body("{\"property\":\"property value\"")
+                .post("/example")
+                .then()
+                .statusCode(HttpStatus.BAD_REQUEST.value())
+                .body("status", equalTo(400))
+                .body("title", equalTo("Unrecognized message"))
+                .body("detail", equalTo("Invalid request body."));
+    }
+
+    @Test
+    public void whenCreateWithoutRequiredPropertyThenReturnBadRequest() {
+        given()
+                .contentType("application/json")
+                .body(Example.of().build())
+                .post("/example")
+                .then()
+                .statusCode(HttpStatus.BAD_REQUEST.value())
+                .body("status", equalTo(400))
+                .body("title", equalTo("Invalid data"))
+                .body("detail", equalTo("Invalid fields."))
+                .body("violations", hasSize(1))
+                .body("violations[0].context", equalTo("stringProperty"))
+                .body("violations[0].message", equalTo("não pode estar em branco"));
     }
 
     private Example concatStringPropertyCreate(Example example) {
