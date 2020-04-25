@@ -54,9 +54,9 @@
         <skip.it.tests>false</skip.it.tests>
         <skip.mutation>false</skip.mutation>
         <skip.signature>true</skip.signature>
-        <covered.line>0.30</covered.line>
-        <covered.branch>0.30</covered.branch>
-        <mutation.threshold>30</mutation.threshold>
+        <line.coverage>0.90</line.coverage>
+        <branch.coverage>0.90</branch.coverage>
+        <mutation.threshold>90</mutation.threshold>
     </properties>    
     <distributionManagement>
         <snapshotRepository>
@@ -275,12 +275,12 @@
                                         <limit>
                                             <counter>LINE</counter>
                                             <value>COVEREDRATIO</value>
-                                            <minimum>${covered.line}</minimum>
+                                            <minimum>${line.coverage}</minimum>
                                         </limit>
                                         <limit>
                                             <counter>BRANCH</counter>
                                             <value>COVEREDRATIO</value>
-                                            <minimum>${covered.branch}</minimum>
+                                            <minimum>${branch.coverage}</minimum>
                                         </limit>
                                     </limits>
                                 </rule>
