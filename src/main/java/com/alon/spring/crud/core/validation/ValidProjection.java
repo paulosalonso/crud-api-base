@@ -11,7 +11,7 @@ import static java.lang.annotation.RetentionPolicy.RUNTIME;
 
 @Target({FIELD, PARAMETER})
 @Retention(RUNTIME)
-@Constraint(validatedBy = ValidaProjectionValidator.class)
+@Constraint(validatedBy = ValidProjectionValidator.class)
 public @interface ValidProjection {
     String message() default "projection not found";
     Class<?>[] groups() default {};

@@ -9,7 +9,7 @@ import javax.validation.ConstraintValidatorContext;
 
 import static com.alon.spring.crud.core.context.ApplicationContextProvider.getApplicationContext;
 
-public class ValidaProjectionValidator implements ConstraintValidator<ValidProjection, String> {
+public class ValidProjectionValidator implements ConstraintValidator<ValidProjection, String> {
 
     private ProjectionService projectionService;
     private Properties properties;
@@ -23,7 +23,7 @@ public class ValidaProjectionValidator implements ConstraintValidator<ValidProje
 
     @Override
     public boolean isValid(String value, ConstraintValidatorContext context) {
-        boolean valid = projectionService.projectionExists(value);
+        boolean valid = value == null || projectionService.projectionExists(value);
 
         if (!valid) {
             String message = "projection %s not found";
