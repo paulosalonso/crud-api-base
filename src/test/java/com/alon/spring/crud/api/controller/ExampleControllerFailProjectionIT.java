@@ -1,12 +1,14 @@
 package com.alon.spring.crud.api.controller;
 
 import static io.restassured.RestAssured.given;
-import static org.hamcrest.Matchers.equalTo;
-import static org.hamcrest.Matchers.notNullValue;
+import static org.hamcrest.Matchers.*;
 
+import com.alon.spring.crud.cleaner.DatabaseCleaner;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.web.server.LocalServerPort;
 import org.springframework.http.HttpStatus;
@@ -26,9 +28,17 @@ public class ExampleControllerFailProjectionIT {
     @LocalServerPort
     private int port;
 
+    @Autowired
+    private DatabaseCleaner databaseCleaner;
+
     @Before
     public void init() {
         RestAssured.port = port;
+    }
+
+    @After
+    public void tearDown() {
+        databaseCleaner.clearTables();
     }
 
     @Test
@@ -46,7 +56,10 @@ public class ExampleControllerFailProjectionIT {
                 .then()
                 .statusCode(HttpStatus.BAD_REQUEST.value())
                 .body("status", equalTo(400))
-                .body("title", equalTo("Invalid parameter"))
-                .body("detail", equalTo("Projection 'nonExistentProjection' not found"));
+                .body("title", equalTo("Invalid data"))
+                .body("detail", equalTo("Invalid field(s)."))
+                .body("violations", hasSize(1))
+                .body("violations.context", hasItem("projection"))
+                .body("violations.message", hasItem("projection nonExistentProjection not found"));
     }
 }

@@ -2,7 +2,6 @@ package com.alon.spring.crud.api.controller.input;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import org.assertj.core.api.Assertions;
 import org.junit.Test;
 import org.springframework.data.jpa.domain.Specification;
 
@@ -12,20 +11,20 @@ public class SearchInputTest {
     public void whenCreateSearchInputThenSuccess() {
         SearchInput searchInput = buildSearchInput();
 
-        searchInput.setExpression("expression");
+        searchInput.setFilter("expression");
 
-        assertThat(searchInput.getExpression()).isEqualTo("expression");
-        assertThat(searchInput.expressionPresent()).isTrue();
-        assertThat(searchInput.expressionNotPresent()).isFalse();
+        assertThat(searchInput.getFilter()).isEqualTo("expression");
+        assertThat(searchInput.filterPresent()).isTrue();
+        assertThat(searchInput.filterNotPresent()).isFalse();
     }
 
     @Test
     public void whenCreateSearchInputWithoutExpressionThenSuccess() {
         SearchInput searchInput = buildSearchInput();
 
-        assertThat(searchInput.getExpression()).isNull();
-        assertThat(searchInput.expressionPresent()).isFalse();
-        assertThat(searchInput.expressionNotPresent()).isTrue();
+        assertThat(searchInput.getFilter()).isNull();
+        assertThat(searchInput.filterPresent()).isFalse();
+        assertThat(searchInput.filterNotPresent()).isTrue();
     }
 
     private SearchInput buildSearchInput() {
