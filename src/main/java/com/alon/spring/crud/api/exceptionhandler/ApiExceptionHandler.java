@@ -185,7 +185,7 @@ public class ApiExceptionHandler extends ResponseEntityExceptionHandler {
 	private ResponseEntity handleValidationInternal(Exception ex, HttpHeaders headers,
 			HttpStatus status, WebRequest request, BindingResult bindingResult) {
 		
-		String detail = "Invalid fields.";
+		String detail = "Invalid field(s).";
 		
 		List<Problem.Violation> problemFields = this.createProblemFields(bindingResult);
 		

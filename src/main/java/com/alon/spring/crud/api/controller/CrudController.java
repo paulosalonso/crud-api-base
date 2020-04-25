@@ -6,6 +6,8 @@ import java.util.List;
 
 import javax.validation.Valid;
 
+import com.alon.spring.crud.api.controller.input.ProjectionOption;
+import com.alon.spring.crud.core.validation.ValidProjection;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -107,7 +109,7 @@ public abstract class CrudController<
     public ResponseEntity search(
             SEARCH_INPUT_TYPE filter,
             Pageable pageable,
-            Options options,
+            @Valid Options options,
             ServletWebRequest request
     ) {
         if (disableContentCaching)
@@ -139,7 +141,7 @@ public abstract class CrudController<
     @GetMapping("${com.alon.spring.crud.path.read:/{id}}")
     public ResponseEntity read(
             @PathVariable MANAGED_ENTITY_ID_TYPE id,
-            Options options,
+            @Valid Options options,
             ServletWebRequest request
     ) throws ReadException {
         if (disableContentCaching)
@@ -168,7 +170,8 @@ public abstract class CrudController<
     @PostMapping("${com.alon.spring.crud.path.create:}")
     protected ResponseEntity create(
             @RequestBody @Valid CREATE_INPUT_TYPE input,
-            @RequestParam(required = false) String projection
+            @Valid
+            ProjectionOption option
     ) throws CreateException {
         
         MANAGED_ENTITY_TYPE entity = createInputMapper.map(input);
@@ -178,9 +181,9 @@ public abstract class CrudController<
         Object response;
 
         try {
-            response = projectionService.project(projection, entity);
+            response = projectionService.project(option.getProjection(), entity);
         } catch (ProjectionException e) {
-            if (projectDefaultOnError(projection))
+            if (projectDefaultOnError(option.getProjection()))
                 response = projectionService.project(getSingleDefaultProjection(), entity);
             else
                 throw e;
@@ -258,12 +261,12 @@ public abstract class CrudController<
     }
 
     protected Specification resolveFilter(SEARCH_INPUT_TYPE filter) {
-        if (filter.expressionPresent()) {
+        if (filter.filterPresent()) {
             if (!properties.search.enableExpressionFilter)
                 throw new ResponseStatusException(HttpStatus.LOCKED,
                         "The filter by expression feature is not enabled.");
 
-            return ExpressionSpecification.of(filter.getExpression());
+            return ExpressionSpecification.of(filter.getFilter());
         }
 
         return filter.toSpecification();
