@@ -169,17 +169,6 @@ public class ProjectionServiceTestNoMutation {
     }
 
     @Test
-    public void whenGetRequiredExpandFromExistentProjectionThenReturn() {
-        List<String> requiredExpand = projectionService
-                .getRequiredExpand("exampleProjection");
-
-        assertThat(requiredExpand)
-                .hasSize(1)
-                .first()
-                .satisfies(element -> assertThat(element).isEqualTo("property"));
-    }
-
-    @Test
     public void whenGetRequiredExpandFromNonExistentProjectionThenThrowsProjectionException() {
         assertThatThrownBy(() -> projectionService.getRequiredExpand("nonExistentProjection"))
                 .isExactlyInstanceOf(ProjectionException.class)
