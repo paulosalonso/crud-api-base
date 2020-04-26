@@ -6,20 +6,25 @@ import static com.alon.spring.crud.domain.service.CrudService.HookHelper.LifeCyc
 import static io.restassured.RestAssured.get;
 import static io.restassured.RestAssured.given;
 import static io.restassured.RestAssured.when;
-import static org.hamcrest.Matchers.*;
+import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.hasItems;
+import static org.hamcrest.Matchers.hasSize;
+import static org.hamcrest.Matchers.not;
+import static org.hamcrest.Matchers.notNullValue;
+import static org.hamcrest.Matchers.nullValue;
 
-import com.alon.spring.crud.api.controller.output.OutputPage;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.boot.web.server.LocalServerPort;
 import org.springframework.http.HttpStatus;
-import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit4.SpringRunner;
 
+import com.alon.spring.crud.api.projection.ProjectionService;
 import com.alon.spring.crud.cleaner.DatabaseCleaner;
 import com.alon.spring.crud.domain.model.Example;
 import com.alon.spring.crud.domain.service.ExampleService;
@@ -40,6 +45,9 @@ public class ExampleControllerIT {
 
     @Autowired
     private ExampleService exampleService;
+
+    @SpyBean
+    private ProjectionService projectionService;
 
     @Before
     public void init() {
@@ -68,7 +76,7 @@ public class ExampleControllerIT {
     }
 
     @Test
-    public void whenGetAllPaginatedThenReturn() {
+    public void whenGetAllPaginatedThenReturnPaginatedContent() {
         insertBatchOfExamples(3);
 
         given()
@@ -115,7 +123,7 @@ public class ExampleControllerIT {
     }
 
     @Test
-    public void whenGetFilteredByPropertyThenReturn() {
+    public void whenGetFilteredByPropertyThenReturnFilteredContent() {
         insertBatchOfExamples(3);
 
         given()
@@ -142,6 +150,44 @@ public class ExampleControllerIT {
                 .body("status", equalTo(423))
                 .body("title", equalTo("Locked resource"))
                 .body("detail", equalTo("The filter by expression feature is not enabled."));
+    }
+
+    @Test
+    public void whenGetAllWithProjectionThenReturnProjectedContent() {
+        insertBatchOfExamples(3);
+
+        given()
+                .queryParam("projection", "exampleProjection")
+                .when()
+                .get("/example")
+                .then()
+                .statusCode(HttpStatus.OK.value())
+                .body("page", equalTo(0))
+                .body("pageSize", equalTo(3))
+                .body("totalPages", equalTo(1))
+                .body("totalSize", equalTo(3))
+                .body("content", hasSize(3))
+                .body("content.id", not(hasItems(nullValue())))
+                .body("content.property", hasItems("Example 1", "Example 2", "Example 3"));
+    }
+
+    @Test
+    public void whenGetAllWithNonExistentProjectionThenReturnContentProjectedWithDefaultProjection() {
+        insertBatchOfExamples(1);
+
+        given()
+                .queryParam("projection", "nonExistentProjection")
+                .when()
+                .get("/example")
+                .then()
+                .statusCode(HttpStatus.OK.value())
+                .body("page", equalTo(0))
+                .body("pageSize", equalTo(1))
+                .body("totalPages", equalTo(1))
+                .body("totalSize", equalTo(1))
+                .body("content", hasSize(1))
+                .body("content.id", not(hasItems(nullValue())))
+                .body("content.stringProperty", hasItems("Example 1"));
     }
 
     @Test
