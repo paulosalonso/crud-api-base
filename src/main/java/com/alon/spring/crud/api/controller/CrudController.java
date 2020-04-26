@@ -115,10 +115,12 @@ public abstract class CrudController<
         if (disableContentCaching)
             ShallowEtagHeaderFilter.disableContentCaching(request.getRequest());
 
+        normalizeCollectionOptions(options);
+
         SearchCriteria criteria = SearchCriteria.of()
                 .filter(resolveFilter(filter))
                 .pageable(pageable)
-                .expand(normalizeExpand(options))
+                .expand(options.getExpand())
                 .build();
 
         Page<MANAGED_ENTITY_TYPE> page = service.search(criteria);
@@ -147,7 +149,9 @@ public abstract class CrudController<
         if (disableContentCaching)
             ShallowEtagHeaderFilter.disableContentCaching(request.getRequest());
 
-        MANAGED_ENTITY_TYPE entity = service.read(id, normalizeExpand(options));
+        normalizeSingleOptions(options);
+
+        MANAGED_ENTITY_TYPE entity = service.read(id, options.getExpand());
 
         if (entity == null)
             throw new HttpClientErrorException(HttpStatus.NOT_FOUND);
@@ -247,17 +251,28 @@ public abstract class CrudController<
         return ProjectionService.NOP_PROJECTION;
     }
 
-    protected List<String> normalizeExpand(Options options) {
-        String projection = options.getProjection();
-
-        if (projection == null || projection.equals(ProjectionService.NOP_PROJECTION))
-            return options.getExpand();
+    protected void normalizeSingleOptions(Options options) {
+        if (options.getProjection() == null)
+            options.setProjection(getSingleDefaultProjection());
 
         try {
-            return projectionService.getRequiredExpand(options.getProjection());
+            if (!options.getProjection().equals(ProjectionService.NOP_PROJECTION))
+                options.setExpand(projectionService.getRequiredExpand(options.getProjection()));
         } catch (ProjectionException e) {
-            return options.getExpand();
+            // NOP
         }
+    }
+
+    protected void normalizeCollectionOptions(Options options) {
+        if (options.getProjection() == null)
+            options.setProjection(getCollectionDefaultProjection());
+
+        if (!options.getProjection().equals(ProjectionService.NOP_PROJECTION))
+            try {
+                options.setExpand(projectionService.getRequiredExpand(options.getProjection()));
+            } catch (ProjectionException e) {
+                // NOP
+            }
     }
 
     protected Specification resolveFilter(SEARCH_INPUT_TYPE filter) {
