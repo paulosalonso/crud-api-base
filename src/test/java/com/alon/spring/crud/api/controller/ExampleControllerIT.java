@@ -196,64 +196,66 @@ public class ExampleControllerIT {
                 .body("stringProperty", equalTo(example.getStringProperty()));
     }
 
-//    @Test
-//    public void whenCreateWithBeforeCreateHookThenPersistWithHookUpdates() {
-//        exampleService.addBeforeCreateHook(this::concatStringPropertyCreate);
-//
-//        Example example = Example.of()
-//                .stringProperty("property")
-//                .build();
-//
-//        given()
-//                .contentType(ContentType.JSON)
-//                .body(example)
-//        .when()
-//                .post("/example")
-//        .then()
-//                .statusCode(HttpStatus.CREATED.value())
-//                .body("id", equalTo(1))
-//                .body("stringProperty", equalTo(example.getStringProperty().concat("-concatenated-by-hook")));
-//
-//        when()
-//                .get("/example/{id}", 1)
-//        .then()
-//                .statusCode(HttpStatus.OK.value())
-//                .body("id", equalTo(1))
-//                .body("stringProperty", equalTo(example.getStringProperty().concat("-concatenated-by-hook")));
-//
-//        exampleService.clearHooks(BEFORE_CREATE);
-//    }
+    @Test
+    public void whenCreateWithBeforeCreateHookThenPersistWithHookUpdates() {
+        exampleService.addBeforeCreateHook(this::concatStringPropertyCreate);
 
-//    @Test
-//    public void whenCreateWithAfterCreateHookThenPersistOriginalAndReturnWithHookUpdates() {
-//        exampleService.addAfterCreateHook(this::concatStringPropertyCreate);
-//
-//        Example example = Example.of()
-//                .stringProperty("property")
-//                .build();
-//
-//        Response response = given()
-//                .contentType(ContentType.JSON)
-//                .body(example)
-//                .when()
-//                .post("/example");
-//
-//        Example responseExample = response.body().as(Example.class);
-//
-//        response.then()
-//                .statusCode(HttpStatus.CREATED.value())
-//                .body("id", notNullValue())
-//                .body("stringProperty", equalTo(example.getStringProperty().concat("-concatenated-by-hook")));
-//
-//        when()
-//                .get("/example/{id}", responseExample.getId())
-//                .then()
-//                .statusCode(HttpStatus.OK.value())
-//                .body(notNullValue())
-//                .body("stringProperty", equalTo(example.getStringProperty()));
-//
-//        exampleService.clearHooks(AFTER_CREATE);
-//    }
+        Example example = Example.of()
+                .stringProperty("property")
+                .build();
+
+        Response response = given()
+                .contentType(ContentType.JSON)
+                .body(example)
+                .post("/example");
+
+        response.then()
+                .statusCode(HttpStatus.CREATED.value())
+                .body("id", notNullValue())
+                .body("stringProperty", equalTo(example.getStringProperty().concat("-concatenated-by-hook")));
+
+        Integer id = response.body().path("id");
+
+        when()
+                .get("/example/{id}", id)
+        .then()
+                .statusCode(HttpStatus.OK.value())
+                .body("id", equalTo(id))
+                .body("stringProperty", equalTo(example.getStringProperty().concat("-concatenated-by-hook")));
+
+        exampleService.clearHooks(BEFORE_CREATE);
+    }
+
+    @Test
+    public void whenCreateWithAfterCreateHookThenPersistOriginalAndReturnWithHookUpdates() {
+        exampleService.addAfterCreateHook(this::concatStringPropertyCreate);
+
+        Example example = Example.of()
+                .stringProperty("property")
+                .build();
+
+        Response response = given()
+                .contentType(ContentType.JSON)
+                .body(example)
+                .post("/example");
+
+        response.then()
+                .statusCode(HttpStatus.CREATED.value())
+                .body("id", notNullValue())
+                .body("stringProperty", equalTo(example.getStringProperty().concat("-concatenated-by-hook")));
+
+        Integer id = response.body().path("id");
+
+        when()
+                .get("/example/{id}", id)
+                .then()
+                .statusCode(HttpStatus.OK.value())
+                .body(notNullValue())
+                .body("id", equalTo(id))
+                .body("stringProperty", equalTo(example.getStringProperty()));
+
+        exampleService.clearHooks(AFTER_CREATE);
+    }
 
     @Test
     public void whenCreateWithInvalidRequestBodyThenReturnBadRequest() {
@@ -291,32 +293,17 @@ public class ExampleControllerIT {
                 .statusCode(HttpStatus.BAD_REQUEST.value())
                 .body("status", equalTo(400))
                 .body("title", equalTo("Invalid data"))
-                .body("detail", equalTo("Invalid fields."))
+                .body("detail", equalTo("Invalid field(s)."))
                 .body("violations", hasSize(1))
                 .body("violations[0].context", equalTo("stringProperty"))
                 .body("violations[0].message", equalTo("não pode estar em branco"));
     }
 
-//    private Example concatStringPropertyCreate(Example example) {
-//        example.setStringProperty(example
-//                .getStringProperty().concat("-concatenated-by-hook"));
-//
-//        return example;
-//    }
+    private Example concatStringPropertyCreate(Example example) {
+        example.setStringProperty(example
+                .getStringProperty().concat("-concatenated-by-hook"));
 
-//    private void insertBatchOfExamples(int quantity) {
-//        for (int i = 1; i <= quantity; i++) {
-//            Example example = Example.of()
-//                    .stringProperty("Example " + i)
-//                    .build();
-//
-//            given()
-//                    .contentType(ContentType.JSON)
-//                    .body(example)
-//                    .post("/example")
-//                    .then()
-//                    .statusCode(HttpStatus.CREATED.value());
-//        }
-//    }
+        return example;
+    }
 
 }
