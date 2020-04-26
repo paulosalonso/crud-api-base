@@ -160,6 +160,7 @@ public class ExampleControllerIT {
                 .body("id", notNullValue())
                 .body("stringProperty", equalTo(example.getStringProperty()));
     }
+    
     @Test
     public void whenCreateWithProjectionThenSuccess() {
         Example example = Example.of()

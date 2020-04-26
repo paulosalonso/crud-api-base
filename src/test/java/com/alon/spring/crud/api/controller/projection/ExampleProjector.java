@@ -1,7 +1,5 @@
 package com.alon.spring.crud.api.controller.projection;
 
-import java.util.List;
-
 import org.springframework.stereotype.Component;
 
 import com.alon.spring.crud.api.controller.output.ExampleDTO;
@@ -17,10 +15,5 @@ public class ExampleProjector implements Projector<Example, ExampleDTO> {
                 .id(input.getId())
                 .property(input.getStringProperty())
                 .build();
-    }
-
-    @Override
-    public List<String> requiredExpand() {
-        return List.of("property");
     }
 }
