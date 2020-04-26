@@ -23,7 +23,9 @@ public class ValidProjectionValidator implements ConstraintValidator<ValidProjec
 
     @Override
     public boolean isValid(String value, ConstraintValidatorContext context) {
-        boolean valid = value == null || projectionService.projectionExists(value);
+        boolean valid = value == null
+                || properties.projection.useDefaultIfError
+                || projectionService.projectionExists(value);
 
         if (!valid) {
             String message = "projection %s not found";
