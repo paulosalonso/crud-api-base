@@ -71,11 +71,21 @@ public class ApiExceptionHandler extends ResponseEntityExceptionHandler {
 
 	@ExceptionHandler(ProjectionException.class)
 	public ResponseEntity handleProjectionException(ProjectionException ex, WebRequest request) {
+		HttpStatus status;
+		String detail;
+		ProblemType type;
 
-		HttpStatus status = HttpStatus.BAD_REQUEST;
+		if (request.getParameter("projection") != null) {
+			status = HttpStatus.BAD_REQUEST;
+			detail = ex.getMessage();
+			type = ProblemType.INVALID_PARAMETER;
+		} else {
+			status = HttpStatus.INTERNAL_SERVER_ERROR;
+			detail = "An error occurred when projecting the response. If the problem persists, contact your administrator.";
+			type = ProblemType.INTERNAL_ERROR;
+		}
 
-		Problem problem = createProblemBuilder(status, ProblemType.INVALID_PARAMETER, ex.getMessage())
-				.build();
+		Problem problem = createProblemBuilder(status, type, detail).build();
 
 		return handleExceptionInternal(ex, problem, new HttpHeaders(), status, request);
 	}
