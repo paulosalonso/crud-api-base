@@ -4,7 +4,6 @@ import static io.restassured.RestAssured.get;
 import static io.restassured.RestAssured.given;
 import static org.hamcrest.Matchers.equalTo;
 
-import org.hamcrest.Matchers;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -23,11 +22,10 @@ import com.alon.spring.crud.domain.service.ExampleService;
 
 import io.restassured.RestAssured;
 import io.restassured.http.ContentType;
-import io.restassured.response.Response;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
-public class ErrorExampleControllerIT {
+public class DefaultProjectionErrorExampleControllerIT {
 
     @LocalServerPort
     private int port;
@@ -53,7 +51,19 @@ public class ErrorExampleControllerIT {
 
     @Test
     public void whenGetAllThenReturnInternalServerError() {
-        ExampleCreator.insertBatchOfExamples(1);
+        Example example = Example.of()
+                .stringProperty("property")
+                .build();
+
+        given()
+                .contentType(ContentType.JSON)
+                .body(example)
+                .when()
+                .post("/example-projection-error")
+                .then()
+                .body("status", equalTo(500))
+                .body("title", equalTo("Internal error"))
+                .body("detail", equalTo("An error occurred when projecting the response. If the problem persists, contact your administrator."));
 
         get("/example-projection-error")
                 .then()
