@@ -7,7 +7,7 @@ import java.util.List;
 import javax.validation.Valid;
 
 import com.alon.spring.crud.api.controller.input.ProjectionOption;
-import com.alon.spring.crud.core.validation.ValidProjection;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -87,11 +87,8 @@ public abstract class CrudController<
     protected CrudController(SERVICE_TYPE service, 
     		InputMapper<CREATE_INPUT_TYPE, MANAGED_ENTITY_TYPE> createInputMapper,
     		InputMapper<UPDATE_INPUT_TYPE, MANAGED_ENTITY_TYPE> updateInputMapper) {
-    	
-    	this.service = service;
-        this.createInputMapper = createInputMapper;
-        this.updateInputMapper = updateInputMapper;
-        this.disableContentCaching = true;
+
+        this(service, createInputMapper, updateInputMapper, true);
     }
 
     protected CrudController(SERVICE_TYPE service,
@@ -174,9 +171,9 @@ public abstract class CrudController<
     @PostMapping("${com.alon.spring.crud.path.create:}")
     protected ResponseEntity create(
             @RequestBody @Valid CREATE_INPUT_TYPE input,
-            @Valid
-            ProjectionOption option
+            @Valid ProjectionOption option
     ) throws CreateException {
+        normalizeProjectionOption(option);
         
         MANAGED_ENTITY_TYPE entity = createInputMapper.map(input);
         
@@ -203,8 +200,9 @@ public abstract class CrudController<
     public ResponseEntity update(
             @PathVariable MANAGED_ENTITY_ID_TYPE id,
             @RequestBody @Valid UPDATE_INPUT_TYPE input,
-            @RequestParam(required = false) String projection
+            @Valid ProjectionOption option
     ) throws UpdateException {
+        normalizeProjectionOption(option);
         
         MANAGED_ENTITY_TYPE entity = updateInputMapper.map(input);
         entity.setId(id);
@@ -214,9 +212,9 @@ public abstract class CrudController<
         Object response;
 
         try {
-            response = projectionService.project(projection, entity);
+            response = projectionService.project(option.getProjection(), entity);
         } catch (ProjectionException e) {
-            if (projectDefaultOnError(projection))
+            if (projectDefaultOnError(option.getProjection()))
                 response = projectionService.project(getSingleDefaultProjection(), entity);
             else
                 throw e;
@@ -273,6 +271,11 @@ public abstract class CrudController<
             } catch (ProjectionException e) {
                 // NOP
             }
+    }
+
+    protected void normalizeProjectionOption(ProjectionOption option) {
+        if (option.getProjection() == null)
+            option.setProjection(getSingleDefaultProjection());
     }
 
     protected Specification resolveFilter(SEARCH_INPUT_TYPE filter) {
