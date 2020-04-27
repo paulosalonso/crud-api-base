@@ -346,6 +346,61 @@ public class ExampleControllerIT {
                 .body("violations[0].message", equalTo("não pode estar em branco"));
     }
 
+    @Test
+    public void whenGetByIdThenReturn() {
+        Example example = Example.of()
+                .stringProperty("property")
+                .build();
+
+        Integer id = given()
+                .contentType(ContentType.JSON)
+                .body(example)
+                .when()
+                .post("/example")
+                .path("id");
+
+        get("/example/{id}", id)
+                .then()
+                .statusCode(HttpStatus.OK.value())
+                .body(notNullValue())
+                .body("id", equalTo((id)))
+                .body("stringProperty", equalTo("property"));
+    }
+
+    @Test
+    public void whenGetByIdWithProjectionThenReturn() {
+        Example example = Example.of()
+                .stringProperty("property")
+                .build();
+
+        Integer id = given()
+                .contentType(ContentType.JSON)
+                .body(example)
+                .when()
+                .post("/example")
+                .path("id");
+
+        given()
+                .queryParam("projection", "exampleProjection")
+                .when()
+                .get("/example/{id}", id)
+                .then()
+                .statusCode(HttpStatus.OK.value())
+                .body(notNullValue())
+                .body("id", equalTo((id)))
+                .body("property", equalTo("property"));
+    }
+
+    @Test
+    public void whenGetNonExistentExampleByIdThenReturnNotFound() {
+        get("/example/{id}", 1)
+                .then()
+                .statusCode(HttpStatus.NOT_FOUND.value())
+                .body("status", equalTo(404))
+                .body("title", equalTo("Not found"))
+                .body("detail", equalTo("ID not found -> 1"));
+    }
+
     private Example concatStringPropertyCreate(Example example) {
         example.setStringProperty(example
                 .getStringProperty().concat("-concatenated-by-hook"));
