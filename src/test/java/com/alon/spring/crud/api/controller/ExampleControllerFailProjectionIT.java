@@ -1,9 +1,9 @@
 package com.alon.spring.crud.api.controller;
 
-import static io.restassured.RestAssured.given;
-import static org.hamcrest.Matchers.*;
-
 import com.alon.spring.crud.cleaner.DatabaseCleaner;
+import com.alon.spring.crud.domain.model.Example;
+import io.restassured.RestAssured;
+import io.restassured.http.ContentType;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -15,10 +15,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit4.SpringRunner;
 
-import com.alon.spring.crud.domain.model.Example;
-
-import io.restassured.RestAssured;
-import io.restassured.http.ContentType;
+import static io.restassured.RestAssured.given;
+import static org.hamcrest.Matchers.*;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)

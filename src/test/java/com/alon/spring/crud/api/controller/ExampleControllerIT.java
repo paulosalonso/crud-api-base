@@ -392,6 +392,30 @@ public class ExampleControllerIT {
     }
 
     @Test
+    public void whenGetByIdWithNonExistentProjectionThenReturn() {
+        Example example = Example.of()
+                .stringProperty("property")
+                .build();
+
+        Integer id = given()
+                .contentType(ContentType.JSON)
+                .body(example)
+                .when()
+                .post("/example")
+                .path("id");
+
+        given()
+                .queryParam("projection", "nonExistentProjection")
+                .when()
+                .get("/example/{id}", id)
+                .then()
+                .statusCode(HttpStatus.OK.value())
+                .body(notNullValue())
+                .body("id", equalTo((id)))
+                .body("stringProperty", equalTo("property"));
+    }
+
+    @Test
     public void whenGetNonExistentExampleByIdThenReturnNotFound() {
         get("/example/{id}", 1)
                 .then()

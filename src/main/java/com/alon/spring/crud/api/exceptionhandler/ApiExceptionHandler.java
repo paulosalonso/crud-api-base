@@ -1,9 +1,13 @@
 package com.alon.spring.crud.api.exceptionhandler;
 
-import java.time.OffsetDateTime;
-import java.util.List;
-import java.util.stream.Collectors;
-
+import com.alon.spring.crud.api.exception.BeanValidationException;
+import com.alon.spring.crud.api.exceptionhandler.Problem.Violation;
+import com.alon.spring.crud.domain.service.exception.CrudException;
+import com.alon.spring.crud.domain.service.exception.DataIntegrityException;
+import com.alon.spring.crud.domain.service.exception.ProjectionException;
+import com.fasterxml.jackson.databind.JsonMappingException.Reference;
+import com.fasterxml.jackson.databind.exc.InvalidFormatException;
+import com.fasterxml.jackson.databind.exc.PropertyBindingException;
 import org.springframework.beans.TypeMismatchException;
 import org.springframework.context.MessageSource;
 import org.springframework.context.i18n.LocaleContextHolder;
@@ -24,15 +28,9 @@ import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.servlet.NoHandlerFoundException;
 import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
 
-import com.alon.spring.crud.api.exception.BeanValidationException;
-import com.alon.spring.crud.api.exceptionhandler.Problem.Violation;
-import com.alon.spring.crud.domain.service.exception.CrudException;
-import com.alon.spring.crud.domain.service.exception.DataIntegrityException;
-import com.alon.spring.crud.domain.service.exception.NotFoundException;
-import com.alon.spring.crud.domain.service.exception.ProjectionException;
-import com.fasterxml.jackson.databind.JsonMappingException.Reference;
-import com.fasterxml.jackson.databind.exc.InvalidFormatException;
-import com.fasterxml.jackson.databind.exc.PropertyBindingException;
+import java.time.OffsetDateTime;
+import java.util.List;
+import java.util.stream.Collectors;
 
 @ControllerAdvice
 public class ApiExceptionHandler extends ResponseEntityExceptionHandler {
@@ -232,17 +230,6 @@ public class ApiExceptionHandler extends ResponseEntityExceptionHandler {
 		
 		return handleExceptionInternal(ex, problem, new HttpHeaders(), status, request);
 	}
-
-	@ExceptionHandler(NotFoundException.class)
-	public ResponseEntity handleNotFoundException(NotFoundException ex, WebRequest request) {
-		
-		HttpStatus status = HttpStatus.NOT_FOUND;
-		
-		Problem problem = createProblemBuilder(status, ProblemType.NOT_FOUND, ex.getMessage())
-				.build();
-		
-		return handleExceptionInternal(ex, problem, new HttpHeaders(), status, request);
-	}
 	
 	@ExceptionHandler(DataIntegrityException.class)
 	public ResponseEntity handleDataIntegrityException(DataIntegrityException ex, WebRequest request) {
@@ -280,7 +267,8 @@ public class ApiExceptionHandler extends ResponseEntityExceptionHandler {
 		HttpStatus status = ex.getStatus();
 		String detail = ex.getReason();
 
-		Problem problem = createProblemBuilder(status, ProblemType.LOCKED, detail).build();
+		Problem problem = createProblemBuilder(status,
+				ProblemType.getByStatusCode(status), detail).build();
 
 		return handleExceptionInternal(ex, problem, new HttpHeaders(), status, request);
 	}

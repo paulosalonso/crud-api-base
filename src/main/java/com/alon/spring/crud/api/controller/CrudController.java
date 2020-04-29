@@ -1,34 +1,7 @@
 package com.alon.spring.crud.api.controller;
 
-import java.io.Serializable;
-import java.lang.reflect.ParameterizedType;
-import java.util.List;
-
-import javax.validation.Valid;
-
-import com.alon.spring.crud.api.controller.input.ProjectionOption;
-
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.jpa.domain.Specification;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
-import org.springframework.http.ResponseEntity.BodyBuilder;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.ResponseStatus;
-import org.springframework.web.client.HttpClientErrorException;
-import org.springframework.web.context.request.ServletWebRequest;
-import org.springframework.web.filter.ShallowEtagHeaderFilter;
-import org.springframework.web.server.ResponseStatusException;
-
 import com.alon.spring.crud.api.controller.input.Options;
+import com.alon.spring.crud.api.controller.input.ProjectionOption;
 import com.alon.spring.crud.api.controller.input.SearchInput;
 import com.alon.spring.crud.api.controller.input.mapper.InputMapper;
 import com.alon.spring.crud.api.controller.input.mapper.ModelMapperInputMapper;
@@ -39,12 +12,25 @@ import com.alon.spring.crud.core.properties.Properties;
 import com.alon.spring.crud.domain.model.BaseEntity;
 import com.alon.spring.crud.domain.service.CrudService;
 import com.alon.spring.crud.domain.service.SearchCriteria;
-import com.alon.spring.crud.domain.service.exception.CreateException;
-import com.alon.spring.crud.domain.service.exception.DeleteException;
-import com.alon.spring.crud.domain.service.exception.ProjectionException;
-import com.alon.spring.crud.domain.service.exception.ReadException;
-import com.alon.spring.crud.domain.service.exception.UpdateException;
+import com.alon.spring.crud.domain.service.exception.*;
 import com.alon.spring.specification.ExpressionSpecification;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.http.ResponseEntity.BodyBuilder;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.context.request.ServletWebRequest;
+import org.springframework.web.filter.ShallowEtagHeaderFilter;
+import org.springframework.web.server.ResponseStatusException;
+
+import javax.validation.Valid;
+import java.io.Serializable;
+import java.lang.reflect.ParameterizedType;
+import java.util.List;
+import java.util.function.Supplier;
 
 public abstract class CrudController<
         MANAGED_ENTITY_ID_TYPE extends Serializable,
@@ -112,7 +98,7 @@ public abstract class CrudController<
         if (disableContentCaching)
             ShallowEtagHeaderFilter.disableContentCaching(request.getRequest());
 
-        normalizeCollectionOptions(options);
+        normalizeOptions(options, this::getCollectionDefaultProjection);
 
         SearchCriteria criteria = SearchCriteria.of()
                 .filter(resolveFilter(filter))
@@ -146,12 +132,15 @@ public abstract class CrudController<
         if (disableContentCaching)
             ShallowEtagHeaderFilter.disableContentCaching(request.getRequest());
 
-        normalizeSingleOptions(options);
+        normalizeOptions(options, this::getSingleDefaultProjection);
 
-        MANAGED_ENTITY_TYPE entity = service.read(id, options.getExpand());
+        MANAGED_ENTITY_TYPE entity;
 
-        if (entity == null)
-            throw new HttpClientErrorException(HttpStatus.NOT_FOUND);
+        try {
+            entity = service.read(id, options.getExpand());
+        } catch (NotFoundException ex) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, ex.getMessage());
+        }
 
         Object response;
 
@@ -159,7 +148,7 @@ public abstract class CrudController<
             response = projectionService.project(options.getProjection(), entity);
         } catch (ProjectionException e) {
             if (projectDefaultOnError(options.getProjection()))
-                return projectionService.project(getSingleDefaultProjection(), entity);
+                response = projectionService.project(getSingleDefaultProjection(), entity);
             else
                 throw e;
         }
@@ -173,7 +162,7 @@ public abstract class CrudController<
             @RequestBody @Valid CREATE_INPUT_TYPE input,
             @Valid ProjectionOption option
     ) throws CreateException {
-        normalizeProjectionOption(option);
+        normalizeProjectionOption(option, this::getSingleDefaultProjection);
         
         MANAGED_ENTITY_TYPE entity = createInputMapper.map(input);
         
@@ -202,7 +191,7 @@ public abstract class CrudController<
             @RequestBody @Valid UPDATE_INPUT_TYPE input,
             @Valid ProjectionOption option
     ) throws UpdateException {
-        normalizeProjectionOption(option);
+        normalizeProjectionOption(option, this::getSingleDefaultProjection);
         
         MANAGED_ENTITY_TYPE entity = updateInputMapper.map(input);
         entity.setId(id);
@@ -249,21 +238,9 @@ public abstract class CrudController<
         return ProjectionService.NOP_PROJECTION;
     }
 
-    protected void normalizeSingleOptions(Options options) {
+    protected void normalizeOptions(Options options, Supplier<String> defaultProjectionSupplier) {
         if (options.getProjection() == null)
-            options.setProjection(getSingleDefaultProjection());
-
-        try {
-            if (!options.getProjection().equals(ProjectionService.NOP_PROJECTION))
-                options.setExpand(projectionService.getRequiredExpand(options.getProjection()));
-        } catch (ProjectionException e) {
-            // NOP
-        }
-    }
-
-    protected void normalizeCollectionOptions(Options options) {
-        if (options.getProjection() == null)
-            options.setProjection(getCollectionDefaultProjection());
+            options.setProjection(defaultProjectionSupplier.get());
 
         if (!options.getProjection().equals(ProjectionService.NOP_PROJECTION))
             try {
@@ -273,9 +250,9 @@ public abstract class CrudController<
             }
     }
 
-    protected void normalizeProjectionOption(ProjectionOption option) {
+    protected void normalizeProjectionOption(ProjectionOption option, Supplier<String> defaultProjectionSupplier) {
         if (option.getProjection() == null)
-            option.setProjection(getSingleDefaultProjection());
+            option.setProjection(defaultProjectionSupplier.get());
     }
 
     protected Specification resolveFilter(SEARCH_INPUT_TYPE filter) {

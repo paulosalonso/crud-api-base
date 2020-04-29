@@ -1,5 +1,7 @@
 package com.alon.spring.crud.api.exceptionhandler;
 
+import org.springframework.http.HttpStatus;
+
 public enum ProblemType {
 
 	NOT_FOUND("Not found", "/not-found"),
@@ -24,6 +26,14 @@ public enum ProblemType {
 
 	public String getUri() {
 		return uri;
+	}
+
+	public static ProblemType getByStatusCode(HttpStatus httpStatus) {
+		switch (httpStatus) {
+			case NOT_FOUND: return NOT_FOUND;
+			case LOCKED: return LOCKED;
+			default: return INTERNAL_ERROR;
+		}
 	}
 	
 }
