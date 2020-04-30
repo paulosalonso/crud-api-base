@@ -60,4 +60,26 @@ public class ExampleControllerFailProjectionIT {
                 .body("violations.context", hasItem("projection"))
                 .body("violations.message", hasItem("projection nonExistentProjection not found"));
     }
+
+    @Test
+    public void whenUpdateWithNonExistentProjectionThenReturnBadRequest() {
+        Example example = Example.of()
+                .stringProperty("string-property")
+                .build();
+
+        given()
+                .contentType(ContentType.JSON)
+                .queryParam("projection", "nonExistentProjection")
+                .body(example)
+                .when()
+                .put("/example/1")
+                .then()
+                .statusCode(HttpStatus.BAD_REQUEST.value())
+                .body("status", equalTo(400))
+                .body("title", equalTo("Invalid data"))
+                .body("detail", equalTo("Invalid field(s)."))
+                .body("violations", hasSize(1))
+                .body("violations.context", hasItem("projection"))
+                .body("violations.message", hasItem("projection nonExistentProjection not found"));
+    }
 }

@@ -1,8 +1,7 @@
 package com.alon.spring.crud.api.controller;
 
 import static com.alon.spring.crud.api.controller.ExampleCreator.insertBatchOfExamples;
-import static com.alon.spring.crud.domain.service.CrudService.HookHelper.LifeCycleHook.AFTER_CREATE;
-import static com.alon.spring.crud.domain.service.CrudService.HookHelper.LifeCycleHook.BEFORE_CREATE;
+import static com.alon.spring.crud.domain.service.CrudService.HookHelper.LifeCycleHook.*;
 import static io.restassured.RestAssured.get;
 import static io.restassured.RestAssured.given;
 import static io.restassured.RestAssured.when;
@@ -199,9 +198,9 @@ public class ExampleControllerIT {
         given()
                 .contentType(ContentType.JSON)
                 .body(example)
-        .when()
+                .when()
                 .post("/example")
-        .then()
+                .then()
                 .statusCode(HttpStatus.CREATED.value())
                 .body("id", notNullValue())
                 .body("stringProperty", equalTo(example.getStringProperty()));
@@ -245,7 +244,7 @@ public class ExampleControllerIT {
 
     @Test
     public void whenCreateWithBeforeCreateHookThenPersistWithHookUpdates() {
-        exampleService.addBeforeCreateHook(this::concatStringPropertyCreate);
+        exampleService.addBeforeCreateHook(this::concatStringProperty);
 
         Example example = Example.of()
                 .stringProperty("property")
@@ -265,7 +264,7 @@ public class ExampleControllerIT {
 
         when()
                 .get("/example/{id}", id)
-        .then()
+                .then()
                 .statusCode(HttpStatus.OK.value())
                 .body("id", equalTo(id))
                 .body("stringProperty", equalTo(example.getStringProperty().concat("-concatenated-by-hook")));
@@ -275,7 +274,7 @@ public class ExampleControllerIT {
 
     @Test
     public void whenCreateWithAfterCreateHookThenPersistOriginalAndReturnWithHookUpdates() {
-        exampleService.addAfterCreateHook(this::concatStringPropertyCreate);
+        exampleService.addAfterCreateHook(this::concatStringProperty);
 
         Example example = Example.of()
                 .stringProperty("property")
@@ -359,7 +358,8 @@ public class ExampleControllerIT {
                 .post("/example")
                 .path("id");
 
-        get("/example/{id}", id)
+        when()
+                .get("/example/{id}", id)
                 .then()
                 .statusCode(HttpStatus.OK.value())
                 .body(notNullValue())
@@ -417,7 +417,8 @@ public class ExampleControllerIT {
 
     @Test
     public void whenGetNonExistentExampleByIdThenReturnNotFound() {
-        get("/example/{id}", 1)
+        when()
+                .get("/example/{id}", 1)
                 .then()
                 .statusCode(HttpStatus.NOT_FOUND.value())
                 .body("status", equalTo(404))
@@ -425,7 +426,207 @@ public class ExampleControllerIT {
                 .body("detail", equalTo("ID not found -> 1"));
     }
 
-    private Example concatStringPropertyCreate(Example example) {
+    @Test
+    public void whenUpdateThenSuccess() {
+        Example example = Example.of()
+                .stringProperty("property")
+                .build();
+
+        Integer id = given()
+                .contentType(ContentType.JSON)
+                .body(example)
+                .when()
+                .post("/example")
+                .path("id");
+
+        example.setStringProperty("updated-property");
+
+        given()
+                .contentType(ContentType.JSON)
+                .body(example)
+                .when()
+                .put("/example/{id}", id)
+                .then()
+                .statusCode(HttpStatus.OK.value())
+                .body("id", equalTo(id))
+                .body("stringProperty", equalTo("updated-property"));
+
+        when()
+                .get("/example/{id}", id)
+                .then()
+                .statusCode(HttpStatus.OK.value())
+                .body("id", equalTo(id))
+                .body("stringProperty", equalTo("updated-property"));
+    }
+
+    @Test
+    public void whenUpdateWithProjectionThenSuccess() {
+        Example example = Example.of()
+                .stringProperty("property")
+                .build();
+
+        Integer id = given()
+                .contentType(ContentType.JSON)
+                .body(example)
+                .when()
+                .post("/example")
+                .path("id");
+
+        example.setStringProperty("updated-property");
+
+        given()
+                .contentType(ContentType.JSON)
+                .queryParam("projection", "exampleProjection")
+                .body(example)
+                .when()
+                .put("/example/{id}", id)
+                .then()
+                .statusCode(HttpStatus.OK.value())
+                .body("id", equalTo(id))
+                .body("property", equalTo("updated-property"));
+    }
+
+    @Test
+    public void whenUpdateWithNonExistentProjectionThenReturnDefaultProjection() {
+        Example example = Example.of()
+                .stringProperty("property")
+                .build();
+
+        Integer id = given()
+                .contentType(ContentType.JSON)
+                .body(example)
+                .when()
+                .post("/example")
+                .path("id");
+
+        example.setStringProperty("updated-property");
+
+        given()
+                .contentType(ContentType.JSON)
+                .queryParam("projection", "nonExistentProjection")
+                .body(example)
+                .when()
+                .put("/example/{id}", id)
+                .then()
+                .statusCode(HttpStatus.OK.value())
+                .body("id", equalTo(id))
+                .body("stringProperty", equalTo("updated-property"));
+    }
+
+    @Test
+    public void whenUpdateWithBeforeUpdateHookThenPersistWithHookUpdates() {
+        exampleService.addBeforeUpdateHook(this::concatStringProperty);
+
+        Example example = Example.of()
+                .stringProperty("property")
+                .build();
+
+        Integer id = given()
+                .contentType(ContentType.JSON)
+                .body(example)
+                .post("/example")
+                .path("id");
+
+        example.setStringProperty("updated-property");
+
+        given()
+                .contentType(ContentType.JSON)
+                .body(example)
+                .when()
+                .put("/example/{id}", id)
+                .then()
+                .statusCode(HttpStatus.OK.value())
+                .body("id", equalTo(id))
+                .body("stringProperty", equalTo(example.getStringProperty().concat("-concatenated-by-hook")));
+
+        when()
+                .get("/example/{id}", id)
+                .then()
+                .statusCode(HttpStatus.OK.value())
+                .body("id", equalTo(id))
+                .body("stringProperty", equalTo("updated-property-concatenated-by-hook"));
+
+        exampleService.clearHooks(BEFORE_UPDATE);
+    }
+
+    @Test
+    public void whenUpdateWithAfterUpdateHookThenPersistOriginalAndReturnWithHookUpdates() {
+        exampleService.addAfterUpdateHook(this::concatStringProperty);
+
+        Example example = Example.of()
+                .stringProperty("property")
+                .build();
+
+        Integer id = given()
+                .contentType(ContentType.JSON)
+                .body(example)
+                .post("/example")
+                .path("id");
+
+        given()
+                .contentType(ContentType.JSON)
+                .body(example)
+                .when()
+                .put("/example/{id}", id)
+                .then()
+                .statusCode(HttpStatus.OK.value())
+                .body("id", notNullValue())
+                .body("stringProperty", equalTo(example.getStringProperty().concat("-concatenated-by-hook")));
+
+        when()
+                .get("/example/{id}", id)
+                .then()
+                .statusCode(HttpStatus.OK.value())
+                .body(notNullValue())
+                .body("id", equalTo(id))
+                .body("stringProperty", equalTo(example.getStringProperty()));
+
+        exampleService.clearHooks(AFTER_CREATE);
+    }
+
+    @Test
+    public void whenUpdateWithInvalidRequestBodyThenReturnBadRequest() {
+        given()
+                .contentType("application/json")
+                .body("{\"stringProperty:\"property value\"")
+                .put("/example/1")
+                .then()
+                .statusCode(HttpStatus.BAD_REQUEST.value())
+                .body("status", equalTo(400))
+                .body("title", equalTo("Unrecognized message"))
+                .body("detail", equalTo("Invalid request body."));
+    }
+
+    @Test
+    public void whenUpdateWithInvalidPropertyNameThenReturnBadRequest() {
+        given()
+                .contentType("application/json")
+                .body("{\"property\":\"property value\"")
+                .put("/example/1")
+                .then()
+                .statusCode(HttpStatus.BAD_REQUEST.value())
+                .body("status", equalTo(400))
+                .body("title", equalTo("Unrecognized message"))
+                .body("detail", equalTo("Invalid request body."));
+    }
+
+    @Test
+    public void whenUpdateWithoutRequiredPropertyThenReturnBadRequest() {
+        given()
+                .contentType("application/json")
+                .body(Example.of().build())
+                .put("/example/1")
+                .then()
+                .statusCode(HttpStatus.BAD_REQUEST.value())
+                .body("status", equalTo(400))
+                .body("title", equalTo("Invalid data"))
+                .body("detail", equalTo("Invalid field(s)."))
+                .body("violations", hasSize(1))
+                .body("violations[0].context", equalTo("stringProperty"))
+                .body("violations[0].message", equalTo("não pode estar em branco"));
+    }
+
+    private Example concatStringProperty(Example example) {
         example.setStringProperty(example
                 .getStringProperty().concat("-concatenated-by-hook"));
 
