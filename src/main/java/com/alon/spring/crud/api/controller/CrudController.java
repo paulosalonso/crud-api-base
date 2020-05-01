@@ -113,7 +113,7 @@ public abstract class CrudController<
         try {
             response = projectionService.project(options.getProjection(), page);
         } catch (ProjectionException e) {
-            if (projectDefaultOnError(options.getProjection()))
+            if (projectDefaultOnError(options.getProjection(), this::getCollectionDefaultProjection))
                 response = projectionService.project(getCollectionDefaultProjection(), page);
             else
                 throw e;
@@ -147,7 +147,7 @@ public abstract class CrudController<
         try {
             response = projectionService.project(options.getProjection(), entity);
         } catch (ProjectionException e) {
-            if (projectDefaultOnError(options.getProjection()))
+            if (projectDefaultOnError(options.getProjection(), this::getSingleDefaultProjection))
                 response = projectionService.project(getSingleDefaultProjection(), entity);
             else
                 throw e;
@@ -173,7 +173,7 @@ public abstract class CrudController<
         try {
             response = projectionService.project(option.getProjection(), entity);
         } catch (ProjectionException e) {
-            if (projectDefaultOnError(option.getProjection()))
+            if (projectDefaultOnError(option.getProjection(), this::getSingleDefaultProjection))
                 response = projectionService.project(getSingleDefaultProjection(), entity);
             else
                 throw e;
@@ -203,7 +203,7 @@ public abstract class CrudController<
         try {
             response = projectionService.project(option.getProjection(), entity);
         } catch (ProjectionException e) {
-            if (projectDefaultOnError(option.getProjection()))
+            if (projectDefaultOnError(option.getProjection(), this::getSingleDefaultProjection))
                 response = projectionService.project(getSingleDefaultProjection(), entity);
             else
                 throw e;
@@ -218,7 +218,11 @@ public abstract class CrudController<
     @DeleteMapping("${com.alon.spring.crud.path.delete:/{id}}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void delete(@PathVariable MANAGED_ENTITY_ID_TYPE id) throws DeleteException {
-        service.delete(id);
+        try {
+            service.delete(id);
+        } catch (NotFoundException ex) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, ex.getMessage());
+        }
     }
     
     @GetMapping("/projections")
@@ -272,9 +276,9 @@ public abstract class CrudController<
         return (Class<T>) classType.getActualTypeArguments()[1];
     }
 
-    private boolean projectDefaultOnError(String projection) {
+    private boolean projectDefaultOnError(String projection, Supplier<String> defaultProjectionSupplier) {
         return properties.projection.useDefaultIfError
-                && !projection.equals(getCollectionDefaultProjection());
+                && !projection.equals(defaultProjectionSupplier.get());
     }
 
 }
