@@ -55,13 +55,12 @@ public class ApiExceptionHandler extends ResponseEntityExceptionHandler {
 	}
 	
 	@ExceptionHandler(CrudException.class)
-	public ResponseEntity handleCrudException(CrudException ex,
-			HttpHeaders headers, WebRequest request) {
+	public ResponseEntity handleCrudException(CrudException ex, WebRequest request) {
 		
 		Throwable cause = ExceptionUtils.getRootCause(ex);
 		
 		if (cause instanceof PropertyReferenceException)
-			return handlePropertyReferenceException((PropertyReferenceException) cause, headers, request);
+			return handlePropertyReferenceException((PropertyReferenceException) cause, new HttpHeaders(), request);
 		
 		return handleUncaught(ex, request);
 		
