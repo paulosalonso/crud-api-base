@@ -135,7 +135,7 @@ public interface CrudService<
 
     default void delete(ENTITY_ID_TYPE id) {
         if (!getRepository().existsById(id))
-            throw new NotFoundException("Entity to delete not found");
+            throw new NotFoundException(String.format("ID not found -> %d", id));
 
         try {
         	HookHelper.executeHook(this, id, BEFORE_DELETE);
