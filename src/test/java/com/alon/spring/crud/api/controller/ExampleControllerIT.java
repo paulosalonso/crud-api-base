@@ -5,6 +5,7 @@ import static com.alon.spring.crud.domain.service.CrudService.HookHelper.LifeCyc
 import static io.restassured.RestAssured.get;
 import static io.restassured.RestAssured.given;
 import static io.restassured.RestAssured.when;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasItems;
 import static org.hamcrest.Matchers.hasSize;
@@ -12,10 +13,19 @@ import static org.hamcrest.Matchers.not;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.nullValue;
 
+import ch.qos.logback.classic.Level;
+import ch.qos.logback.classic.Logger;
+import ch.qos.logback.classic.spi.ILoggingEvent;
+import ch.qos.logback.core.filter.Filter;
+import ch.qos.logback.core.read.ListAppender;
+import ch.qos.logback.core.spi.FilterReply;
+import com.alon.spring.crud.domain.service.exception.DeleteException;
+import org.assertj.core.api.Assertions;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.SpyBean;
@@ -31,6 +41,8 @@ import com.alon.spring.crud.domain.service.ExampleService;
 import io.restassured.RestAssured;
 import io.restassured.http.ContentType;
 import io.restassured.response.Response;
+
+import java.util.List;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
@@ -626,11 +638,139 @@ public class ExampleControllerIT {
                 .body("violations[0].message", equalTo("não pode estar em branco"));
     }
 
+    @Test
+    public void whenDeleteThenSuccess() {
+        Example example = Example.of()
+                .stringProperty("property")
+                .build();
+
+        Integer id = given()
+                .contentType(ContentType.JSON)
+                .body(example)
+                .post("/example")
+                .path("id");
+
+        when()
+                .delete("/example/{id}", id)
+                .then()
+                .statusCode(HttpStatus.NO_CONTENT.value());
+
+        when()
+                .get("/example/{id}", id)
+                .then()
+                .statusCode(HttpStatus.NOT_FOUND.value());
+    }
+
+    @Test
+    public void whenDeleteNonExistentResourceThenReturnNotFound() {
+        when()
+                .delete("/example/99999")
+                .then()
+                .statusCode(HttpStatus.NOT_FOUND.value())
+                .body("status", equalTo(404))
+                .body("title", equalTo("Not found"))
+                .body("detail", equalTo("ID not found -> 99999"));
+    }
+
+    @Test
+    public void whenDeleteWithBeforeDeleteHookThenExecuteHook() {
+        exampleService.addBeforeDeleteHook(id -> { throw new DeleteException(); });
+
+        Example example = Example.of()
+                .stringProperty("property")
+                .build();
+
+        Integer id = given()
+                .contentType(ContentType.JSON)
+                .body(example)
+                .post("/example")
+                .path("id");
+
+        when()
+                .delete("/example/{id}", id)
+                .then()
+                .statusCode(HttpStatus.INTERNAL_SERVER_ERROR.value())
+                .body("status", equalTo(500))
+                .body("title", equalTo("Internal error"))
+                .body("detail", equalTo("An internal server problem has occurred. If the problem persists, contact your administrator."));
+
+        exampleService.clearHooks(BEFORE_DELETE);
+    }
+
+    @Test
+    public void whenDeleteWithAfterDeleteHookThenExecuteHook() {
+        org.slf4j.Logger LOGGER = LoggerFactory.getLogger(ExampleController.class);
+
+        exampleService.addAfterDeleteHook(id -> {
+            LOGGER.info(String.format("Example %d was deleted", id));
+            return id;
+        });
+
+        ListAppender<ILoggingEvent> appender = buildLoggerAppender(ExampleController.class, Level.INFO);
+
+        Example example = Example.of()
+                .stringProperty("property")
+                .build();
+
+        Integer id = given()
+                .contentType(ContentType.JSON)
+                .body(example)
+                .post("/example")
+                .path("id");
+
+        when()
+                .delete("/example/{id}", id)
+                .then()
+                .statusCode(HttpStatus.NO_CONTENT.value());
+
+        assertThat(appender.list)
+                .hasSize(1)
+                .first()
+                .satisfies(event -> assertThat(event.getFormattedMessage())
+                        .isEqualTo(String.format("Example %d was deleted", id)));
+
+        exampleService.clearHooks(AFTER_DELETE);
+    }
+
+    @Test
+    public void whenGetRepresentationsThenSuccess() {
+        when()
+                .get("/example/projections")
+                .then()
+                .statusCode(HttpStatus.OK.value())
+                .body("projectionName", hasItems("exampleProjection", "errorExampleProjection"))
+                .body("representation.id", hasItems("long", "long"))
+                .body("representation.property", hasItems("string", null))
+                .body("representation.stringProperty", hasItems(null, "string"));
+    }
+
     private Example concatStringProperty(Example example) {
         example.setStringProperty(example
                 .getStringProperty().concat("-concatenated-by-hook"));
 
         return example;
+    }
+
+    public static ListAppender<ILoggingEvent> buildLoggerAppender(Class clazz, Level... levels) {
+        Logger logger = (Logger) LoggerFactory.getLogger(clazz);
+        ListAppender<ILoggingEvent> appender = new ListAppender<ILoggingEvent>();
+        List<Level> acceptedLevels = List.of(levels);
+
+        appender.addFilter(new Filter<ILoggingEvent>() {
+            @Override
+            public FilterReply decide(ILoggingEvent event) {
+                if (acceptedLevels.contains(event.getLevel())) {
+                    return FilterReply.ACCEPT;
+                }
+
+                return FilterReply.DENY;
+            }
+        });
+
+        appender.start();
+        logger.addAppender(appender);
+
+        return appender;
     }
 
 }

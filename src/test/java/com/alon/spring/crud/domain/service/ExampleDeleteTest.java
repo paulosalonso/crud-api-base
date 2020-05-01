@@ -63,7 +63,7 @@ public class ExampleDeleteTest {
 
         assertThatThrownBy(() -> service.delete(1L))
                 .isExactlyInstanceOf(NotFoundException.class)
-                .hasMessage("Entity to delete not found")
+                .hasMessage("ID not found -> 1")
                 .hasNoCause();
 
         verify(repository).existsById(1L);
