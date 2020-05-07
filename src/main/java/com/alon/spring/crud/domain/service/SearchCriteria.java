@@ -7,6 +7,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 
 import java.util.List;
+import java.util.Set;
 
 public class SearchCriteria {
 
@@ -67,9 +68,9 @@ public class SearchCriteria {
             return this;
         }
 
-        public SearchCriteriaBuilder expand(List<String> expand) {
+        public SearchCriteriaBuilder expand(Set<String> expand) {
             if (expand != null && !expand.isEmpty())
-                this.searchCriteria.expand = new DynamicEntityGraph(expand);
+                this.searchCriteria.expand = new DynamicEntityGraph(List.copyOf(expand));
 
             return this;
         }

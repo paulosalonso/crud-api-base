@@ -1,44 +1,23 @@
 package com.alon.spring.crud.domain.service;
 
-import static com.alon.spring.crud.domain.service.CrudService.HookHelper.LifeCycleHook.AFTER_CREATE;
-import static com.alon.spring.crud.domain.service.CrudService.HookHelper.LifeCycleHook.AFTER_DELETE;
-import static com.alon.spring.crud.domain.service.CrudService.HookHelper.LifeCycleHook.AFTER_READ;
-import static com.alon.spring.crud.domain.service.CrudService.HookHelper.LifeCycleHook.AFTER_SEARCH;
-import static com.alon.spring.crud.domain.service.CrudService.HookHelper.LifeCycleHook.AFTER_UPDATE;
-import static com.alon.spring.crud.domain.service.CrudService.HookHelper.LifeCycleHook.BEFORE_CREATE;
-import static com.alon.spring.crud.domain.service.CrudService.HookHelper.LifeCycleHook.BEFORE_DELETE;
-import static com.alon.spring.crud.domain.service.CrudService.HookHelper.LifeCycleHook.BEFORE_READ;
-import static com.alon.spring.crud.domain.service.CrudService.HookHelper.LifeCycleHook.BEFORE_SEARCH;
-import static com.alon.spring.crud.domain.service.CrudService.HookHelper.LifeCycleHook.BEFORE_UPDATE;
-
-import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.function.Function;
-
-import javax.validation.Valid;
-
+import com.alon.spring.crud.domain.model.BaseEntity;
+import com.alon.spring.crud.domain.repository.CrudRepository;
+import com.alon.spring.crud.domain.service.exception.*;
+import com.cosium.spring.data.jpa.entity.graph.domain.DynamicEntityGraph;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
-import com.alon.spring.crud.domain.model.BaseEntity;
-import com.alon.spring.crud.domain.service.exception.CreateException;
-import com.alon.spring.crud.domain.service.exception.DeleteException;
-import com.alon.spring.crud.domain.service.exception.NotFoundException;
-import com.alon.spring.crud.domain.service.exception.ReadException;
-import com.alon.spring.crud.domain.service.exception.UpdateException;
-import com.cosium.spring.data.jpa.entity.graph.domain.DynamicEntityGraph;
-import com.cosium.spring.data.jpa.entity.graph.repository.EntityGraphJpaRepository;
-import com.cosium.spring.data.jpa.entity.graph.repository.EntityGraphJpaSpecificationExecutor;
+import javax.validation.Valid;
+import java.io.Serializable;
+import java.util.*;
+import java.util.function.Function;
+
+import static com.alon.spring.crud.domain.service.CrudService.HookHelper.LifeCycleHook.*;
 
 public interface CrudService<
         ENTITY_ID_TYPE extends Serializable, 
         ENTITY_TYPE extends BaseEntity<ENTITY_ID_TYPE>, 
-        REPOSITORY extends EntityGraphJpaRepository<ENTITY_TYPE, ENTITY_ID_TYPE> &
-                EntityGraphJpaSpecificationExecutor<ENTITY_TYPE>
+        REPOSITORY extends CrudRepository<ENTITY_ID_TYPE, ENTITY_TYPE>
 > {
     
     REPOSITORY getRepository();

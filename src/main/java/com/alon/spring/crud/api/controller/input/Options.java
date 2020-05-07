@@ -2,20 +2,20 @@ package com.alon.spring.crud.api.controller.input;
 
 import com.alon.spring.crud.core.validation.ValidProjection;
 
-import java.util.List;
+import java.util.Set;
 
 public class Options {
 
-    private List<String> expand;
+    private Set<String> expand;
 
     @ValidProjection
     private String projection;
 
-    public List<String> getExpand() {
+    public Set<String> getExpand() {
         return expand;
     }
 
-    public void setExpand(List<String> expand) {
+    public void setExpand(Set<String> expand) {
         this.expand = expand;
     }
 

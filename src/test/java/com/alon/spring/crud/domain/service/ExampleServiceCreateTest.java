@@ -1,7 +1,7 @@
 package com.alon.spring.crud.domain.service;
 
 import com.alon.spring.crud.domain.model.Example;
-import com.alon.spring.crud.domain.repository.ExampleRepository;
+import com.alon.spring.crud.domain.repository.ExampleCrudRepository;
 import com.alon.spring.crud.domain.service.exception.CreateException;
 import org.junit.Before;
 import org.junit.Test;
@@ -25,7 +25,7 @@ public class ExampleServiceCreateTest {
     private ExampleService service;
 
     @Mock
-    private ExampleRepository repository;
+    private ExampleCrudRepository repository;
     
     @Mock
     private Function<Example, Example> beforeCreateHookA;

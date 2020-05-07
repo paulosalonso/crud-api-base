@@ -1,25 +1,19 @@
 package com.alon.spring.crud.api.projection;
 
-import java.lang.reflect.ParameterizedType;
-import java.lang.reflect.Type;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.stream.Collectors;
-
+import com.alon.spring.crud.api.controller.output.OutputPage;
+import com.alon.spring.crud.domain.model.BaseEntity;
+import com.alon.spring.crud.domain.service.exception.ProjectionException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
 import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
 
-import com.alon.spring.crud.api.controller.output.OutputPage;
-import com.alon.spring.crud.core.properties.Properties;
-import com.alon.spring.crud.domain.model.BaseEntity;
-import com.alon.spring.crud.domain.service.exception.ProjectionException;
+import java.lang.reflect.ParameterizedType;
+import java.lang.reflect.Type;
+import java.util.*;
+import java.util.function.Supplier;
+import java.util.stream.Collectors;
 
 @Service
 public class ProjectionService {
@@ -62,6 +56,29 @@ public class ProjectionService {
         }
     }
 
+    public <I extends BaseEntity, O> Collection<O> project(String projectionName, Collection<I> input) {
+        if (projectionName == null || projectionName.equals(NOP_PROJECTION))
+            return (Collection<O>) input;
+
+        try {
+            Projector<I, O> projector = getProjector(projectionName);
+
+            return input.stream()
+                    .map(projector::project)
+                    .collect(Collectors.toCollection(getCollectionFactory(input.getClass())));
+        } catch (ProjectionException e) {
+            throw e;
+        } catch (Exception e) {
+            String message = String.format(
+                    "Error projecting collection of %s with projector '%s'",
+                    extractCollectionElementsType(input),
+                    projectionName);
+
+            LOGGER.error(message, e);
+            throw new ProjectionException(message, e);
+        }
+    }
+
     public <I extends BaseEntity, O> OutputPage<O> project(String projectionName, Page<I> input) {
         try {
             List content = input.getContent();
@@ -95,7 +112,7 @@ public class ProjectionService {
         }
     }
     
-    public List<String> getRequiredExpand(String projectionName) {
+    public Set<String> getRequiredExpand(String projectionName) {
         Projector projector = getProjector(projectionName);
         return projector.requiredExpand();
     }
@@ -169,6 +186,23 @@ public class ProjectionService {
                 .findFirst();
         
         return (ParameterizedType) projectorTypeOpt.get();
+    }
+
+    private final String extractCollectionElementsType(Collection collection) {
+        ParameterizedType classType = (ParameterizedType) getClass().getGenericInterfaces()[0];
+        return ((Class) classType.getActualTypeArguments()[0]).getSimpleName();
+    }
+
+    private final <O> Supplier<Collection<O>> getCollectionFactory(Class<? extends Collection> collectionType) {
+
+        if (List.class.isAssignableFrom(collectionType))
+            return ArrayList::new;
+        else if (Set.class.isAssignableFrom(collectionType))
+            return HashSet::new;
+
+        throw new IllegalArgumentException(
+                String.format("Collection type %s is not supported by projections.",
+                        collectionType.getSimpleName()));
     }
 
 }

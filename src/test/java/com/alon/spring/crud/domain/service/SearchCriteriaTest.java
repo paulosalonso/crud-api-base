@@ -1,11 +1,10 @@
 package com.alon.spring.crud.domain.service;
 
-import org.assertj.core.api.Assertions;
 import org.junit.Test;
 import org.springframework.data.domain.PageRequest;
 
 import java.util.Collections;
-import java.util.List;
+import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -15,7 +14,7 @@ public class SearchCriteriaTest {
     public void whenBuildWithSpecificationFilterThenSuccess() {
         SearchCriteria searchCriteria = SearchCriteria.of()
                 .pageable(PageRequest.of(1, 100))
-                .expand(List.of("property"))
+                .expand(Set.of("property"))
                 .filter(((root, query, criteriaBuilder) -> null))
                 .build();
 
@@ -59,7 +58,7 @@ public class SearchCriteriaTest {
         assertThat(searchCriteria.getExpand()).isNull();
 
         searchCriteria = SearchCriteria.of()
-                .expand(Collections.emptyList())
+                .expand(Collections.emptySet())
                 .build();
 
         assertThat(searchCriteria.getExpand()).isNull();
@@ -69,7 +68,7 @@ public class SearchCriteriaTest {
     public void whenBuildWithoutFilterThenReturnExpandOption() {
         SearchCriteria searchCriteria = SearchCriteria.of()
                 .pageable(PageRequest.of(1, 100))
-                .expand(List.of("property"))
+                .expand(Set.of("property"))
                 .build();
 
         assertThat(searchCriteria.getSearchOption()).isEqualTo(SearchType.EXPAND);

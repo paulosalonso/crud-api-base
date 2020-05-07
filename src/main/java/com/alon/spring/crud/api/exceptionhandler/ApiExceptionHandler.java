@@ -8,6 +8,8 @@ import com.alon.spring.crud.domain.service.exception.ProjectionException;
 import com.fasterxml.jackson.databind.JsonMappingException.Reference;
 import com.fasterxml.jackson.databind.exc.InvalidFormatException;
 import com.fasterxml.jackson.databind.exc.PropertyBindingException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.TypeMismatchException;
 import org.springframework.context.MessageSource;
 import org.springframework.context.i18n.LocaleContextHolder;
@@ -34,7 +36,9 @@ import java.util.stream.Collectors;
 
 @ControllerAdvice
 public class ApiExceptionHandler extends ResponseEntityExceptionHandler {
-	
+
+	private static Logger LOGGER = LoggerFactory.getLogger(ApiExceptionHandler.class);
+
 	private MessageSource messageSource;
 	
 	public ApiExceptionHandler(MessageSource messageSource) {
@@ -275,7 +279,9 @@ public class ApiExceptionHandler extends ResponseEntityExceptionHandler {
 	@Override
 	protected ResponseEntity handleExceptionInternal(Exception ex, Object body, HttpHeaders headers,
 			HttpStatus status, WebRequest request) {
-		
+
+		LOGGER.error(((Problem) body).getDetail(), ex);
+
 		if (body == null) {
 			body = Problem.of()
 					.status(status.value())

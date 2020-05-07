@@ -9,7 +9,7 @@
     </parent>
     <groupId>com.github.paulosalonso</groupId>
     <artifactId>crud-api-base</artifactId>
-    <version>0.0.3-RP-SNAPSHOT</version>
+    <version>0.0.3-SNAPSHOT</version>
     <name>CRUD API Base</name>
     <description>Fornece implementação básica e expansível para criação API's CRUD com Spring Boot e Spring Data JPA.</description>
     <url>https://github.com/paulosalonso/crud-api-base</url>
@@ -54,7 +54,7 @@
         <skip.it.tests>false</skip.it.tests>
         <skip.mutation>false</skip.mutation>
         <skip.signature>false</skip.signature>
-        <skip.jacoco>true</skip.jacoco>
+        <skip.jacoco>false</skip.jacoco>
         <line.coverage>0.40</line.coverage>
         <branch.coverage>0.40</branch.coverage>
         <mutation.threshold>30</mutation.threshold>

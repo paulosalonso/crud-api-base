@@ -2,22 +2,18 @@ package com.alon.spring.crud.api.controller;
 
 import com.alon.spring.crud.api.controller.input.Options;
 import com.alon.spring.crud.api.controller.input.ProjectionOption;
-import com.alon.spring.crud.api.controller.input.SearchInput;
 import com.alon.spring.crud.api.controller.input.mapper.InputMapper;
 import com.alon.spring.crud.api.controller.input.mapper.ModelMapperInputMapper;
-import com.alon.spring.crud.api.controller.output.OutputPage;
 import com.alon.spring.crud.api.projection.ProjectionRepresentation;
 import com.alon.spring.crud.api.projection.ProjectionService;
 import com.alon.spring.crud.core.properties.Properties;
 import com.alon.spring.crud.domain.model.BaseEntity;
+import com.alon.spring.crud.domain.model.NestedBaseEntity;
 import com.alon.spring.crud.domain.service.CrudService;
-import com.alon.spring.crud.domain.service.SearchCriteria;
+import com.alon.spring.crud.domain.service.NestedCrudService;
+import com.alon.spring.crud.domain.service.NestedOwnerNestedCrudService;
 import com.alon.spring.crud.domain.service.exception.*;
-import com.alon.spring.specification.ExpressionSpecification;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.ResponseEntity.BodyBuilder;
@@ -29,69 +25,80 @@ import org.springframework.web.server.ResponseStatusException;
 import javax.validation.Valid;
 import java.io.Serializable;
 import java.lang.reflect.ParameterizedType;
+import java.util.Collection;
 import java.util.List;
 import java.util.function.Supplier;
 
-public abstract class CrudController<
-        MANAGED_ENTITY_ID_TYPE extends Serializable,
-        MANAGED_ENTITY_TYPE extends BaseEntity<MANAGED_ENTITY_ID_TYPE>,
-        CREATE_INPUT_TYPE, 
-        UPDATE_INPUT_TYPE,
-        SEARCH_INPUT_TYPE extends SearchInput,
-        SERVICE_TYPE extends CrudService<MANAGED_ENTITY_ID_TYPE, MANAGED_ENTITY_TYPE, ?>
-> {
-	
-    protected final SERVICE_TYPE service;
-    
+public abstract class NestedCrudController<
+        MASTER_ENTITY_ID_TYPE extends Serializable,
+        MASTER_ENTITY_TYPE extends BaseEntity<MASTER_ENTITY_ID_TYPE>,
+        MASTER_SERVICE_TYPE extends CrudService<MASTER_ENTITY_ID_TYPE, MASTER_ENTITY_TYPE, ?>,
+        NESTED_ENTITY_ID_TYPE extends Serializable,
+        NESTED_ENTITY_TYPE extends BaseEntity<NESTED_ENTITY_ID_TYPE>,
+        NESTED_SERVICE_TYPE extends NestedCrudService<
+                                MASTER_ENTITY_ID_TYPE, MASTER_ENTITY_TYPE,
+                                NESTED_ENTITY_ID_TYPE, NESTED_ENTITY_TYPE>,
+        CREATE_INPUT_TYPE,
+        UPDATE_INPUT_TYPE> {
+
+    protected final MASTER_SERVICE_TYPE masterService;
+    protected final NESTED_SERVICE_TYPE nestedService;
+
     @Autowired
     protected ProjectionService projectionService;
 
     @Autowired
     protected Properties properties;
-    
-    protected InputMapper<CREATE_INPUT_TYPE, MANAGED_ENTITY_TYPE> createInputMapper;
-    protected InputMapper<UPDATE_INPUT_TYPE, MANAGED_ENTITY_TYPE> updateInputMapper;
+
+    protected InputMapper<CREATE_INPUT_TYPE, NESTED_ENTITY_TYPE> createInputMapper;
+    protected InputMapper<UPDATE_INPUT_TYPE, NESTED_ENTITY_TYPE> updateInputMapper;
 
     protected final boolean disableContentCaching;
 
-    protected Class<MANAGED_ENTITY_TYPE> managedEntityClass = extractManagedEntityType();
-    
-    public CrudController(SERVICE_TYPE service) {
-        this.service = service;
-        this.createInputMapper = new ModelMapperInputMapper<>(managedEntityClass);
-        this.updateInputMapper = new ModelMapperInputMapper<>(managedEntityClass);
+    protected Class<NESTED_ENTITY_TYPE> nestedEntityClass = extractNestedEntityType();
+
+    public NestedCrudController(MASTER_SERVICE_TYPE masterService, NESTED_SERVICE_TYPE nestedService) {
+        this.masterService = masterService;
+        this.nestedService = nestedService;
+        this.createInputMapper = new ModelMapperInputMapper<>(nestedEntityClass);
+        this.updateInputMapper = new ModelMapperInputMapper<>(nestedEntityClass);
         this.disableContentCaching = true;
     }
 
-    public CrudController(SERVICE_TYPE service, boolean disableContentCaching) {
-        this.service = service;
-        this.createInputMapper = new ModelMapperInputMapper<>(managedEntityClass);
-        this.updateInputMapper = new ModelMapperInputMapper<>(managedEntityClass);
+    public NestedCrudController(MASTER_SERVICE_TYPE masterService,
+            NESTED_SERVICE_TYPE nestedService, boolean disableContentCaching) {
+
+        this.masterService = masterService;
+        this.nestedService = nestedService;
+        this.createInputMapper = new ModelMapperInputMapper<>(nestedEntityClass);
+        this.updateInputMapper = new ModelMapperInputMapper<>(nestedEntityClass);
         this.disableContentCaching = disableContentCaching;
     }
-    
-    protected CrudController(SERVICE_TYPE service, 
-    		InputMapper<CREATE_INPUT_TYPE, MANAGED_ENTITY_TYPE> createInputMapper,
-    		InputMapper<UPDATE_INPUT_TYPE, MANAGED_ENTITY_TYPE> updateInputMapper) {
 
-        this(service, createInputMapper, updateInputMapper, true);
+    protected NestedCrudController(MASTER_SERVICE_TYPE masterService,
+            NESTED_SERVICE_TYPE nestedService,
+            InputMapper<CREATE_INPUT_TYPE, NESTED_ENTITY_TYPE> createInputMapper,
+            InputMapper<UPDATE_INPUT_TYPE, NESTED_ENTITY_TYPE> updateInputMapper) {
+
+        this(masterService, nestedService, createInputMapper, updateInputMapper, true);
     }
 
-    protected CrudController(SERVICE_TYPE service,
-             InputMapper<CREATE_INPUT_TYPE, MANAGED_ENTITY_TYPE> createInputMapper,
-             InputMapper<UPDATE_INPUT_TYPE, MANAGED_ENTITY_TYPE> updateInputMapper,
-             boolean disableContentCaching) {
+    protected NestedCrudController(MASTER_SERVICE_TYPE masterService,
+            NESTED_SERVICE_TYPE nestedService,
+            InputMapper<CREATE_INPUT_TYPE, NESTED_ENTITY_TYPE> createInputMapper,
+            InputMapper<UPDATE_INPUT_TYPE, NESTED_ENTITY_TYPE> updateInputMapper,
+            boolean disableContentCaching) {
 
-        this.service = service;
+        this.masterService = masterService;
+        this.nestedService = nestedService;
         this.createInputMapper = createInputMapper;
         this.updateInputMapper = updateInputMapper;
         this.disableContentCaching = disableContentCaching;
     }
 
     @GetMapping
-    public ResponseEntity search(
-            SEARCH_INPUT_TYPE filter,
-            Pageable pageable,
+    public ResponseEntity getAll(
+            @PathVariable MASTER_ENTITY_ID_TYPE masterId,
             @Valid Options options,
             ServletWebRequest request
     ) {
@@ -100,21 +107,19 @@ public abstract class CrudController<
 
         normalizeOptions(options, this::getCollectionDefaultProjection);
 
-        SearchCriteria criteria = SearchCriteria.of()
-                .filter(resolveFilter(filter))
-                .pageable(pageable)
-                .expand(options.getExpand())
-                .build();
-
-        Page<MANAGED_ENTITY_TYPE> page = service.search(criteria);
-
-        OutputPage response;
+        Collection response;
 
         try {
-            response = projectionService.project(options.getProjection(), page);
+            response = nestedService.getAll(masterId, List.copyOf(options.getExpand()));
+        } catch (NotFoundException ex) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, ex.getMessage());
+        }
+
+        try {
+            response = projectionService.project(options.getProjection(), response);
         } catch (ProjectionException e) {
             if (projectDefaultOnError(options.getProjection(), this::getCollectionDefaultProjection))
-                response = projectionService.project(getCollectionDefaultProjection(), page);
+                response = projectionService.project(getCollectionDefaultProjection(), response);
             else
                 throw e;
         }
@@ -123,9 +128,10 @@ public abstract class CrudController<
                 .body(response);
     }
 
-    @GetMapping("/{id}")
+    @GetMapping("/{nestedId}")
     public ResponseEntity read(
-            @PathVariable MANAGED_ENTITY_ID_TYPE id,
+            @PathVariable MASTER_ENTITY_ID_TYPE masterId,
+            @PathVariable NESTED_ENTITY_ID_TYPE nestedId,
             @Valid Options options,
             ServletWebRequest request
     ) throws ReadException {
@@ -134,10 +140,10 @@ public abstract class CrudController<
 
         normalizeOptions(options, this::getSingleDefaultProjection);
 
-        MANAGED_ENTITY_TYPE entity;
+        NESTED_ENTITY_TYPE entity;
 
         try {
-            entity = service.read(id, List.copyOf(options.getExpand()));
+            entity = nestedService.read(masterId, nestedId, List.copyOf(options.getExpand()));
         } catch (NotFoundException ex) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, ex.getMessage());
         }
@@ -159,22 +165,23 @@ public abstract class CrudController<
 
     @PostMapping
     protected ResponseEntity create(
+            @PathVariable MASTER_ENTITY_ID_TYPE masterId,
             @RequestBody @Valid CREATE_INPUT_TYPE input,
             @Valid ProjectionOption option
     ) throws CreateException {
         normalizeProjectionOption(option, this::getSingleDefaultProjection);
+
+        NESTED_ENTITY_TYPE nestedEntity = createInputMapper.map(input);
         
-        MANAGED_ENTITY_TYPE entity = createInputMapper.map(input);
-        
-        entity = service.create(entity);
+        nestedEntity = nestedService.create(masterId, nestedEntity);
         
         Object response;
 
         try {
-            response = projectionService.project(option.getProjection(), entity);
+            response = projectionService.project(option.getProjection(), nestedEntity);
         } catch (ProjectionException e) {
             if (projectDefaultOnError(option.getProjection(), this::getSingleDefaultProjection))
-                response = projectionService.project(getSingleDefaultProjection(), entity);
+                response = projectionService.project(getSingleDefaultProjection(), nestedEntity);
             else
                 throw e;
         }
@@ -185,18 +192,19 @@ public abstract class CrudController<
         
     }
 
-    @PutMapping("/{id}")
+    @PutMapping("/{nestedId}")
     public ResponseEntity update(
-            @PathVariable MANAGED_ENTITY_ID_TYPE id,
+            @PathVariable MASTER_ENTITY_ID_TYPE masterId,
+            @PathVariable NESTED_ENTITY_ID_TYPE nestedId,
             @RequestBody @Valid UPDATE_INPUT_TYPE input,
             @Valid ProjectionOption option
     ) throws UpdateException {
         normalizeProjectionOption(option, this::getSingleDefaultProjection);
-        
-        MANAGED_ENTITY_TYPE entity = updateInputMapper.map(input);
-        entity.setId(id);
 
-        entity = service.update(entity);
+        NESTED_ENTITY_TYPE entity = updateInputMapper.map(input);
+        entity.setId(nestedId);
+
+        entity = nestedService.update(masterId, nestedId, entity);
 
         Object response;
 
@@ -215,11 +223,13 @@ public abstract class CrudController<
         
     }
 
-    @DeleteMapping("/{id}   ")
+    @DeleteMapping("/{nestedId}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void delete(@PathVariable MANAGED_ENTITY_ID_TYPE id) throws DeleteException {
+    public void delete(@PathVariable MASTER_ENTITY_ID_TYPE masterId,
+           @PathVariable NESTED_ENTITY_ID_TYPE nestedId) throws DeleteException {
+
         try {
-            service.delete(id);
+            nestedService.delete(masterId, nestedId);
         } catch (NotFoundException ex) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, ex.getMessage());
         }
@@ -227,7 +237,7 @@ public abstract class CrudController<
     
     @GetMapping("/projections")
     public List<ProjectionRepresentation> getRepresentations() {
-        return projectionService.getEntityRepresentations(extractManagedEntityType());
+        return projectionService.getEntityRepresentations(extractNestedEntityType());
     }
 
     public BodyBuilder buildResponseEntity(HttpStatus status) {
@@ -262,21 +272,9 @@ public abstract class CrudController<
             option.setProjection(defaultProjectionSupplier.get());
     }
 
-    protected Specification resolveFilter(SEARCH_INPUT_TYPE filter) {
-        if (filter.filterPresent()) {
-            if (!properties.search.enableExpressionFilter)
-                throw new ResponseStatusException(HttpStatus.LOCKED,
-                        "The filter by expression feature is not enabled.");
-
-            return ExpressionSpecification.of(filter.getFilter());
-        }
-
-        return filter.toSpecification();
-    }
-
-    private final <T extends BaseEntity<MANAGED_ENTITY_ID_TYPE>> Class<T> extractManagedEntityType() {
+    private final <T extends BaseEntity<NESTED_ENTITY_ID_TYPE>> Class<T> extractNestedEntityType() {
         ParameterizedType classType = (ParameterizedType) getClass().getGenericSuperclass();
-        return (Class<T>) classType.getActualTypeArguments()[1];
+        return (Class<T>) classType.getActualTypeArguments()[4];
     }
 
     private boolean projectDefaultOnError(String projection, Supplier<String> defaultProjectionSupplier) {

@@ -2,6 +2,7 @@ package com.alon.spring.crud.api.projection;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 
 import com.alon.spring.crud.domain.service.exception.ProjectionException;
 
@@ -14,8 +15,8 @@ public interface Projector<I, O> {
     
     public O project(I input) throws ProjectionException;
     
-    default List<String> requiredExpand() {
-        return Collections.emptyList();
+    default Set<String> requiredExpand() {
+        return Collections.emptySet();
     }
     
 }

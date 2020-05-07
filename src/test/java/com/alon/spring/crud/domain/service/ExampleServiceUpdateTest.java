@@ -1,7 +1,7 @@
 package com.alon.spring.crud.domain.service;
 
 import com.alon.spring.crud.domain.model.Example;
-import com.alon.spring.crud.domain.repository.ExampleRepository;
+import com.alon.spring.crud.domain.repository.ExampleCrudRepository;
 import com.alon.spring.crud.domain.service.exception.NotFoundException;
 import com.alon.spring.crud.domain.service.exception.UpdateException;
 import org.junit.Before;
@@ -26,7 +26,7 @@ public class ExampleServiceUpdateTest {
     private ExampleService service;
 
     @Mock
-    private ExampleRepository repository;
+    private ExampleCrudRepository repository;
     
     @Mock
     private Function<Example, Example> beforeUpdateHookA;
