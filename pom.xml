@@ -50,11 +50,11 @@
         <pitest-maven.version>1.5.1</pitest-maven.version>
 
         <!--    CONFIGURATIONS    -->
-        <skip.unit.tests>false</skip.unit.tests>
-        <skip.it.tests>false</skip.it.tests>
-        <skip.mutation>false</skip.mutation>
-        <skip.signature>false</skip.signature>
-        <skip.jacoco>false</skip.jacoco>
+        <skip.unit.tests>true</skip.unit.tests>
+        <skip.it.tests>true</skip.it.tests>
+        <skip.mutation>true</skip.mutation>
+        <skip.signature>true</skip.signature>
+        <skip.jacoco>true</skip.jacoco>
         <line.coverage>0.40</line.coverage>
         <branch.coverage>0.40</branch.coverage>
         <mutation.threshold>30</mutation.threshold>
