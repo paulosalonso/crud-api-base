@@ -39,7 +39,8 @@
         <expression-specification-for-spring-data-jpa.version>1.0.0</expression-specification-for-spring-data-jpa.version>
         <springfox.version>2.9.1</springfox.version>
         <h2.version>1.4.200</h2.version>
-        <modelmapper.version>2.3.0</modelmapper.version>
+<!--        <modelmapper.version>2.3.0</modelmapper.version>-->
+        <modelmapper.version>2.3.8-SNAPSHOT</modelmapper.version>
 
         <!--    PLUGINS VERSION    -->
         <nexus-staging-maven-plugin.version>1.6.8</nexus-staging-maven-plugin.version>
@@ -49,16 +50,48 @@
         <jacoco-maven-plugin.version>0.8.5</jacoco-maven-plugin.version>
         <pitest-maven.version>1.5.1</pitest-maven.version>
 
-        <!--    CONFIGURATIONS    -->
-        <skip.unit.tests>true</skip.unit.tests>
-        <skip.it.tests>true</skip.it.tests>
-        <skip.mutation>true</skip.mutation>
-        <skip.signature>true</skip.signature>
-        <skip.jacoco>true</skip.jacoco>
+        <!--    TESTS COVERAGE    -->
         <line.coverage>0.40</line.coverage>
         <branch.coverage>0.40</branch.coverage>
         <mutation.threshold>30</mutation.threshold>
-    </properties>    
+    </properties>
+
+    <profiles>
+        <profile>
+            <id>dev-without-tests</id>
+            <activation>
+                <activeByDefault>true</activeByDefault>
+            </activation>
+            <properties>
+                <skip.unit.tests>true</skip.unit.tests>
+                <skip.it.tests>true</skip.it.tests>
+                <skip.mutation>true</skip.mutation>
+                <skip.jacoco>true</skip.jacoco>
+                <skip.signature>true</skip.signature>
+            </properties>
+        </profile>
+        <profile>
+            <id>dev-with-tests</id>
+            <properties>
+                <skip.unit.tests>false</skip.unit.tests>
+                <skip.it.tests>false</skip.it.tests>
+                <skip.mutation>false</skip.mutation>
+                <skip.jacoco>false</skip.jacoco>
+                <skip.signature>true</skip.signature>
+            </properties>
+        </profile>
+        <profile>
+            <id>release</id>
+            <properties>
+                <skip.unit.tests>false</skip.unit.tests>
+                <skip.it.tests>false</skip.it.tests>
+                <skip.mutation>false</skip.mutation>
+                <skip.jacoco>false</skip.jacoco>
+                <skip.signature>false</skip.signature>
+            </properties>
+        </profile>
+    </profiles>
+
     <distributionManagement>
         <snapshotRepository>
           <id>ossrh</id>
