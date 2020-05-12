@@ -158,26 +158,12 @@ public abstract class CrudController<
     }
 
     @PostMapping
-    protected ResponseEntity create(
-            @RequestBody @Valid CREATE_INPUT_TYPE input,
-            @Valid ProjectionOption option
-    ) throws CreateException {
-        normalizeProjectionOption(option, this::getSingleDefaultProjection);
-        
+    protected ResponseEntity create(@RequestBody @Valid CREATE_INPUT_TYPE input) throws CreateException {
         MANAGED_ENTITY_TYPE entity = createInputMapper.map(input);
         
         entity = service.create(entity);
         
-        Object response;
-
-        try {
-            response = projectionService.project(option.getProjection(), entity);
-        } catch (ProjectionException e) {
-            if (projectDefaultOnError(option.getProjection(), this::getSingleDefaultProjection))
-                response = projectionService.project(getSingleDefaultProjection(), entity);
-            else
-                throw e;
-        }
+        Object response = projectionService.project(getSingleDefaultProjection(), entity);
 
         return ResponseEntity
                 .status(HttpStatus.CREATED)
@@ -188,26 +174,14 @@ public abstract class CrudController<
     @PutMapping("/{id}")
     public ResponseEntity update(
             @PathVariable MANAGED_ENTITY_ID_TYPE id,
-            @RequestBody @Valid UPDATE_INPUT_TYPE input,
-            @Valid ProjectionOption option
-    ) throws UpdateException {
-        normalizeProjectionOption(option, this::getSingleDefaultProjection);
-        
+            @RequestBody @Valid UPDATE_INPUT_TYPE input) throws UpdateException {
+
         MANAGED_ENTITY_TYPE entity = updateInputMapper.map(input);
         entity.setId(id);
 
         entity = service.update(entity);
 
-        Object response;
-
-        try {
-            response = projectionService.project(option.getProjection(), entity);
-        } catch (ProjectionException e) {
-            if (projectDefaultOnError(option.getProjection(), this::getSingleDefaultProjection))
-                response = projectionService.project(getSingleDefaultProjection(), entity);
-            else
-                throw e;
-        }
+        Object response = projectionService.project(getSingleDefaultProjection(), entity);
 
         return ResponseEntity
                 .status(HttpStatus.OK)
@@ -215,7 +189,7 @@ public abstract class CrudController<
         
     }
 
-    @DeleteMapping("/{id}   ")
+    @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void delete(@PathVariable MANAGED_ENTITY_ID_TYPE id) throws DeleteException {
         try {

@@ -166,25 +166,13 @@ public abstract class NestedCrudController<
     @PostMapping
     protected ResponseEntity create(
             @PathVariable MASTER_ENTITY_ID_TYPE masterId,
-            @RequestBody @Valid CREATE_INPUT_TYPE input,
-            @Valid ProjectionOption option
-    ) throws CreateException {
-        normalizeProjectionOption(option, this::getSingleDefaultProjection);
+            @RequestBody @Valid CREATE_INPUT_TYPE input) throws CreateException {
 
         NESTED_ENTITY_TYPE nestedEntity = createInputMapper.map(input);
         
         nestedEntity = nestedService.create(masterId, nestedEntity);
         
-        Object response;
-
-        try {
-            response = projectionService.project(option.getProjection(), nestedEntity);
-        } catch (ProjectionException e) {
-            if (projectDefaultOnError(option.getProjection(), this::getSingleDefaultProjection))
-                response = projectionService.project(getSingleDefaultProjection(), nestedEntity);
-            else
-                throw e;
-        }
+        Object response = projectionService.project(getSingleDefaultProjection(), nestedEntity);
 
         return ResponseEntity
                 .status(HttpStatus.CREATED)
@@ -196,26 +184,14 @@ public abstract class NestedCrudController<
     public ResponseEntity update(
             @PathVariable MASTER_ENTITY_ID_TYPE masterId,
             @PathVariable NESTED_ENTITY_ID_TYPE nestedId,
-            @RequestBody @Valid UPDATE_INPUT_TYPE input,
-            @Valid ProjectionOption option
-    ) throws UpdateException {
-        normalizeProjectionOption(option, this::getSingleDefaultProjection);
+            @RequestBody @Valid UPDATE_INPUT_TYPE input) throws UpdateException {
 
         NESTED_ENTITY_TYPE entity = updateInputMapper.map(input);
         entity.setId(nestedId);
 
         entity = nestedService.update(masterId, nestedId, entity);
 
-        Object response;
-
-        try {
-            response = projectionService.project(option.getProjection(), entity);
-        } catch (ProjectionException e) {
-            if (projectDefaultOnError(option.getProjection(), this::getSingleDefaultProjection))
-                response = projectionService.project(getSingleDefaultProjection(), entity);
-            else
-                throw e;
-        }
+        Object response = projectionService.project(getSingleDefaultProjection(), entity);
 
         return ResponseEntity
                 .status(HttpStatus.OK)
