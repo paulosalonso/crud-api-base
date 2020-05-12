@@ -98,7 +98,7 @@ extends EntityGraphSimpleJpaRepository<NESTED_ENTITY_TYPE, NESTED_ENTITY_ID_TYPE
         Type type = classType.getActualTypeArguments()[1];
 
         if (type instanceof  Class)
-            return (Class<T>) classType.getActualTypeArguments()[1];
+            return (Class<T>) type;
 
         return null;
     }
@@ -109,7 +109,7 @@ extends EntityGraphSimpleJpaRepository<NESTED_ENTITY_TYPE, NESTED_ENTITY_ID_TYPE
         Type type = classType.getActualTypeArguments()[2];
 
         if (type instanceof Class)
-            return (Class<T>) classType.getActualTypeArguments()[3];
+            return (Class<T>) type;
 
         return null;
     }
