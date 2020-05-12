@@ -14,6 +14,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public interface MasterOwnerNestedCrudService<
@@ -29,7 +30,6 @@ extends NestedCrudService<
     String ID_FIELD_NAME = "id";
     ModelMapper MAPPER = new ModelMapper();
 
-
     Supplier<Collection<NESTED_ENTITY_TYPE>> getNestedGetter(MASTER_ENTITY_TYPE masterEntity);
     Consumer<NESTED_ENTITY_TYPE> getNestedSetter(MASTER_ENTITY_TYPE masterEntity);
     MASTER_REPOSITORY_TYPE getMasterRepository();
@@ -38,6 +38,8 @@ extends NestedCrudService<
     @Override
     default Collection<NESTED_ENTITY_TYPE> getAll(MASTER_ENTITY_ID_TYPE masterId, List<String> expand) {
         Optional<MASTER_ENTITY_TYPE> masterEntityOpt;
+
+        expand = normalizeExpand(expand);
 
         if (expand != null && !expand.isEmpty())
             masterEntityOpt = getMasterRepository().findById(masterId, new DynamicEntityGraph(expand));
@@ -59,6 +61,8 @@ extends NestedCrudService<
 
         Optional<MASTER_ENTITY_TYPE> masterEntityOpt;
 
+        expand = normalizeExpand(expand);
+        
         if (expand != null && !expand.isEmpty())
             masterEntityOpt = getMasterRepository().findOne(specification, new DynamicEntityGraph(expand));
         else
@@ -137,5 +141,14 @@ extends NestedCrudService<
             return criteriaBuilder.and(criteriaBuilder.equal(root.get(ID_FIELD_NAME), masterId),
                     criteriaBuilder.equal(nested.get(ID_FIELD_NAME), nestedId));
         });
+    }
+
+    default List<String> normalizeExpand(List<String> expand) {
+        return expand.stream()
+                .map(field -> field.startsWith(getNestedFieldName()) ?
+                        field
+                        :
+                        String.format("%s.%s", getNestedFieldName(), field))
+                .collect(Collectors.toList());
     }
 }

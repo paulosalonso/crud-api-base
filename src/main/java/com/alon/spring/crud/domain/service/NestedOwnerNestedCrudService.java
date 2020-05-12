@@ -2,12 +2,11 @@ package com.alon.spring.crud.domain.service;
 
 import com.alon.spring.crud.domain.model.BaseEntity;
 import com.alon.spring.crud.domain.model.NestedBaseEntity;
-import com.alon.spring.crud.domain.repository.NestedRepository;
 import com.alon.spring.crud.domain.repository.CrudRepository;
+import com.alon.spring.crud.domain.repository.NestedRepository;
 import com.alon.spring.crud.domain.service.exception.NotFoundException;
 import com.alon.spring.crud.domain.service.exception.UpdateException;
 import org.modelmapper.ModelMapper;
-import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.io.Serializable;
 import java.util.Collection;
@@ -20,8 +19,7 @@ public interface NestedOwnerNestedCrudService<
         NESTED_ENTITY_ID_TYPE extends Serializable,
         NESTED_ENTITY_TYPE extends NestedBaseEntity<NESTED_ENTITY_ID_TYPE, MASTER_ENTITY_TYPE>,
         NESTED_REPOSITORY_TYPE extends
-                JpaRepository<NESTED_ENTITY_TYPE, NESTED_ENTITY_ID_TYPE> &
-                NestedRepository<MASTER_ENTITY_ID_TYPE, MASTER_ENTITY_TYPE, NESTED_ENTITY_ID_TYPE, NESTED_ENTITY_TYPE>>
+                NestedRepository<MASTER_ENTITY_ID_TYPE, NESTED_ENTITY_ID_TYPE, NESTED_ENTITY_TYPE>>
     extends NestedCrudService<
         MASTER_ENTITY_ID_TYPE, MASTER_ENTITY_TYPE,
         NESTED_ENTITY_ID_TYPE, NESTED_ENTITY_TYPE> {
