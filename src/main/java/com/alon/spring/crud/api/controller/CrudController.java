@@ -14,11 +14,13 @@ import com.alon.spring.crud.domain.service.CrudService;
 import com.alon.spring.crud.domain.service.SearchCriteria;
 import com.alon.spring.crud.domain.service.exception.*;
 import com.alon.spring.specification.ExpressionSpecification;
+import io.swagger.annotations.ApiOperation;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.ResponseEntity.BodyBuilder;
 import org.springframework.web.bind.annotation.*;
@@ -88,6 +90,8 @@ public abstract class CrudController<
         this.disableContentCaching = disableContentCaching;
     }
 
+    @ApiOperation(value = "Search resources",
+            nickname = "Search", produces = MediaType.APPLICATION_JSON_VALUE)
     @GetMapping
     public ResponseEntity search(
             SEARCH_INPUT_TYPE filter,
@@ -123,6 +127,7 @@ public abstract class CrudController<
                 .body(response);
     }
 
+    @ApiOperation(value = "Read a resource", nickname = "Read", produces = MediaType.APPLICATION_JSON_VALUE)
     @GetMapping("/{id}")
     public ResponseEntity read(
             @PathVariable MANAGED_ENTITY_ID_TYPE id,
@@ -157,6 +162,8 @@ public abstract class CrudController<
                 .body(response);
     }
 
+    @ApiOperation(value = "Create a resource", nickname = "Create",
+            consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
     @PostMapping
     protected ResponseEntity create(@RequestBody @Valid CREATE_INPUT_TYPE input) throws CreateException {
         MANAGED_ENTITY_TYPE entity = createInputMapper.map(input);
@@ -171,6 +178,8 @@ public abstract class CrudController<
         
     }
 
+    @ApiOperation(value = "Update a resource", nickname = "Update",
+            consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
     @PutMapping("/{id}")
     public ResponseEntity update(
             @PathVariable MANAGED_ENTITY_ID_TYPE id,
@@ -189,6 +198,7 @@ public abstract class CrudController<
         
     }
 
+    @ApiOperation(value = "Delete a resource", nickname = "Delete")
     @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void delete(@PathVariable MANAGED_ENTITY_ID_TYPE id) throws DeleteException {
@@ -198,7 +208,9 @@ public abstract class CrudController<
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, ex.getMessage());
         }
     }
-    
+
+    @ApiOperation(value = "Get available projections and their representations",
+            nickname = "Get projections", produces = MediaType.APPLICATION_JSON_VALUE)
     @GetMapping("/projections")
     public List<ProjectionRepresentation> getRepresentations() {
         return projectionService.getEntityRepresentations(extractManagedEntityType());

@@ -8,13 +8,13 @@ import com.alon.spring.crud.api.projection.ProjectionRepresentation;
 import com.alon.spring.crud.api.projection.ProjectionService;
 import com.alon.spring.crud.core.properties.Properties;
 import com.alon.spring.crud.domain.model.BaseEntity;
-import com.alon.spring.crud.domain.model.NestedBaseEntity;
 import com.alon.spring.crud.domain.service.CrudService;
 import com.alon.spring.crud.domain.service.NestedCrudService;
-import com.alon.spring.crud.domain.service.NestedOwnerNestedCrudService;
 import com.alon.spring.crud.domain.service.exception.*;
+import io.swagger.annotations.ApiOperation;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.ResponseEntity.BodyBuilder;
 import org.springframework.web.bind.annotation.*;
@@ -96,6 +96,8 @@ public abstract class NestedCrudController<
         this.disableContentCaching = disableContentCaching;
     }
 
+    @ApiOperation(value = "Get all nested resources",
+            nickname = "Get all nested", produces = MediaType.APPLICATION_JSON_VALUE)
     @GetMapping
     public ResponseEntity getAll(
             @PathVariable MASTER_ENTITY_ID_TYPE masterId,
@@ -128,6 +130,8 @@ public abstract class NestedCrudController<
                 .body(response);
     }
 
+    @ApiOperation(value = "Read a nested resource",
+            nickname = "Read nested", produces = MediaType.APPLICATION_JSON_VALUE)
     @GetMapping("/{nestedId}")
     public ResponseEntity read(
             @PathVariable MASTER_ENTITY_ID_TYPE masterId,
@@ -163,6 +167,8 @@ public abstract class NestedCrudController<
                 .body(response);
     }
 
+    @ApiOperation(value = "Create a nested resource", nickname = "Create nested",
+            consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
     @PostMapping
     protected ResponseEntity create(
             @PathVariable MASTER_ENTITY_ID_TYPE masterId,
@@ -180,6 +186,8 @@ public abstract class NestedCrudController<
         
     }
 
+    @ApiOperation(value = "Update a nested resource", nickname = "Update nested",
+            consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
     @PutMapping("/{nestedId}")
     public ResponseEntity update(
             @PathVariable MASTER_ENTITY_ID_TYPE masterId,
@@ -199,6 +207,7 @@ public abstract class NestedCrudController<
         
     }
 
+    @ApiOperation(value = "Delete a nested resource", nickname = "Delete nested")
     @DeleteMapping("/{nestedId}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void delete(@PathVariable MASTER_ENTITY_ID_TYPE masterId,
@@ -210,7 +219,9 @@ public abstract class NestedCrudController<
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, ex.getMessage());
         }
     }
-    
+
+    @ApiOperation(value = "Get available nested resource projections and their representations",
+            nickname = "Get projections", produces = MediaType.APPLICATION_JSON_VALUE)
     @GetMapping("/projections")
     public List<ProjectionRepresentation> getRepresentations() {
         return projectionService.getEntityRepresentations(extractNestedEntityType());
