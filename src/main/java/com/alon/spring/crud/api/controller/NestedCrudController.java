@@ -197,7 +197,11 @@ public abstract class NestedCrudController<
         NESTED_ENTITY_TYPE entity = updateInputMapper.map(input);
         entity.setId(nestedId);
 
-        entity = nestedService.update(masterId, nestedId, entity);
+        try {
+            entity = nestedService.update(masterId, nestedId, entity);
+        } catch (NotFoundException ex) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, ex.getMessage());
+        }
 
         Object response = projectionService.project(getSingleDefaultProjection(), entity);
 
