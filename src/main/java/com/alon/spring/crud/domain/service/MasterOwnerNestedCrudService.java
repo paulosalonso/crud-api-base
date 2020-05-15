@@ -59,9 +59,9 @@ extends NestedCrudService<
 
         Specification<MASTER_ENTITY_TYPE> specification = getFindByIdSpecification(masterId, nestedId);
 
-        Optional<MASTER_ENTITY_TYPE> masterEntityOpt;
-
         expand = normalizeExpand(expand);
+
+        Optional<MASTER_ENTITY_TYPE> masterEntityOpt;
         
         if (expand != null && !expand.isEmpty())
             masterEntityOpt = getMasterRepository().findOne(specification, new DynamicEntityGraph(expand));
