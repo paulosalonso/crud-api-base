@@ -99,7 +99,7 @@ public class RepresentationService {
 
     private String getTypeName(Type type) {
         String typeName = type.getTypeName();
-        typeName = typeName.substring(typeName.lastIndexOf("."));
+        typeName = typeName.substring(typeName.lastIndexOf(".") + 1);
 
         if (typeName.endsWith("DTO"))
             return typeName.substring(0, typeName.length() - 3);
