@@ -228,7 +228,8 @@ public abstract class NestedCrudController<
             nickname = "Get projections", produces = MediaType.APPLICATION_JSON_VALUE)
     @GetMapping("/projections")
     public List<ProjectionRepresentation> getRepresentations() {
-        return projectionService.getEntityRepresentations(extractNestedEntityType());
+        return projectionService.getEntityRepresentations(extractNestedEntityType(),
+                this::getSingleDefaultProjection, this::getCollectionDefaultProjection);
     }
 
     public BodyBuilder buildResponseEntity(HttpStatus status) {

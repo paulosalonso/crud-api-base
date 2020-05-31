@@ -19,8 +19,8 @@ import org.springframework.data.jpa.domain.Specification;
 import java.util.Set;
 import java.util.function.Function;
 
-import static com.alon.spring.crud.domain.service.CrudService.HookHelper.LifeCycleHook.AFTER_SEARCH;
-import static com.alon.spring.crud.domain.service.CrudService.HookHelper.LifeCycleHook.BEFORE_SEARCH;
+import static com.alon.spring.crud.domain.service.LifeCycleHook.AFTER_SEARCH;
+import static com.alon.spring.crud.domain.service.LifeCycleHook.BEFORE_SEARCH;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.*;
 

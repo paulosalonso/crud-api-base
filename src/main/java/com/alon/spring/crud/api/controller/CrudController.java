@@ -213,7 +213,8 @@ public abstract class CrudController<
             nickname = "Get projections", produces = MediaType.APPLICATION_JSON_VALUE)
     @GetMapping("/projections")
     public List<ProjectionRepresentation> getRepresentations() {
-        return projectionService.getEntityRepresentations(extractManagedEntityType());
+        return projectionService.getEntityRepresentations(extractManagedEntityType(),
+                this::getSingleDefaultProjection, this::getCollectionDefaultProjection);
     }
 
     public BodyBuilder buildResponseEntity(HttpStatus status) {

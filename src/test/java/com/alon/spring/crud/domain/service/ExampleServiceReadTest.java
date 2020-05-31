@@ -18,8 +18,8 @@ import java.util.List;
 import java.util.Optional;
 import java.util.function.Function;
 
-import static com.alon.spring.crud.domain.service.CrudService.HookHelper.LifeCycleHook.AFTER_READ;
-import static com.alon.spring.crud.domain.service.CrudService.HookHelper.LifeCycleHook.BEFORE_READ;
+import static com.alon.spring.crud.domain.service.LifeCycleHook.AFTER_READ;
+import static com.alon.spring.crud.domain.service.LifeCycleHook.BEFORE_READ;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.*;

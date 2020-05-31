@@ -17,7 +17,7 @@ import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-public interface MasterOwnerNestedCrudService<
+public interface MasterAsOwnerNestedCrudService<
         MASTER_ENTITY_ID_TYPE extends Serializable,
         MASTER_ENTITY_TYPE extends BaseEntity<MASTER_ENTITY_ID_TYPE>,
         MASTER_REPOSITORY_TYPE extends CrudRepository<MASTER_ENTITY_ID_TYPE, MASTER_ENTITY_TYPE>,
@@ -57,6 +57,8 @@ extends NestedCrudService<
     default NESTED_ENTITY_TYPE read(
             MASTER_ENTITY_ID_TYPE masterId, NESTED_ENTITY_ID_TYPE nestedId, List<String> expand) {
 
+        executeBeforeReadHooks(nestedId, masterId);
+
         Specification<MASTER_ENTITY_TYPE> specification = getFindByIdSpecification(masterId, nestedId);
 
         expand = normalizeExpand(expand);
@@ -68,7 +70,7 @@ extends NestedCrudService<
         else
             masterEntityOpt = getMasterRepository().findOne(specification);
 
-        return masterEntityOpt
+        NESTED_ENTITY_TYPE entity = masterEntityOpt
                 .map(this::getNestedGetter)
                 .map(Supplier::get)
                 .map(Collection::stream)
@@ -76,10 +78,16 @@ extends NestedCrudService<
                 .map(Optional::get)
                 .orElseThrow(() -> new NotFoundException(
                         String.format("Resource not found with masterId %s and nestedId %s", masterId, nestedId)));
+
+        executeAfterReadHooks(entity, masterId);
+
+        return entity;
     }
 
     @Override
     default NESTED_ENTITY_TYPE create(MASTER_ENTITY_ID_TYPE masterId, NESTED_ENTITY_TYPE nestedEntity) {
+        executeBeforeCreateHooks(nestedEntity, masterId);
+
         MASTER_ENTITY_TYPE masterEntity = getMasterRepository()
                 .findById(masterId)
                 .orElseThrow(() -> new NotFoundException(
@@ -91,15 +99,20 @@ extends NestedCrudService<
 
         Collection<NESTED_ENTITY_TYPE> nestedCollection = getNestedGetter(masterEntity).get();
 
-        return nestedCollection.stream()
+        NESTED_ENTITY_TYPE entity = nestedCollection.stream()
                 .skip(nestedCollection.size() - 1)
                 .findFirst()
                 .get();
+
+        executeAfterCreateHooks(entity, masterId);
+
+        return entity;
     }
 
     @Override
     default NESTED_ENTITY_TYPE update(MASTER_ENTITY_ID_TYPE masterId,
             NESTED_ENTITY_ID_TYPE nestedId, NESTED_ENTITY_TYPE nestedEntity) {
+        executeBeforeUpdateHooks(nestedEntity, masterId);
 
         Specification<MASTER_ENTITY_TYPE> specification = getFindByIdSpecification(masterId, nestedId);
 
@@ -118,11 +131,14 @@ extends NestedCrudService<
 
         getMasterRepository().save(masterEntityOpt.get());
 
+        executeAfterUpdateHooks(persistedNestedEntity, masterId);
+
         return persistedNestedEntity;
     }
 
     @Override
     default void delete(MASTER_ENTITY_ID_TYPE masterId, NESTED_ENTITY_ID_TYPE nestedId) {
+        executeBeforeDeleteHooks(nestedId, masterId);
 
         MASTER_ENTITY_TYPE masterEntity = getMasterRepository()
                 .findOne(getFindByIdSpecification(masterId, nestedId))
@@ -133,6 +149,8 @@ extends NestedCrudService<
         getNestedGetter(masterEntity).get().clear();
 
         getMasterRepository().save(masterEntity);
+
+        executeBeforeDeleteHooks(nestedId, masterId);
     }
 
     default Specification<MASTER_ENTITY_TYPE> getFindByIdSpecification(MASTER_ENTITY_ID_TYPE masterId, NESTED_ENTITY_ID_TYPE nestedId) {

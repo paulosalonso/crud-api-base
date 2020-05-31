@@ -1,26 +1,19 @@
 package com.alon.spring.crud.api.controller;
 
-import static com.alon.spring.crud.api.controller.ExampleCreator.insertBatchOfExamples;
-import static com.alon.spring.crud.domain.service.CrudService.HookHelper.LifeCycleHook.*;
-import static io.restassured.RestAssured.get;
-import static io.restassured.RestAssured.given;
-import static io.restassured.RestAssured.when;
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.hamcrest.Matchers.equalTo;
-import static org.hamcrest.Matchers.hasItems;
-import static org.hamcrest.Matchers.hasSize;
-import static org.hamcrest.Matchers.not;
-import static org.hamcrest.Matchers.notNullValue;
-import static org.hamcrest.Matchers.nullValue;
-
 import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.Logger;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.filter.Filter;
 import ch.qos.logback.core.read.ListAppender;
 import ch.qos.logback.core.spi.FilterReply;
+import com.alon.spring.crud.api.projection.ProjectionService;
+import com.alon.spring.crud.cleaner.DatabaseCleaner;
+import com.alon.spring.crud.domain.model.Example;
+import com.alon.spring.crud.domain.service.ExampleService;
 import com.alon.spring.crud.domain.service.exception.DeleteException;
-import org.assertj.core.api.Assertions;
+import io.restassured.RestAssured;
+import io.restassured.http.ContentType;
+import io.restassured.response.Response;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -33,16 +26,13 @@ import org.springframework.boot.web.server.LocalServerPort;
 import org.springframework.http.HttpStatus;
 import org.springframework.test.context.junit4.SpringRunner;
 
-import com.alon.spring.crud.api.projection.ProjectionService;
-import com.alon.spring.crud.cleaner.DatabaseCleaner;
-import com.alon.spring.crud.domain.model.Example;
-import com.alon.spring.crud.domain.service.ExampleService;
-
-import io.restassured.RestAssured;
-import io.restassured.http.ContentType;
-import io.restassured.response.Response;
-
 import java.util.List;
+
+import static com.alon.spring.crud.api.controller.ExampleCreator.insertBatchOfExamples;
+import static com.alon.spring.crud.domain.service.LifeCycleHook.*;
+import static io.restassured.RestAssured.*;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.hamcrest.Matchers.*;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)

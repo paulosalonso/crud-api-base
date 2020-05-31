@@ -13,9 +13,8 @@ import org.mockito.MockitoAnnotations;
 
 import java.util.function.Function;
 
-import static com.alon.spring.crud.domain.service.CrudService.HookHelper.LifeCycleHook.AFTER_CREATE;
-import static com.alon.spring.crud.domain.service.CrudService.HookHelper.LifeCycleHook.BEFORE_CREATE;
-import static org.assertj.core.api.Assertions.assertThat;
+import static com.alon.spring.crud.domain.service.LifeCycleHook.AFTER_CREATE;
+import static com.alon.spring.crud.domain.service.LifeCycleHook.BEFORE_CREATE;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.*;
 

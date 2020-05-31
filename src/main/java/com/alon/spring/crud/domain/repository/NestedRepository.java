@@ -25,8 +25,8 @@ extends EntityGraphSimpleJpaRepository<NESTED_ENTITY_TYPE, NESTED_ENTITY_ID_TYPE
     private static final String EXPAND_HINT = "javax.persistence.loadgraph";
     private static final String ID_FIELD_NAME = "id";
 
-    private final EntityManager entityManager;
-    private final CriteriaBuilder builder;
+    protected final EntityManager entityManager;
+    protected final CriteriaBuilder builder;
 
     public NestedRepository(Class<NESTED_ENTITY_TYPE> entityType, EntityManager entityManager) {
         super(entityType, entityManager);

@@ -5,7 +5,8 @@ import java.util.List;
 
 public interface NestedCrudService<
         MASTER_ENTITY_ID_TYPE, MASTER_ENTITY_TYPE,
-        NESTED_ENTITY_ID_TYPE, NESTED_ENTITY_TYPE> {
+        NESTED_ENTITY_ID_TYPE, NESTED_ENTITY_TYPE>
+extends BiHookable<MASTER_ENTITY_ID_TYPE, NESTED_ENTITY_ID_TYPE, NESTED_ENTITY_TYPE> {
 
     Collection<NESTED_ENTITY_TYPE> getAll(MASTER_ENTITY_ID_TYPE masterId, List<String> expand);
 

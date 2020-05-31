@@ -12,7 +12,7 @@ import org.springframework.data.domain.Page;
 import java.util.Optional;
 import java.util.function.Function;
 
-import static com.alon.spring.crud.domain.service.CrudService.HookHelper.LifeCycleHook.*;
+import static com.alon.spring.crud.domain.service.LifeCycleHook.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 

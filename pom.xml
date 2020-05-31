@@ -57,7 +57,7 @@
 
     <profiles>
         <profile>
-            <id>dev-without-tests</id>
+            <id>no-tests</id>
             <activation>
                 <activeByDefault>true</activeByDefault>
             </activation>
@@ -70,7 +70,27 @@
             </properties>
         </profile>
         <profile>
-            <id>dev-with-tests</id>
+            <id>unit-tests</id>
+            <properties>
+                <skip.unit.tests>false</skip.unit.tests>
+                <skip.it.tests>true</skip.it.tests>
+                <skip.mutation>false</skip.mutation>
+                <skip.jacoco>false</skip.jacoco>
+                <skip.signature>true</skip.signature>
+            </properties>
+        </profile>
+        <profile>
+            <id>integration-tests</id>
+            <properties>
+                <skip.unit.tests>true</skip.unit.tests>
+                <skip.it.tests>false</skip.it.tests>
+                <skip.mutation>true</skip.mutation>
+                <skip.jacoco>false</skip.jacoco>
+                <skip.signature>true</skip.signature>
+            </properties>
+        </profile>
+        <profile>
+            <id>all-tests</id>
             <properties>
                 <skip.unit.tests>false</skip.unit.tests>
                 <skip.it.tests>false</skip.it.tests>

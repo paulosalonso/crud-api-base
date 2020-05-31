@@ -121,7 +121,9 @@ public class ProjectionService {
         return projections.containsKey(projectionName);
     }
     
-    public List<ProjectionRepresentation> getEntityRepresentations(Class<? extends BaseEntity> clazz) {
+    public List<ProjectionRepresentation> getEntityRepresentations(Class<? extends BaseEntity> clazz,
+            Supplier<String> singleDefaultProjectionSupplier, Supplier<String> collectionDefaultProjectionSupplier) {
+
         if (representationsCache.containsKey(clazz))
             return representationsCache.get(clazz);
         
@@ -129,11 +131,26 @@ public class ProjectionService {
 
         List<ProjectionRepresentation> representations = projections.entrySet().stream()
                 .map(this::getProjectionRepresentation)
+                .peek(representation -> resolveDefaultRepresentation(representation,
+                        singleDefaultProjectionSupplier, collectionDefaultProjectionSupplier))
                 .collect(Collectors.toList());
-        
+
         representationsCache.put(clazz, representations);
         
         return representations;
+    }
+
+    private void resolveDefaultRepresentation(ProjectionRepresentation representation,
+            Supplier<String> singleDefaultProjectionSupplier, Supplier<String> collectionDefaultProjectionSupplier) {
+
+        String singleDefaultProjection = singleDefaultProjectionSupplier.get();
+        String collectionDefaultProjection = collectionDefaultProjectionSupplier.get();
+
+        if (singleDefaultProjection.equals(representation.projectionName))
+            representation.setSingleDefault(true);
+
+        if (collectionDefaultProjection.equals(representation.projectionName))
+            representation.setCollectionDefault(true);
     }
 
     private Projector getProjector(String projectionName) {

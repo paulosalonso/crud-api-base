@@ -12,7 +12,7 @@ import java.io.Serializable;
 import java.util.Collection;
 import java.util.List;
 
-public interface NestedOwnerNestedCrudService<
+public interface NestedAsOwnerNestedCrudService<
         MASTER_ENTITY_ID_TYPE extends Serializable,
         MASTER_ENTITY_TYPE extends BaseEntity<MASTER_ENTITY_ID_TYPE>,
         MASTER_REPOSITORY_TYPE extends CrudRepository<MASTER_ENTITY_ID_TYPE, MASTER_ENTITY_TYPE>,
@@ -39,14 +39,21 @@ public interface NestedOwnerNestedCrudService<
     default NESTED_ENTITY_TYPE read(
             MASTER_ENTITY_ID_TYPE masterId, NESTED_ENTITY_ID_TYPE nestedId, List<String> expand) {
 
-        return getNestedRepository()
+        executeBeforeReadHooks(nestedId, masterId);
+
+        NESTED_ENTITY_TYPE entity =  getNestedRepository()
                 .getById(getMasterFieldName(), masterId, nestedId, expand)
                 .orElseThrow(() -> new NotFoundException(
                         String.format("Resource not found with masterId %s and nestedId %s", masterId, nestedId)));
+
+        executeAfterReadHooks(entity, masterId);
+
+        return entity;
     }
 
     @Override
     default NESTED_ENTITY_TYPE create(MASTER_ENTITY_ID_TYPE masterId, NESTED_ENTITY_TYPE nestedEntity) {
+        executeBeforeCreateHooks(nestedEntity, masterId);
 
         MASTER_ENTITY_TYPE masterEntity = getMasterRepository()
                 .findById(masterId)
@@ -55,12 +62,18 @@ public interface NestedOwnerNestedCrudService<
 
         nestedEntity.setMasterEntity(masterEntity);
 
-        return getNestedRepository().save(nestedEntity);
+        nestedEntity = getNestedRepository().save(nestedEntity);
+
+        executeAfterCreateHooks(nestedEntity, masterId);
+
+        return nestedEntity;
     }
 
     @Override
     default NESTED_ENTITY_TYPE update(MASTER_ENTITY_ID_TYPE masterId,
             NESTED_ENTITY_ID_TYPE nestedId, NESTED_ENTITY_TYPE nestedEntity) {
+
+        executeBeforeUpdateHooks(nestedEntity, masterId);
 
         if (nestedEntity.getMasterEntity() != null && nestedEntity.getMasterEntity().getId().equals(nestedId))
             throw new UpdateException("Master entity must not be changed in the update.");
@@ -73,11 +86,17 @@ public interface NestedOwnerNestedCrudService<
 
         MAPPER.map(nestedEntity, persistedNestedEntity);
 
-        return getNestedRepository().save(persistedNestedEntity);
+        persistedNestedEntity = getNestedRepository().save(persistedNestedEntity);
+
+        executeAfterUpdateHooks(persistedNestedEntity, masterId);
+
+        return persistedNestedEntity;
     }
 
     @Override
     default void delete(MASTER_ENTITY_ID_TYPE masterId, NESTED_ENTITY_ID_TYPE nestedId) {
+        executeBeforeDeleteHooks(nestedId, masterId);
+
         boolean exists = getNestedRepository()
                 .existsById(getMasterFieldName(), masterId, nestedId);
 
@@ -87,5 +106,7 @@ public interface NestedOwnerNestedCrudService<
                             masterId, nestedId));
 
         getNestedRepository().deleteById(nestedId);
+
+        executeAfterDeleteHooks(nestedId, masterId);
     }
 }

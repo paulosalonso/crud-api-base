@@ -192,14 +192,14 @@ public class ProjectionServiceTestNoMutation {
         ReflectionTestUtils.setField(projectionService, "representationsCache", representationsCache);
 
         List<ProjectionRepresentation> representations =
-                projectionService.getEntityRepresentations(Example.class);
+                projectionService.getEntityRepresentations(Example.class, () -> "default", () -> "default");
 
         assertRepresentations(representations);
 
         verify(representationsCache, never()).get(Example.class);
         verify(representationsCache).put(Example.class, representations);
 
-        representations = projectionService.getEntityRepresentations(Example.class);
+        representations = projectionService.getEntityRepresentations(Example.class, () -> "default", () -> "default");
 
         assertRepresentations(representations);
 
@@ -213,7 +213,7 @@ public class ProjectionServiceTestNoMutation {
                 "projections", Map.of("projector", new GenericProjectorExample<Example, Example>()));
 
         List<ProjectionRepresentation> representations =
-                projectionService.getEntityRepresentations(Example.class);
+                projectionService.getEntityRepresentations(Example.class, () -> "default", () -> "default");
 
         assertThat(representations).isNullOrEmpty();
     }
