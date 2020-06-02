@@ -1,19 +1,18 @@
 package com.alon.spring.crud.api.controller;
 
 import com.alon.spring.crud.api.controller.input.Options;
-import com.alon.spring.crud.api.controller.input.ProjectionOption;
+import com.alon.spring.crud.api.controller.input.OptionsNormalizer;
 import com.alon.spring.crud.api.controller.input.SearchInput;
+import com.alon.spring.crud.api.controller.input.SearchResolver;
 import com.alon.spring.crud.api.controller.input.mapper.InputMapper;
 import com.alon.spring.crud.api.controller.input.mapper.ModelMapperInputMapper;
 import com.alon.spring.crud.api.controller.output.OutputPage;
 import com.alon.spring.crud.api.projection.ProjectionRepresentation;
 import com.alon.spring.crud.api.projection.ProjectionService;
-import com.alon.spring.crud.core.properties.Properties;
 import com.alon.spring.crud.domain.model.BaseEntity;
 import com.alon.spring.crud.domain.service.CrudService;
 import com.alon.spring.crud.domain.service.SearchCriteria;
 import com.alon.spring.crud.domain.service.exception.*;
-import com.alon.spring.specification.ExpressionSpecification;
 import io.swagger.annotations.ApiOperation;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -31,8 +30,8 @@ import org.springframework.web.server.ResponseStatusException;
 import javax.validation.Valid;
 import java.io.Serializable;
 import java.lang.reflect.ParameterizedType;
+import java.util.Collections;
 import java.util.List;
-import java.util.function.Supplier;
 
 public abstract class CrudController<
         MANAGED_ENTITY_ID_TYPE extends Serializable,
@@ -49,7 +48,10 @@ public abstract class CrudController<
     protected ProjectionService projectionService;
 
     @Autowired
-    protected Properties properties;
+    protected OptionsNormalizer optionsNormalizer;
+
+    @Autowired
+    private SearchResolver searchResolver;
     
     protected InputMapper<CREATE_INPUT_TYPE, MANAGED_ENTITY_TYPE> createInputMapper;
     protected InputMapper<UPDATE_INPUT_TYPE, MANAGED_ENTITY_TYPE> updateInputMapper;
@@ -94,7 +96,7 @@ public abstract class CrudController<
             nickname = "Search", produces = MediaType.APPLICATION_JSON_VALUE)
     @GetMapping
     public ResponseEntity search(
-            SEARCH_INPUT_TYPE filter,
+            SEARCH_INPUT_TYPE search,
             Pageable pageable,
             @Valid Options options,
             ServletWebRequest request
@@ -102,10 +104,13 @@ public abstract class CrudController<
         if (disableContentCaching)
             ShallowEtagHeaderFilter.disableContentCaching(request.getRequest());
 
-        normalizeOptions(options, this::getCollectionDefaultProjection);
+        optionsNormalizer.normalizeOptions(options,
+                this::getCollectionDefaultProjection, this::getCollectionAllowedProjections);
+
+        Specification specification = searchResolver.resolve(search);
 
         SearchCriteria criteria = SearchCriteria.of()
-                .filter(resolveFilter(filter))
+                .filter(specification)
                 .pageable(pageable)
                 .expand(options.getExpand())
                 .build();
@@ -117,13 +122,13 @@ public abstract class CrudController<
         try {
             response = projectionService.project(options.getProjection(), page);
         } catch (ProjectionException e) {
-            if (projectDefaultOnError(options.getProjection(), this::getCollectionDefaultProjection))
+            if (optionsNormalizer.projectDefaultOnError(options.getProjection(), this::getCollectionDefaultProjection))
                 response = projectionService.project(getCollectionDefaultProjection(), page);
             else
                 throw e;
         }
 
-        return buildResponseEntity(HttpStatus.OK)
+        return buildHttpGETResponseEntity(HttpStatus.OK)
                 .body(response);
     }
 
@@ -137,7 +142,8 @@ public abstract class CrudController<
         if (disableContentCaching)
             ShallowEtagHeaderFilter.disableContentCaching(request.getRequest());
 
-        normalizeOptions(options, this::getSingleDefaultProjection);
+        optionsNormalizer.normalizeOptions(options,
+                this::getSingleDefaultProjection, this::getSingleAllowedProjections);
 
         MANAGED_ENTITY_TYPE entity;
 
@@ -152,13 +158,13 @@ public abstract class CrudController<
         try {
             response = projectionService.project(options.getProjection(), entity);
         } catch (ProjectionException e) {
-            if (projectDefaultOnError(options.getProjection(), this::getSingleDefaultProjection))
+            if (optionsNormalizer.projectDefaultOnError(options.getProjection(), this::getSingleDefaultProjection))
                 response = projectionService.project(getSingleDefaultProjection(), entity);
             else
                 throw e;
         }
 
-        return buildResponseEntity(HttpStatus.OK)
+        return buildHttpGETResponseEntity(HttpStatus.OK)
                 .body(response);
     }
 
@@ -217,7 +223,7 @@ public abstract class CrudController<
                 this::getSingleDefaultProjection, this::getCollectionDefaultProjection);
     }
 
-    public BodyBuilder buildResponseEntity(HttpStatus status) {
+    public BodyBuilder buildHttpGETResponseEntity(HttpStatus status) {
         return ResponseEntity.status(status);
     }
 
@@ -225,50 +231,21 @@ public abstract class CrudController<
         return ProjectionService.NOP_PROJECTION;
     }
 
+    public List<String> getSingleAllowedProjections() {
+        return Collections.emptyList();
+    }
+
     protected String getCollectionDefaultProjection() {
         return ProjectionService.NOP_PROJECTION;
     }
 
-    protected void normalizeOptions(Options options, Supplier<String> defaultProjectionSupplier) {
-        if (options.getProjection() == null)
-            options.setProjection(defaultProjectionSupplier.get());
-
-        if (!options.getProjection().equals(ProjectionService.NOP_PROJECTION))
-            try {
-                if (options.getExpand() != null)
-                    options.getExpand().addAll(projectionService.getRequiredExpand(options.getProjection()));
-                else
-                    options.setExpand(projectionService.getRequiredExpand(options.getProjection()));
-            } catch (ProjectionException e) {
-                // NOP
-            }
-    }
-
-    protected void normalizeProjectionOption(ProjectionOption option, Supplier<String> defaultProjectionSupplier) {
-        if (option.getProjection() == null)
-            option.setProjection(defaultProjectionSupplier.get());
-    }
-
-    protected Specification resolveFilter(SEARCH_INPUT_TYPE filter) {
-        if (filter.filterPresent()) {
-            if (!properties.search.enableExpressionFilter)
-                throw new ResponseStatusException(HttpStatus.LOCKED,
-                        "The filter by expression feature is not enabled.");
-
-            return ExpressionSpecification.of(filter.getFilter());
-        }
-
-        return filter.toSpecification();
+    public List<String> getCollectionAllowedProjections() {
+        return Collections.emptyList();
     }
 
     private final <T extends BaseEntity<MANAGED_ENTITY_ID_TYPE>> Class<T> extractManagedEntityType() {
         ParameterizedType classType = (ParameterizedType) getClass().getGenericSuperclass();
         return (Class<T>) classType.getActualTypeArguments()[1];
-    }
-
-    private boolean projectDefaultOnError(String projection, Supplier<String> defaultProjectionSupplier) {
-        return properties.projection.useDefaultIfError
-                && !projection.equals(defaultProjectionSupplier.get());
     }
 
 }

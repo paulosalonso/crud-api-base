@@ -84,7 +84,7 @@ extends Hookable<ENTITY_ID_TYPE, ENTITY_TYPE> {
                 opt = getRepository().findById(id);
 
             if (opt.isEmpty())
-                throw new NotFoundException(String.format("ID not found -> %d", id));
+                throw new NotFoundException(String.format("ID not found -> %s", id));
 
             ENTITY_TYPE entity = opt.get();
 
@@ -114,7 +114,7 @@ extends Hookable<ENTITY_ID_TYPE, ENTITY_TYPE> {
 
     default void delete(ENTITY_ID_TYPE id) {
         if (!getRepository().existsById(id))
-            throw new NotFoundException(String.format("ID not found -> %d", id));
+            throw new NotFoundException(String.format("ID not found -> %s", id));
 
         try {
         	HookManager.executeHook(this, id, BEFORE_DELETE);

@@ -5,6 +5,7 @@ import com.alon.spring.crud.api.controller.cache.ETagPolicy;
 import com.alon.spring.crud.api.controller.input.mapper.InputMapper;
 import com.alon.spring.crud.api.controller.input.Options;
 import com.alon.spring.crud.api.controller.input.SearchInput;
+import com.alon.spring.crud.core.properties.Properties;
 import com.alon.spring.crud.core.properties.Properties.CacheControlProperties;
 import com.alon.spring.crud.domain.model.BaseEntity;
 import com.alon.spring.crud.domain.service.CrudService;
@@ -42,6 +43,9 @@ public abstract class CachedCrudController<
 
 	@Autowired
 	private DeepETagResolver deepETagResolver;
+
+	@Autowired
+	private Properties properties;
 
 	/**
 	 * Creates a CachedCrudController with disabled ETag feature
@@ -86,7 +90,7 @@ public abstract class CachedCrudController<
 	@Override
 	@GetMapping("${com.alon.spring.crud.path.search:}")
 	public ResponseEntity search(
-			SEARCH_INPUT_TYPE filter,
+			SEARCH_INPUT_TYPE search,
 			Pageable pageable,
 			Options options,
 			ServletWebRequest request
@@ -94,16 +98,16 @@ public abstract class CachedCrudController<
 		ResponseEntity response;
 
 		if (eTagPolicy.equals(ETagPolicy.DISABLED) || eTagPolicy.equals(ETagPolicy.SHALLOW)) {
-			response = super.search(filter, pageable, options, request);
+			response = super.search(search, pageable, options, request);
 		} else {
-			String eTag = deepETagResolver.generateCollectionResourceETag(managedEntityClass, filter);
+			String eTag = deepETagResolver.generateCollectionResourceETag(managedEntityClass, search);
 
 			if (request.checkNotModified(eTag))
-				response = buildResponseEntity(HttpStatus.NOT_MODIFIED)
+				response = buildHttpGETResponseEntity(HttpStatus.NOT_MODIFIED)
 						.header(HttpHeaders.ETAG, eTag)
 						.build();
 			else
-				response = super.search(filter, pageable, options, request);
+				response = super.search(search, pageable, options, request);
 		}
 
 		return response;
@@ -123,7 +127,7 @@ public abstract class CachedCrudController<
 			String eTag = deepETagResolver.generateSingleResourceETag(managedEntityClass, id);
 
 			if (request.checkNotModified(eTag))
-				response = buildResponseEntity(HttpStatus.NOT_MODIFIED)
+				response = buildHttpGETResponseEntity(HttpStatus.NOT_MODIFIED)
 						.header(HttpHeaders.ETAG, eTag)
 						.build();
 			else
@@ -134,7 +138,7 @@ public abstract class CachedCrudController<
 	}
 
 	@Override
-	public BodyBuilder buildResponseEntity(HttpStatus status) {
+	public BodyBuilder buildHttpGETResponseEntity(HttpStatus status) {
 		return ResponseEntity
 				.status(status)
 				.cacheControl(buildCacheControl());
