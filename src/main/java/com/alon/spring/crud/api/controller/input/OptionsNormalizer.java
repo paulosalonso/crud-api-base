@@ -41,12 +41,8 @@ public class OptionsNormalizer {
         } else {
             List<String> allowedProjections = allowedProjectionsSupplier.get();
 
-            if (!allowedProjections.isEmpty() && !allowedProjections.contains(options.getProjection())) {
-                if (projectDefaultOnError(options.getProjection(), defaultProjectionSupplier))
-                    options.setProjection(defaultProjectionSupplier.get());
-                else
-                    throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Projection not allowed");
-            }
+            if (!allowedProjections.isEmpty() && !allowedProjections.contains(options.getProjection()))
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Projection not allowed");
         }
     }
 

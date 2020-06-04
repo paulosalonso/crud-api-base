@@ -8,7 +8,7 @@ public interface NestedCrudService<
         NESTED_ENTITY_ID_TYPE, NESTED_ENTITY_TYPE>
 extends BiHookable<MASTER_ENTITY_ID_TYPE, NESTED_ENTITY_ID_TYPE, NESTED_ENTITY_TYPE> {
 
-    Collection<NESTED_ENTITY_TYPE> getAll(MASTER_ENTITY_ID_TYPE masterId, List<String> expand);
+    Collection<NESTED_ENTITY_TYPE> search(MASTER_ENTITY_ID_TYPE masterId, SearchCriteria searchCriteria);
 
     NESTED_ENTITY_TYPE create(MASTER_ENTITY_ID_TYPE masterId, NESTED_ENTITY_TYPE nestedEntity);
 

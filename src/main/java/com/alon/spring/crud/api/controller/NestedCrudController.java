@@ -2,6 +2,8 @@ package com.alon.spring.crud.api.controller;
 
 import com.alon.spring.crud.api.controller.input.Options;
 import com.alon.spring.crud.api.controller.input.OptionsNormalizer;
+import com.alon.spring.crud.api.controller.input.SearchInput;
+import com.alon.spring.crud.api.controller.input.SearchResolver;
 import com.alon.spring.crud.api.controller.input.mapper.InputMapper;
 import com.alon.spring.crud.api.controller.input.mapper.ModelMapperInputMapper;
 import com.alon.spring.crud.api.projection.ProjectionRepresentation;
@@ -9,9 +11,12 @@ import com.alon.spring.crud.api.projection.ProjectionService;
 import com.alon.spring.crud.domain.model.BaseEntity;
 import com.alon.spring.crud.domain.service.CrudService;
 import com.alon.spring.crud.domain.service.NestedCrudService;
+import com.alon.spring.crud.domain.service.SearchCriteria;
 import com.alon.spring.crud.domain.service.exception.*;
 import io.swagger.annotations.ApiOperation;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -35,10 +40,9 @@ public abstract class NestedCrudController<
         NESTED_ENTITY_ID_TYPE extends Serializable,
         NESTED_ENTITY_TYPE extends BaseEntity<NESTED_ENTITY_ID_TYPE>,
         NESTED_SERVICE_TYPE extends NestedCrudService<
-                                MASTER_ENTITY_ID_TYPE, MASTER_ENTITY_TYPE,
-                                NESTED_ENTITY_ID_TYPE, NESTED_ENTITY_TYPE>,
-        CREATE_INPUT_TYPE,
-        UPDATE_INPUT_TYPE> {
+                MASTER_ENTITY_ID_TYPE, MASTER_ENTITY_TYPE,
+                NESTED_ENTITY_ID_TYPE, NESTED_ENTITY_TYPE>,
+        CREATE_INPUT_TYPE, UPDATE_INPUT_TYPE, SEARCH_INPUT_TYPE extends SearchInput> {
 
     protected final MASTER_SERVICE_TYPE masterService;
     protected final NESTED_SERVICE_TYPE nestedService;
@@ -48,6 +52,9 @@ public abstract class NestedCrudController<
 
     @Autowired
     private OptionsNormalizer optionsNormalizer;
+
+    @Autowired
+    private SearchResolver searchResolver;
 
     protected InputMapper<CREATE_INPUT_TYPE, NESTED_ENTITY_TYPE> createInputMapper;
     protected InputMapper<UPDATE_INPUT_TYPE, NESTED_ENTITY_TYPE> updateInputMapper;
@@ -95,11 +102,13 @@ public abstract class NestedCrudController<
         this.disableContentCaching = disableContentCaching;
     }
 
-    @ApiOperation(value = "Get all nested resources",
-            nickname = "Get all nested", produces = MediaType.APPLICATION_JSON_VALUE)
+    @ApiOperation(value = "Search nested resources",
+            nickname = "Search nested", produces = MediaType.APPLICATION_JSON_VALUE)
     @GetMapping
-    public ResponseEntity getAll(
+    public ResponseEntity search(
+            SEARCH_INPUT_TYPE search,
             @PathVariable MASTER_ENTITY_ID_TYPE masterId,
+            Pageable pageable,
             @Valid Options options,
             ServletWebRequest request
     ) {
@@ -109,10 +118,18 @@ public abstract class NestedCrudController<
         optionsNormalizer.normalizeOptions(options,
                 this::getCollectionDefaultProjection, this::getCollectionAllowedProjections);
 
+        Specification specification = searchResolver.resolve(search);
+
+        SearchCriteria criteria = SearchCriteria.of()
+                .filter(specification)
+                .pageable(pageable)
+                .expand(options.getExpand())
+                .build();
+
         Collection response;
 
         try {
-            response = nestedService.getAll(masterId, List.copyOf(options.getExpand()));
+            response = nestedService.search(masterId, criteria);
         } catch (NotFoundException ex) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, ex.getMessage());
         }

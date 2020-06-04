@@ -36,13 +36,11 @@ extends NestedCrudService<
     String getNestedFieldName();
 
     @Override
-    default Collection<NESTED_ENTITY_TYPE> getAll(MASTER_ENTITY_ID_TYPE masterId, List<String> expand) {
+    default Collection<NESTED_ENTITY_TYPE> search(MASTER_ENTITY_ID_TYPE masterId, SearchCriteria searchCriteria) {
         Optional<MASTER_ENTITY_TYPE> masterEntityOpt;
 
-        expand = normalizeExpand(expand);
-
-        if (expand != null && !expand.isEmpty())
-            masterEntityOpt = getMasterRepository().findById(masterId, new DynamicEntityGraph(expand));
+        if (searchCriteria.getExpand() != null)
+            masterEntityOpt = getMasterRepository().findById(masterId, searchCriteria.getExpand());
         else
             masterEntityOpt = getMasterRepository().findById(masterId);
 
