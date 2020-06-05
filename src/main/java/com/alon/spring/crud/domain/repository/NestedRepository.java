@@ -31,31 +31,38 @@ extends EntityGraphSimpleJpaRepository<NESTED_ENTITY_TYPE, NESTED_ENTITY_ID_TYPE
 
     protected final EntityManager entityManager;
     protected final CriteriaBuilder builder;
-    private final String masterIdFieldName;
-    private final String nestedIdFieldName;
+
+    protected final String masterFieldName;
+    protected final String masterIdFieldName;
+    protected final String nestedIdFieldName;
+
+    protected final Class<NESTED_ENTITY_TYPE> nestedEntityType = extractNestedEntityType();
+    protected final Class<NESTED_ENTITY_ID_TYPE> nestedEntityIdType = extractNestedEntityIdType();
 
     /**
-     * Use "id" as the field name for the master and nested id fields
+     * Uses "id" as the field name for the master and nested id fields
      */
-    public NestedRepository(Class<NESTED_ENTITY_TYPE> entityType, EntityManager entityManager) {
-        this(entityType, entityManager, "id", "id");
+    public NestedRepository(Class<NESTED_ENTITY_TYPE> entityType, EntityManager entityManager, String masterFieldName) {
+        this(entityType, entityManager, masterFieldName, "id", "id");
     }
 
-    public NestedRepository(Class<NESTED_ENTITY_TYPE> entityType,
-            EntityManager entityManager, String masterIdFieldName, String nestedIdFieldName) {
+    public NestedRepository(Class<NESTED_ENTITY_TYPE> entityType, EntityManager entityManager,
+                            String masterFieldName, String masterIdFieldName, String nestedIdFieldName) {
 
         super(entityType, entityManager);
         this.entityManager = entityManager;
         builder = entityManager.getCriteriaBuilder();
+        this.masterFieldName = masterFieldName;
         this.masterIdFieldName = masterIdFieldName;
         this.nestedIdFieldName = nestedIdFieldName;
     }
 
-    private final Class<NESTED_ENTITY_TYPE> nestedEntityType = extractNestedEntityType();
-    private final Class<NESTED_ENTITY_ID_TYPE> nestedEntityIdType = extractNestedEntityIdType();
+    public String getMasterFieldName() {
+        return masterFieldName;
+    }
 
     public List<NESTED_ENTITY_TYPE> search(
-            String masterFieldName, MASTER_ENTITY_ID_TYPE masterId, SearchCriteria searchCriteria) {
+            MASTER_ENTITY_ID_TYPE masterId, SearchCriteria searchCriteria) {
 
         CriteriaQuery<NESTED_ENTITY_TYPE> criteriaQuery = builder.createQuery(nestedEntityType);
         Root<NESTED_ENTITY_TYPE> from = criteriaQuery.from(nestedEntityType);
@@ -92,7 +99,13 @@ extends EntityGraphSimpleJpaRepository<NESTED_ENTITY_TYPE, NESTED_ENTITY_ID_TYPE
         return typedQuery.getResultList();
     }
 
-    public Optional<NESTED_ENTITY_TYPE> findById(String masterFieldName,
+    public Optional<NESTED_ENTITY_TYPE> findById(
+            MASTER_ENTITY_ID_TYPE masterId, NESTED_ENTITY_ID_TYPE nestedId) {
+
+        return findById(masterId, nestedId, null);
+    }
+
+    public Optional<NESTED_ENTITY_TYPE> findById(
             MASTER_ENTITY_ID_TYPE masterId, NESTED_ENTITY_ID_TYPE nestedId, List<String> expand) {
 
         CriteriaQuery<NESTED_ENTITY_TYPE> criteriaQuery = builder.createQuery(nestedEntityType);
@@ -114,10 +127,9 @@ extends EntityGraphSimpleJpaRepository<NESTED_ENTITY_TYPE, NESTED_ENTITY_ID_TYPE
         }
     }
 
-    public boolean existsById(String masterFieldName,
-            MASTER_ENTITY_ID_TYPE masterId, NESTED_ENTITY_ID_TYPE nestedId) {
+    public boolean existsById(MASTER_ENTITY_ID_TYPE masterId, NESTED_ENTITY_ID_TYPE nestedId) {
 
-        CriteriaQuery<NESTED_ENTITY_ID_TYPE> criteriaQuery = builder.createQuery(extractNestedEntityIdType());
+        CriteriaQuery<NESTED_ENTITY_ID_TYPE> criteriaQuery = builder.createQuery(nestedEntityIdType);
         Root<NESTED_ENTITY_TYPE> from = criteriaQuery.from(nestedEntityType);
         criteriaQuery.multiselect(from.get(nestedIdFieldName));
         criteriaQuery.where(builder.and(
@@ -132,10 +144,6 @@ extends EntityGraphSimpleJpaRepository<NESTED_ENTITY_TYPE, NESTED_ENTITY_ID_TYPE
         } catch (NoResultException ex) {
             return false;
         }
-    }
-
-    private String getIdFieldName() {
-        return "id";
     }
 
     private final <T extends NESTED_ENTITY_ID_TYPE> Class<T> extractNestedEntityIdType() {

@@ -28,11 +28,10 @@ public interface NestedAsOwnerNestedCrudService<
 
     MASTER_REPOSITORY_TYPE getMasterRepository();
     NESTED_REPOSITORY_TYPE getNestedRepository();
-    String getMasterFieldName();
 
     @Override
     default Collection<NESTED_ENTITY_TYPE> search(MASTER_ENTITY_ID_TYPE masterId, SearchCriteria searchCriteria) {
-        return getNestedRepository().search(getMasterFieldName(), masterId, searchCriteria);
+        return getNestedRepository().search(masterId, searchCriteria);
     }
 
     @Override
@@ -42,7 +41,7 @@ public interface NestedAsOwnerNestedCrudService<
         executeBeforeReadHooks(nestedId, masterId);
 
         NESTED_ENTITY_TYPE entity =  getNestedRepository()
-                .findById(getMasterFieldName(), masterId, nestedId, expand)
+                .findById(masterId, nestedId, expand)
                 .orElseThrow(() -> new NotFoundException(
                         String.format("Resource not found with masterId %s and nestedId %s", masterId, nestedId)));
 
@@ -79,7 +78,7 @@ public interface NestedAsOwnerNestedCrudService<
             throw new UpdateException("Master entity must not be changed in the update.");
 
         NESTED_ENTITY_TYPE persistedNestedEntity = getNestedRepository()
-                .findById(getMasterFieldName(), masterId, nestedId, null)
+                .findById(masterId, nestedId, null)
                 .orElseThrow(() -> new NotFoundException(
                         String.format("Resource not found with masterId %s and nestedId %s",
                                 masterId, nestedId)));
@@ -98,7 +97,7 @@ public interface NestedAsOwnerNestedCrudService<
         executeBeforeDeleteHooks(nestedId, masterId);
 
         boolean exists = getNestedRepository()
-                .existsById(getMasterFieldName(), masterId, nestedId);
+                .existsById(masterId, nestedId);
 
         if (!exists)
             new NotFoundException(
@@ -111,9 +110,14 @@ public interface NestedAsOwnerNestedCrudService<
     }
 
     default ModelMapper getUpdateMapper() {
-        ModelMapper mapper = new ModelMapper();
-        mapper.getConfiguration().setPropertyCondition(context ->
-                !context.getMapping().getLastDestinationProperty().getName().equals(getMasterFieldName()));
-        return mapper;
+        if (UPDATE_MAPPER.getConfiguration().getPropertyCondition() == null) {
+            UPDATE_MAPPER.getConfiguration().setPropertyCondition(context ->
+                    !context.getMapping()
+                            .getLastDestinationProperty()
+                            .getName()
+                            .equals(getNestedRepository().getMasterFieldName()));
+        }
+
+        return UPDATE_MAPPER;
     }
 }
