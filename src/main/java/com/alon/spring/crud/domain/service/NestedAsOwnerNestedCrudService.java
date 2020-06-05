@@ -42,7 +42,7 @@ public interface NestedAsOwnerNestedCrudService<
         executeBeforeReadHooks(nestedId, masterId);
 
         NESTED_ENTITY_TYPE entity =  getNestedRepository()
-                .getById(getMasterFieldName(), masterId, nestedId, expand)
+                .findById(getMasterFieldName(), masterId, nestedId, expand)
                 .orElseThrow(() -> new NotFoundException(
                         String.format("Resource not found with masterId %s and nestedId %s", masterId, nestedId)));
 
@@ -79,7 +79,7 @@ public interface NestedAsOwnerNestedCrudService<
             throw new UpdateException("Master entity must not be changed in the update.");
 
         NESTED_ENTITY_TYPE persistedNestedEntity = getNestedRepository()
-                .getById(getMasterFieldName(), masterId, nestedId, null)
+                .findById(getMasterFieldName(), masterId, nestedId, null)
                 .orElseThrow(() -> new NotFoundException(
                         String.format("Resource not found with masterId %s and nestedId %s",
                                 masterId, nestedId)));

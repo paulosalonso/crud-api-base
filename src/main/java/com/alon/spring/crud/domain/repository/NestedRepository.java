@@ -92,7 +92,7 @@ extends EntityGraphSimpleJpaRepository<NESTED_ENTITY_TYPE, NESTED_ENTITY_ID_TYPE
         return typedQuery.getResultList();
     }
 
-    public Optional<NESTED_ENTITY_TYPE> getById(String masterFieldName,
+    public Optional<NESTED_ENTITY_TYPE> findById(String masterFieldName,
             MASTER_ENTITY_ID_TYPE masterId, NESTED_ENTITY_ID_TYPE nestedId, List<String> expand) {
 
         CriteriaQuery<NESTED_ENTITY_TYPE> criteriaQuery = builder.createQuery(nestedEntityType);
