@@ -280,7 +280,10 @@ public class ApiExceptionHandler extends ResponseEntityExceptionHandler {
 	protected ResponseEntity handleExceptionInternal(Exception ex, Object body, HttpHeaders headers,
 			HttpStatus status, WebRequest request) {
 
-		LOGGER.error(((Problem) body).getDetail(), ex);
+		if (body != null)
+			LOGGER.error(((Problem) body).getDetail(), ex);
+		else
+			LOGGER.error("An problem occurred and was handled by exception handler", ex);
 
 		if (body == null) {
 			body = Problem.of()

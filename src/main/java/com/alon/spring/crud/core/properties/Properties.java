@@ -4,7 +4,7 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Configuration;
 
 @Configuration("crudProperties")
-@ConfigurationProperties(prefix = "com.alon.spring.crud")
+@ConfigurationProperties(prefix = "com.alon")
 public class Properties {
 
     public CacheControlProperties cacheControl = new CacheControlProperties();
