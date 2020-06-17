@@ -109,6 +109,16 @@
                 <skip.signature>false</skip.signature>
             </properties>
         </profile>
+        <profile>
+            <id>release-without-tests</id>
+            <properties>
+                <skip.unit.tests>true</skip.unit.tests>
+                <skip.it.tests>true</skip.it.tests>
+                <skip.mutation>true</skip.mutation>
+                <skip.jacoco>true</skip.jacoco>
+                <skip.signature>false</skip.signature>
+            </properties>
+        </profile>
     </profiles>
 
     <distributionManagement>
