@@ -9,7 +9,7 @@ import java.time.OffsetDateTime;
 public class OffsetDateTimeTypeMapper implements RepresentationTypeMapper<OffsetDateTime> {
 
     @Override
-    public String map(Class<OffsetDateTime> type) {
+    public String map() {
         return "string (pattern: yyyy-MM-ddTHH:mm:ssZ)";
     }
 }

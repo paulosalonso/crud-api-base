@@ -57,7 +57,7 @@ public class RepresentationService {
 
             return field.getType().getSimpleName().toLowerCase();
         } else if (hasMapper(field)) {
-            return getMapper(field).map(field.getType());
+            return getMapper(field).map();
         } else if (isCollection(field)) {
             return mapCollection(field, parents);
         } else if (parents.contains(field.getType())) {

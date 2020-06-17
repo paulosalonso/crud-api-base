@@ -9,7 +9,7 @@ import java.util.Date;
 public class DateTypeMapper implements RepresentationTypeMapper<Date> {
 
     @Override
-    public String map(Class<Date> type) {
+    public String map() {
         return "string (pattern: yyyy-MM-dd)";
     }
 }
