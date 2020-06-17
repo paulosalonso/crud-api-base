@@ -8,7 +8,7 @@ import java.time.LocalTime;
 public class LocalTimeTypeMapper implements RepresentationTypeMapper<LocalTime> {
 
     @Override
-    public String map(Class<LocalTime> type) {
+    public String map() {
         return "string (pattern: HH:mm:ss)";
     }
 }

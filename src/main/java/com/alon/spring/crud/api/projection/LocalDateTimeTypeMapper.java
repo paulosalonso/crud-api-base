@@ -9,7 +9,7 @@ import java.time.LocalDateTime;
 public class LocalDateTimeTypeMapper implements RepresentationTypeMapper<LocalDateTime> {
 
     @Override
-    public String map(Class<LocalDateTime> type) {
+    public String map() {
         return "string (pattern: yyyy-MM-ddTHH:mm:ss)";
     }
 }
