@@ -27,13 +27,14 @@ public class RepresentationService {
             Double.class, double.class,
             BigDecimal.class,
             Boolean.class, boolean.class,
-            Byte.class, byte.class,
-            Date.class,
-            Calendar.class,
-            LocalDate.class,
-            LocalDateTime.class,
-            OffsetDateTime.class);
-    
+            Byte.class, byte.class);
+
+    private List<RepresentationTypeMapper> typeMappers;
+
+    public RepresentationService(List<RepresentationTypeMapper> typeMappers) {
+        this.typeMappers = typeMappers;
+    }
+
     public Map<String, Object> getRepresentationOf(Class clazz) {
         List<Field> fields = List.of(clazz.getDeclaredFields());
 
@@ -51,10 +52,12 @@ public class RepresentationService {
     private Object mapField(Field field, List<Type> parents) {
         
         if (isFinalType(field)) {
-            if (field.getType().isArray())
+            if (isArray(field))
                 return field.getType().getComponentType().getSimpleName().toLowerCase();
 
             return field.getType().getSimpleName().toLowerCase();
+        } else if (hasMapper(field)) {
+            return getMapper(field).map(field.getType());
         } else if (isCollection(field)) {
             return mapCollection(field, parents);
         } else if (parents.contains(field.getType())) {
@@ -65,7 +68,7 @@ public class RepresentationService {
 
         List<Field> fields;
 
-        if (field.getType().isArray())
+        if (isArray(field))
             fields = List.of(field.getType().getComponentType().getDeclaredFields());
         else
             fields = List.of(field.getType().getDeclaredFields());
@@ -91,7 +94,7 @@ public class RepresentationService {
     }
 
     private String getFieldName(Field field) {
-        if (field.getType().isArray() || isCollection(field))
+        if (isArray(field) || isCollection(field))
             return String.format("%s[]", field.getName());
 
         return field.getName();
@@ -120,6 +123,24 @@ public class RepresentationService {
 
     private boolean isCollection(Field field) {
         return Collection.class.isAssignableFrom(field.getType());
+    }
+
+    private boolean isArray(Field field) {
+        return field.getType().isArray();
+    }
+
+    private boolean hasMapper(Field field) {
+        return typeMappers.stream()
+                .filter(mapper -> mapper.getMappedType().equals(field.getType()))
+                .findFirst()
+                .isPresent();
+    }
+
+    private RepresentationTypeMapper getMapper(Field field) {
+        return typeMappers.stream()
+                .filter(mapper -> mapper.getMappedType().equals(field.getType()))
+                .findFirst()
+                .get();
     }
     
 }
