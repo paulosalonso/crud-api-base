@@ -3,21 +3,24 @@ package com.alon.spring.crud.domain.service;
 import com.alon.spring.crud.api.controller.input.ExampleSearchInput;
 import com.alon.spring.crud.api.controller.input.SearchInput;
 import com.alon.spring.crud.domain.model.Example;
-import com.alon.spring.crud.domain.repository.ExampleRepository;
+import com.alon.spring.crud.domain.repository.ExampleCrudRepository;
 import com.alon.spring.crud.domain.service.exception.ReadException;
 import org.junit.Before;
 import org.junit.Test;
-import org.mockito.*;
+import org.mockito.InOrder;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.MockitoAnnotations;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 
-import java.util.List;
+import java.util.Set;
 import java.util.function.Function;
 
-import static com.alon.spring.crud.domain.service.CrudService.HookHelper.LifeCycleHook.AFTER_SEARCH;
-import static com.alon.spring.crud.domain.service.CrudService.HookHelper.LifeCycleHook.BEFORE_SEARCH;
+import static com.alon.spring.crud.domain.service.LifeCycleHook.AFTER_SEARCH;
+import static com.alon.spring.crud.domain.service.LifeCycleHook.BEFORE_SEARCH;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.*;
 
@@ -27,7 +30,7 @@ public class ExampleServiceSearchTest {
     private ExampleService service;
 
     @Mock
-    private ExampleRepository repository;
+    private ExampleCrudRepository repository;
 
     @Mock
     private Function<SearchCriteria, SearchCriteria> beforeSearchHookA;
@@ -82,7 +85,7 @@ public class ExampleServiceSearchTest {
 
         SearchCriteria criteria = SearchCriteria.of()
                 .pageable(pageable)
-                .expand(List.of("propertyA", "propertyB"))
+                .expand(Set.of("propertyA", "propertyB"))
                 .build();
 
         service.search(criteria);
@@ -98,7 +101,7 @@ public class ExampleServiceSearchTest {
         SearchCriteria criteria = SearchCriteria.of()
                 .pageable(pageable)
                 .filter(specification)
-                .expand(List.of("propertyA", "propertyB"))
+                .expand(Set.of("propertyA", "propertyB"))
                 .build();
 
         service.search(criteria);

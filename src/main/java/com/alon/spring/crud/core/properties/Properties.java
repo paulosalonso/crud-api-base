@@ -4,12 +4,13 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Configuration;
 
 @Configuration("crudProperties")
-@ConfigurationProperties(prefix = "com.alon.spring.crud")
+@ConfigurationProperties(prefix = "com.alon")
 public class Properties {
 
     public CacheControlProperties cacheControl = new CacheControlProperties();
     public SearchProperties search = new SearchProperties();
     public ProjectionProperties projection = new ProjectionProperties();
+    public SerializationProperties serialization = new SerializationProperties();
 
     public CacheControlProperties getCacheControl() {
         return cacheControl;
@@ -132,6 +133,45 @@ public class Properties {
 
         public void setUseDefaultIfError(boolean useDefaultIfError) {
             this.useDefaultIfError = useDefaultIfError;
+        }
+    }
+
+    public class SerializationProperties {
+        public boolean forceLazyLoading = false;
+        public boolean serializeIdentifierForLazyNotLoadedObjects = true;
+        public boolean writeDatesAsTimestamps = false;
+        public boolean includeNullValues = false;
+
+        public boolean isForceLazyLoading() {
+            return forceLazyLoading;
+        }
+
+        public void setForceLazyLoading(boolean forceLazyLoading) {
+            this.forceLazyLoading = forceLazyLoading;
+        }
+
+        public boolean isSerializeIdentifierForLazyNotLoadedObjects() {
+            return serializeIdentifierForLazyNotLoadedObjects;
+        }
+
+        public void setSerializeIdentifierForLazyNotLoadedObjects(boolean serializeIdentifierForLazyNotLoadedObjects) {
+            this.serializeIdentifierForLazyNotLoadedObjects = serializeIdentifierForLazyNotLoadedObjects;
+        }
+
+        public boolean isWriteDatesAsTimestamps() {
+            return writeDatesAsTimestamps;
+        }
+
+        public void setWriteDatesAsTimestamps(boolean writeDatesAsTimestamps) {
+            this.writeDatesAsTimestamps = writeDatesAsTimestamps;
+        }
+
+        public boolean isIncludeNullValues() {
+            return includeNullValues;
+        }
+
+        public void setIncludeNullValues(boolean includeNullValues) {
+            this.includeNullValues = includeNullValues;
         }
     }
 }

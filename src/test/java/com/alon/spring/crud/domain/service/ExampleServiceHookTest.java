@@ -1,7 +1,7 @@
 package com.alon.spring.crud.domain.service;
 
 import com.alon.spring.crud.domain.model.Example;
-import com.alon.spring.crud.domain.repository.ExampleRepository;
+import com.alon.spring.crud.domain.repository.ExampleCrudRepository;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.InjectMocks;
@@ -12,7 +12,7 @@ import org.springframework.data.domain.Page;
 import java.util.Optional;
 import java.util.function.Function;
 
-import static com.alon.spring.crud.domain.service.CrudService.HookHelper.LifeCycleHook.*;
+import static com.alon.spring.crud.domain.service.LifeCycleHook.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
@@ -22,7 +22,7 @@ public class ExampleServiceHookTest {
     private ExampleService service;
 
     @Mock
-    private ExampleRepository repository;
+    private ExampleCrudRepository repository;
 
     @Mock
     private Function<SearchCriteria, SearchCriteria> beforeSearch;

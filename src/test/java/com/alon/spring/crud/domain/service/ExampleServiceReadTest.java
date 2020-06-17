@@ -1,7 +1,7 @@
 package com.alon.spring.crud.domain.service;
 
 import com.alon.spring.crud.domain.model.Example;
-import com.alon.spring.crud.domain.repository.ExampleRepository;
+import com.alon.spring.crud.domain.repository.ExampleCrudRepository;
 import com.alon.spring.crud.domain.service.exception.NotFoundException;
 import com.alon.spring.crud.domain.service.exception.ReadException;
 import com.cosium.spring.data.jpa.entity.graph.domain.DynamicEntityGraph;
@@ -18,8 +18,8 @@ import java.util.List;
 import java.util.Optional;
 import java.util.function.Function;
 
-import static com.alon.spring.crud.domain.service.CrudService.HookHelper.LifeCycleHook.AFTER_READ;
-import static com.alon.spring.crud.domain.service.CrudService.HookHelper.LifeCycleHook.BEFORE_READ;
+import static com.alon.spring.crud.domain.service.LifeCycleHook.AFTER_READ;
+import static com.alon.spring.crud.domain.service.LifeCycleHook.BEFORE_READ;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.*;
@@ -31,7 +31,7 @@ public class ExampleServiceReadTest {
     private ExampleService service;
 
     @Mock
-    private ExampleRepository repository;
+    private ExampleCrudRepository repository;
     
     @Mock
     private Function<Long, Long> beforeReadHookA;

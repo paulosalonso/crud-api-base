@@ -30,4 +30,9 @@ public class ModelMapperInputMapper<I, O extends BaseEntity<?>> implements Input
         return modelMapper.map(input, outputType);
     }
 
+    public O map(I source, O destination) {
+        modelMapper.map(source, destination);
+        return destination;
+    }
+
 }

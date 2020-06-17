@@ -17,7 +17,7 @@ public enum ProblemType {
 	
 	private ProblemType(String title, String path) {
 		this.title = title;
-		this.uri = "https://algafood.com.br".concat(path);
+		this.uri = "https://feedback.alon.com.br".concat(path);
 	}
 
 	public String getTitle() {
