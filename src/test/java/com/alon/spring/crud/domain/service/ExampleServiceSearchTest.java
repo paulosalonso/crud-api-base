@@ -90,7 +90,7 @@ public class ExampleServiceSearchTest {
 
         service.search(criteria);
 
-        verify(repository).findAll(pageable, criteria.getExpand());
+        verify(repository).findAll(pageable, criteria.getEntityGraph());
     }
 
     @Test
@@ -106,7 +106,7 @@ public class ExampleServiceSearchTest {
 
         service.search(criteria);
 
-        verify(repository).findAll(specification, pageable, criteria.getExpand());
+        verify(repository).findAll(specification, pageable, criteria.getEntityGraph());
     }
 
     @Test

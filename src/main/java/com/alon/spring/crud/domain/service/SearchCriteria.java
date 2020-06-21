@@ -13,7 +13,8 @@ public class SearchCriteria {
 
     private Specification filter;
     private Pageable pageable;
-    private EntityGraph expand;
+    private Set<String> expand;
+    private EntityGraph entityGraph;
 
     public Specification getFilter() {
         return filter;
@@ -23,8 +24,15 @@ public class SearchCriteria {
         return pageable;
     }
 
-    public EntityGraph getExpand() {
+    public Set<String> getExpand() {
         return expand;
+    }
+
+    public EntityGraph getEntityGraph() {
+        if (entityGraph == null && expand != null && !expand.isEmpty())
+            entityGraph = new DynamicEntityGraph(List.copyOf(expand));
+
+        return entityGraph;
     }
 
     public SearchType getSearchOption() {
@@ -34,7 +42,7 @@ public class SearchCriteria {
         if (this.filter != null)
             option += SearchType.FILTER.getOption();
 
-        if (this.expand != null)
+        if (this.entityGraph != null)
             option += SearchType.EXPAND.getOption();
 
         return SearchType.getByOptionString(option);
@@ -69,11 +77,11 @@ public class SearchCriteria {
         }
 
         public SearchCriteriaBuilder expand(Set<String> expand) {
-            if (expand != null && !expand.isEmpty())
-                this.searchCriteria.expand = new DynamicEntityGraph(List.copyOf(expand));
+            this.searchCriteria.expand = expand;
 
             return this;
         }
+
         public SearchCriteria build() {
             return this.searchCriteria;
         }

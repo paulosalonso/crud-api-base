@@ -37,11 +37,11 @@ extends Hookable<ENTITY_ID_TYPE, ENTITY_TYPE> {
                     break;
 
                 case EXPAND:
-                    searchResult = getRepository().findAll(pageable, criteria.getExpand());
+                    searchResult = getRepository().findAll(pageable, criteria.getEntityGraph());
                     break;
 
                 case FILTER_EXPAND:
-            		searchResult = getRepository().findAll(criteria.getFilter(), pageable, criteria.getExpand());
+            		searchResult = getRepository().findAll(criteria.getFilter(), pageable, criteria.getEntityGraph());
                     break;
 
                 case NONE:
