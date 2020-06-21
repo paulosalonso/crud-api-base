@@ -9,8 +9,7 @@ public class ModelMapperInputMapper<I, O extends BaseEntity<?>> implements Input
     private final Class<O> outputType;
 
     public ModelMapperInputMapper(Class<O> outputType) {
-        this.outputType = outputType;
-        this.modelMapper = new ModelMapper();
+        this(outputType, new ModelMapper());
     }
 
     public ModelMapperInputMapper(Class<O> outputType, ModelMapper modelMapper) {
@@ -30,9 +29,9 @@ public class ModelMapperInputMapper<I, O extends BaseEntity<?>> implements Input
         return modelMapper.map(input, outputType);
     }
 
-    public O map(I source, O destination) {
+    @Override
+    public void map(I source, O destination) {
         modelMapper.map(source, destination);
-        return destination;
     }
 
 }
