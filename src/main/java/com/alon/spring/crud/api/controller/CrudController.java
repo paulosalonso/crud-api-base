@@ -191,8 +191,8 @@ public abstract class CrudController<
             @PathVariable MANAGED_ENTITY_ID_TYPE id,
             @RequestBody @Valid UPDATE_INPUT_TYPE input) throws UpdateException {
 
-        MANAGED_ENTITY_TYPE entity = updateInputMapper.map(input);
-        entity.setId(id);
+        MANAGED_ENTITY_TYPE entity = service.read(id);
+        updateInputMapper.map(input, entity);
 
         entity = service.update(entity);
 

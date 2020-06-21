@@ -7,6 +7,7 @@ package com.alon.spring.crud.api.controller.input.mapper;
  */
 public interface InputMapper<I, O> {
     
-    public O map(I input);
+    O map(I input);
+    void map(I input, O output);
     
 }
