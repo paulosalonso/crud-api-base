@@ -2,23 +2,22 @@ package com.alon.spring.crud.domain.repository;
 
 import com.alon.spring.crud.domain.model.BaseEntity;
 import com.alon.spring.crud.domain.service.SearchCriteria;
-import com.cosium.spring.data.jpa.entity.graph.domain.DynamicEntityGraph;
 import com.cosium.spring.data.jpa.entity.graph.repository.support.EntityGraphSimpleJpaRepository;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.repository.query.QueryUtils;
 
-import javax.persistence.EntityManager;
-import javax.persistence.NoResultException;
-import javax.persistence.TypedQuery;
+import javax.persistence.*;
 import javax.persistence.criteria.*;
 import java.io.Serializable;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
-import static java.util.stream.Collectors.toList;
 import static org.springframework.data.domain.Sort.unsorted;
 
 public class NestedRepository<
@@ -93,8 +92,11 @@ extends EntityGraphSimpleJpaRepository<NESTED_ENTITY_TYPE, NESTED_ENTITY_ID_TYPE
             typedQuery.setMaxResults(searchCriteria.getPageable().getPageSize());
         }
 
-        if (searchCriteria.getExpand() != null)
-            typedQuery.setHint(EXPAND_HINT, searchCriteria.getExpand());
+        if (searchCriteria.getExpand() != null && !searchCriteria.getExpand().isEmpty()) {
+            List<String> expand = new ArrayList<>();
+            expand.addAll(searchCriteria.getExpand());
+            typedQuery.setHint(EXPAND_HINT, resolveExpand(expand));
+        }
 
         return typedQuery.getResultList();
     }
@@ -118,7 +120,7 @@ extends EntityGraphSimpleJpaRepository<NESTED_ENTITY_TYPE, NESTED_ENTITY_ID_TYPE
         TypedQuery<NESTED_ENTITY_TYPE> typedQuery = entityManager.createQuery(criteriaQuery);
 
         if (expand != null && !expand.isEmpty())
-            typedQuery.setHint(EXPAND_HINT, new DynamicEntityGraph(expand));
+            typedQuery.setHint(EXPAND_HINT, resolveExpand(expand));
 
         try {
             return Optional.of(typedQuery.getSingleResult());
@@ -143,6 +145,37 @@ extends EntityGraphSimpleJpaRepository<NESTED_ENTITY_TYPE, NESTED_ENTITY_ID_TYPE
             return true;
         } catch (NoResultException ex) {
             return false;
+        }
+    }
+
+    private EntityGraph<NESTED_ENTITY_TYPE> resolveExpand(List<String> expand) {
+        EntityGraph<NESTED_ENTITY_TYPE> graph = entityManager.createEntityGraph(nestedEntityType);
+
+        expand.stream()
+                .filter(property -> !property.contains("."))
+                .forEach(property -> graph.addAttributeNodes(property));
+
+        expand.stream()
+                .filter(property -> property.contains("."))
+                .map(property -> property.split("\\."))
+                .map(Stream::of)
+                .map(stream -> stream.collect(Collectors.toList()))
+                .forEach(expandComposition -> resolveCompoundExpand(graph, expandComposition));
+
+        return graph;
+    }
+
+    private void resolveCompoundExpand(EntityGraph graph, List<String> expandComposition) {
+        Subgraph subgraph = graph.addSubgraph(expandComposition.remove(0));
+        resolveExpandSubProperty(subgraph, expandComposition);
+    }
+
+    private void resolveExpandSubProperty(Subgraph parentGraph, List<String> expandComposition) {
+        if (expandComposition.size() > 1) {
+            Subgraph subgraph = parentGraph.addSubgraph(expandComposition.remove(0));
+            resolveExpandSubProperty(subgraph, expandComposition);
+        } else {
+            parentGraph.addAttributeNodes(expandComposition.get(0));
         }
     }
 

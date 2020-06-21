@@ -231,7 +231,7 @@ public abstract class CrudController<
         return ProjectionService.NOP_PROJECTION;
     }
 
-    public List<String> getSingleAllowedProjections() {
+    protected List<String> getSingleAllowedProjections() {
         return Collections.emptyList();
     }
 
@@ -239,7 +239,7 @@ public abstract class CrudController<
         return ProjectionService.NOP_PROJECTION;
     }
 
-    public List<String> getCollectionAllowedProjections() {
+    protected List<String> getCollectionAllowedProjections() {
         return Collections.emptyList();
     }
 

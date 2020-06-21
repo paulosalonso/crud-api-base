@@ -21,7 +21,7 @@ public class SearchCriteriaTest {
         assertThat(searchCriteria.getPageable()).isNotNull();
         assertThat(searchCriteria.getFilter()).isNotNull();
         assertThat(searchCriteria.getSearchOption()).isEqualTo(SearchType.FILTER_EXPAND);
-        assertThat(searchCriteria.getExpand())
+        assertThat(searchCriteria.getEntityGraph())
                 .isNotNull()
                 .satisfies(entityGraph -> {
                     assertThat(entityGraph.getEntityGraphAttributePaths())
@@ -55,13 +55,13 @@ public class SearchCriteriaTest {
                 .expand(null)
                 .build();
 
-        assertThat(searchCriteria.getExpand()).isNull();
+        assertThat(searchCriteria.getEntityGraph()).isNull();
 
         searchCriteria = SearchCriteria.of()
                 .expand(Collections.emptySet())
                 .build();
 
-        assertThat(searchCriteria.getExpand()).isNull();
+        assertThat(searchCriteria.getEntityGraph()).isNull();
     }
 
     @Test

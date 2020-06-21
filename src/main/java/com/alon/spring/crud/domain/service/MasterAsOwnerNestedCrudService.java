@@ -2,13 +2,16 @@ package com.alon.spring.crud.domain.service;
 
 import com.alon.spring.crud.domain.model.BaseEntity;
 import com.alon.spring.crud.domain.repository.CrudRepository;
+import com.alon.spring.crud.domain.repository.EntityGraphResolver;
 import com.alon.spring.crud.domain.service.exception.NotFoundException;
 import com.cosium.spring.data.jpa.entity.graph.domain.DynamicEntityGraph;
+import com.cosium.spring.data.jpa.entity.graph.domain.EntityGraph;
 import org.modelmapper.ModelMapper;
 import org.springframework.data.jpa.domain.Specification;
 
 import javax.persistence.criteria.Join;
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
@@ -37,12 +40,11 @@ extends NestedCrudService<
 
     @Override
     default Collection<NESTED_ENTITY_TYPE> search(MASTER_ENTITY_ID_TYPE masterId, SearchCriteria searchCriteria) {
-        Optional<MASTER_ENTITY_TYPE> masterEntityOpt;
+        List<String> expand = normalizeExpand(List.copyOf(searchCriteria.getExpand()));
 
-        if (searchCriteria.getExpand() != null)
-            masterEntityOpt = getMasterRepository().findById(masterId, searchCriteria.getExpand());
-        else
-            masterEntityOpt = getMasterRepository().findById(masterId);
+        EntityGraph graph = new DynamicEntityGraph(expand);
+
+        Optional<MASTER_ENTITY_TYPE> masterEntityOpt = getMasterRepository().findById(masterId, graph);
 
         return masterEntityOpt
                 .map(this::getNestedGetter)
