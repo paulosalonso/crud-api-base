@@ -3,6 +3,7 @@ package com.alon.spring.crud.domain.service;
 import com.alon.spring.specification.ExpressionSpecification;
 import com.cosium.spring.data.jpa.entity.graph.domain.DynamicEntityGraph;
 import com.cosium.spring.data.jpa.entity.graph.domain.EntityGraph;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 
@@ -12,7 +13,7 @@ import java.util.Set;
 public class SearchCriteria {
 
     private Specification filter;
-    private Pageable pageable;
+    private Pageable pageable = PageRequest.of(0, 20);
     private Set<String> expand;
     private EntityGraph entityGraph;
 
