@@ -9,7 +9,7 @@
     </parent>
     <groupId>com.github.paulosalonso</groupId>
     <artifactId>crud-api-base</artifactId>
-    <version>1.0.5</version>
+    <version>1.0.6-SNAPSHOT</version>
     <name>CRUD API Base</name>
     <description>Fornece implementação básica e expansível para criação API's CRUD com Spring Boot e Spring Data JPA.</description>
     <url>https://github.com/paulosalonso/crud-api-base</url>
@@ -136,7 +136,7 @@
         <url>https://github.com/paulosalonso/crud-api-base.git</url>
         <connection>scm:git:https://github.com/paulosalonso/crud-api-base.git</connection>
         <developerConnection>scm:git:https://github.com/paulosalonso/crud-api-base.git</developerConnection>
-        <tag>crud-api-base-1.0.5</tag>
+        <tag>HEAD</tag>
     </scm>
     <dependencies>
         <dependency>
