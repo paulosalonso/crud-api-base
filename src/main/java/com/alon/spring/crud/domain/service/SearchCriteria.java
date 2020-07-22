@@ -43,7 +43,7 @@ public class SearchCriteria {
         if (this.filter != null)
             option += SearchType.FILTER.getOption();
 
-        if (this.entityGraph != null)
+        if (this.expand != null && !expand.isEmpty())
             option += SearchType.EXPAND.getOption();
 
         return SearchType.getByOptionString(option);
