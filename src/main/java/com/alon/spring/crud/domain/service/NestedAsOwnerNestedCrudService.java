@@ -100,9 +100,9 @@ public interface NestedAsOwnerNestedCrudService<
                 .existsById(masterId, nestedId);
 
         if (!exists)
-            new NotFoundException(
-                    String.format("Resource not found with masterId %s and nestedId %s",
-                            masterId, nestedId));
+            throw new NotFoundException(String.format(
+                    "Resource not found with masterId %s and nestedId %s",
+                    masterId, nestedId));
 
         getNestedRepository().deleteById(nestedId);
 
