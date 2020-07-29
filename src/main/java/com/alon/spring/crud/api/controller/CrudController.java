@@ -92,8 +92,7 @@ public abstract class CrudController<
         this.disableContentCaching = disableContentCaching;
     }
 
-    @ApiOperation(value = "Search resources",
-            nickname = "Search", produces = MediaType.APPLICATION_JSON_VALUE)
+    @ApiOperation(value = "Search resources", produces = MediaType.APPLICATION_JSON_VALUE)
     @GetMapping
     public ResponseEntity search(
             SEARCH_INPUT_TYPE search,
@@ -132,7 +131,7 @@ public abstract class CrudController<
                 .body(response);
     }
 
-    @ApiOperation(value = "Read a resource", nickname = "Read", produces = MediaType.APPLICATION_JSON_VALUE)
+    @ApiOperation(value = "Read a resource", produces = MediaType.APPLICATION_JSON_VALUE)
     @GetMapping("/{id}")
     public ResponseEntity read(
             @PathVariable MANAGED_ENTITY_ID_TYPE id,
@@ -168,7 +167,7 @@ public abstract class CrudController<
                 .body(response);
     }
 
-    @ApiOperation(value = "Create a resource", nickname = "Create",
+    @ApiOperation(value = "Create a resource",
             consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
     @PostMapping
     protected ResponseEntity create(@RequestBody @Valid CREATE_INPUT_TYPE input) throws CreateException {
@@ -184,14 +183,21 @@ public abstract class CrudController<
         
     }
 
-    @ApiOperation(value = "Update a resource", nickname = "Update",
+    @ApiOperation(value = "Update a resource",
             consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
     @PutMapping("/{id}")
     public ResponseEntity update(
             @PathVariable MANAGED_ENTITY_ID_TYPE id,
             @RequestBody @Valid UPDATE_INPUT_TYPE input) throws UpdateException {
 
-        MANAGED_ENTITY_TYPE entity = service.read(id);
+        MANAGED_ENTITY_TYPE entity;
+
+        try {
+            entity = service.read(id);
+        } catch (NotFoundException ex) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, ex.getMessage());
+        }
+
         updateInputMapper.map(input, entity);
 
         entity = service.update(entity);
@@ -204,7 +210,7 @@ public abstract class CrudController<
         
     }
 
-    @ApiOperation(value = "Delete a resource", nickname = "Delete")
+    @ApiOperation("Delete a resource")
     @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void delete(@PathVariable MANAGED_ENTITY_ID_TYPE id) throws DeleteException {

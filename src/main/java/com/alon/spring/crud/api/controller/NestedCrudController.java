@@ -102,8 +102,7 @@ public abstract class NestedCrudController<
         this.disableContentCaching = disableContentCaching;
     }
 
-    @ApiOperation(value = "Search nested resources",
-            nickname = "Search nested", produces = MediaType.APPLICATION_JSON_VALUE)
+    @ApiOperation(value = "Search nested resources", produces = MediaType.APPLICATION_JSON_VALUE)
     @GetMapping
     public ResponseEntity search(
             SEARCH_INPUT_TYPE search,
@@ -147,8 +146,7 @@ public abstract class NestedCrudController<
                 .body(response);
     }
 
-    @ApiOperation(value = "Read a nested resource",
-            nickname = "Read nested", produces = MediaType.APPLICATION_JSON_VALUE)
+    @ApiOperation(value = "Read a nested resource", produces = MediaType.APPLICATION_JSON_VALUE)
     @GetMapping("/{nestedId}")
     public ResponseEntity read(
             @PathVariable MASTER_ENTITY_ID_TYPE masterId,
@@ -185,7 +183,7 @@ public abstract class NestedCrudController<
                 .body(response);
     }
 
-    @ApiOperation(value = "Create a nested resource", nickname = "Create nested",
+    @ApiOperation(value = "Create a nested resource",
             consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
     @PostMapping
     protected ResponseEntity create(
@@ -204,7 +202,7 @@ public abstract class NestedCrudController<
         
     }
 
-    @ApiOperation(value = "Update a nested resource", nickname = "Update nested",
+    @ApiOperation(value = "Update a nested resource",
             consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
     @PutMapping("/{nestedId}")
     public ResponseEntity update(
@@ -212,14 +210,16 @@ public abstract class NestedCrudController<
             @PathVariable NESTED_ENTITY_ID_TYPE nestedId,
             @RequestBody @Valid UPDATE_INPUT_TYPE input) throws UpdateException {
 
-        NESTED_ENTITY_TYPE entity = updateInputMapper.map(input);
-        entity.setId(nestedId);
+        NESTED_ENTITY_TYPE entity;
 
         try {
-            entity = nestedService.update(masterId, nestedId, entity);
+            entity = nestedService.read(masterId, nestedId, Collections.emptyList());
         } catch (NotFoundException ex) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, ex.getMessage());
         }
+
+        updateInputMapper.map(input, entity);
+        entity = nestedService.update(masterId, nestedId, entity);
 
         Object response = projectionService.project(getSingleDefaultProjection(), entity);
 
@@ -229,7 +229,7 @@ public abstract class NestedCrudController<
         
     }
 
-    @ApiOperation(value = "Delete a nested resource", nickname = "Delete nested")
+    @ApiOperation(value = "Delete a nested resource")
     @DeleteMapping("/{nestedId}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void delete(@PathVariable MASTER_ENTITY_ID_TYPE masterId,
